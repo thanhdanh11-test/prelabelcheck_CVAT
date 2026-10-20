@@ -175,6 +175,17 @@
     return xyz;
   }
 
+  // Where loading time goes, logged to the console after each preview / auto fit.
+  const cloudStats = { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: 0 };
+  function logCloudStats(what) {
+    const st = cloudStats, wall = (performance.now() - st.since) / 1000;
+    if (st.frames) {
+      console.info(`[Track Resizer] ${what}: ${wall.toFixed(1)} s, ${st.frames} frame tải mới, ` +
+        `${(st.bytes / 1e6).toFixed(1)} MB (${(st.bytes / 1e6 / st.frames).toFixed(1)} MB/frame), ` +
+        `tải ${(st.fetchMs / st.frames).toFixed(0)} ms/frame, parse ${(st.parseMs / st.frames).toFixed(0)} ms/frame`);
+    } else console.info(`[Track Resizer] ${what}: ${wall.toFixed(1)} s, không tải frame nào (dùng cache)`);
+    Object.assign(st, { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: performance.now() });
+  }
   const clouds = new Map(); // "job:frame" -> Promise<Float32Array>, least recently used first
 
   function loadCloud(frame) {
@@ -183,10 +194,16 @@
     if (cloud) {
       clouds.delete(key);
     } else {
+      const t0 = performance.now();
       cloud = fetch(`/api/jobs/${jobId}/data?type=frame&number=${frame}&quality=compressed`,
         { credentials: "same-origin" }).then(async (resp) => {
         if (!resp.ok) throw new Error(`Không tải được point cloud frame ${frame} (HTTP ${resp.status}).`);
-        return parsePcd(await resp.arrayBuffer());
+        const buf = await resp.arrayBuffer(), t1 = performance.now(), xyz = parsePcd(buf);
+        cloudStats.frames++;
+        cloudStats.bytes += buf.byteLength;
+        cloudStats.fetchMs += t1 - t0;
+        cloudStats.parseMs += performance.now() - t1;
+        return xyz;
       });
       cloud.catch(() => clouds.delete(key));
     }
@@ -206,12 +223,12 @@
   const nearCached = (trackId, frame) => near.get(`${jobId}:${trackId}:${frame}`);
 
   // Points within `reach` of `center` (plus `margin` of room for later tweaks), cut from the frame.
-  async function nearCloud(trackId, frame, center, reach, margin = reach * 0.5 + 1) {
+  // The default margin leaves room for later size tweaks and for the auto fit's search around the box.
+  async function nearCloud(trackId, frame, center, reach, margin = reach * 0.5 + 4) {
     const key = `${jobId}:${trackId}:${frame}`;
     const old = near.get(key);
     if (old && cropCovers(old, center, reach)) {
-      near.delete(key);
-      near.set(key, old);
+      remember(key, old);
       return old.xyz;
     }
     const full = await loadCloud(frame);
@@ -223,6 +240,11 @@
       }
     }
     const crop = { center: center.slice(), half, xyz: Float32Array.from(kept) };
+    remember(key, crop);
+    return crop.xyz;
+  }
+
+  function remember(key, crop) {
     if (near.has(key)) nearFloats -= near.get(key).xyz.length;
     near.delete(key);
     near.set(key, crop);
@@ -232,7 +254,6 @@
       near.delete(k);
       nearFloats -= c.xyz.length;
     }
-    return crop.xyz;
   }
 
   // Points inside a box, by job, track, frame and exact box geometry: changing only the threshold
@@ -322,8 +343,9 @@
   .fitgrid input { width: 100%; margin-top: 4px; }
   .fit-kind { margin-top: 0; }
   .btn.fit { width: 100%; height: 44px; margin-top: 12px; }
-  .btn.fit.busy { background: linear-gradient(90deg, var(--primary) var(--p, 0%), var(--elevated) var(--p, 0%));
-                  border-color: var(--primary); font-variant-numeric: tabular-nums; }
+  .btn.busy { background: linear-gradient(90deg, var(--primary) var(--p, 0%), var(--elevated) var(--p, 0%));
+              border-color: var(--primary); color: var(--on-primary); font-variant-numeric: tabular-nums; }
+  .btn.busy:disabled { opacity: 1; }
   h3 .help-btn { margin-left: auto; width: 28px; height: 28px; padding: 0; font-size: 14px; letter-spacing: 0; border-color: var(--control-border); }
   h3 .help-btn + .close { margin-left: 0; }
   .helpbox { position: absolute; left: 16px; top: 56px; z-index: 3; width: 368px; max-height: calc(100% - 72px); overflow: auto;
@@ -487,6 +509,20 @@
   root.querySelectorAll(".logo").forEach((img) => (logoUrl ? (img.src = logoUrl) : img.remove()));
   let jobId = null, job = null, annotations = null, labels = [], plan = null, planning = 0;
 
+  // A long-running button doubles as its own progress bar; null puts its label back.
+  function progress(btn, x, label) {
+    if (x === null) {
+      btn.classList.remove("busy");
+      btn.style.removeProperty("--p");
+      btn.textContent = label;
+      return;
+    }
+    const pct = Math.max(0, Math.min(100, Math.round(x * 100)));
+    btn.classList.add("busy");
+    btn.style.setProperty("--p", pct + "%");
+    btn.textContent = pct + "%";
+  }
+
   function setStatus(text, isError) {
     $(".status").textContent = text;
     $(".status").className = "status" + (isError ? " err" : "");
@@ -578,7 +614,7 @@
         if (pos && !pos.outside) frames.push(f);
       }
       let done = 0;
-      const next = () => frames.shift();
+      const total = frames.length, next = () => frames.shift();
       const worker = async () => {
         for (let f = next(); f !== undefined; f = next()) {
           const box = positionAt(keys, f).points, key = `${jobId}:${track.id}:${f}:${box.join(",")}`;
@@ -590,10 +626,10 @@
             counted.set(key, n);
           }
           counts.set(f, n);
-          setStatus(`Đang đếm điểm trong box… ${++done} frame`);
+          progress($(".preview"), ++done / total);
         }
       };
-      await Promise.all([worker(), worker(), worker()]);
+      await Promise.all([worker(), worker(), worker(), worker()]);
       const sorted = [...counts].sort((a, b) => a[0] - b[0]); // workers finish out of order
       counts.clear();
       sorted.forEach(([f, n]) => counts.set(f, n));
@@ -640,6 +676,8 @@
     closePlan();
     const token = planning;
     $(".preview").disabled = true;
+    if ($(".auto").checked) progress($(".preview"), 0);
+    Object.assign(cloudStats, { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: performance.now() });
     try {
       const result = await buildPlan(token);
       if (token !== planning) return;
@@ -649,6 +687,8 @@
       return;
     } finally {
       $(".preview").disabled = false;
+      progress($(".preview"), null, "Xem trước");
+      logCloudStats("Xem trước");
     }
     plan.manual = new Set(); // frames edited by hand in the preview
     plan.flagged = new Set(); // frames the auto fit could not match well
@@ -1150,9 +1190,10 @@
   }
 
   async function fitFrame(f, T, size, pred, alt, W, lastN) {
-    const cloud = await loadCloud(f);
     const centers = Math.hypot(alt.x - pred.x, alt.y - pred.y) > 0.3 ? [pred, alt] : [pred];
-    const Q = targetPoints(cloud, centers, W + Math.hypot(size[0], size[1]) / 2 + 0.5, size);
+    const radius = W + Math.hypot(size[0], size[1]) / 2 + 0.5;
+    const cloud = await nearCloud(plan.track.id, f, [pred.x, pred.y, pred.z], radius + Math.hypot(alt.x - pred.x, alt.y - pred.y));
+    const Q = targetPoints(cloud, centers, radius, size);
     // the search and ICP run on a thinned set of points; the final checks use all of them
     const thin = (max) => { const every = Math.ceil(Q.length / 3 / max); return every > 1 ? Q.filter((_, i) => Math.floor(i / 3) % every === 0) : Q; };
     const Qs = thin(1500), Qi = thin(2000);
@@ -1221,7 +1262,7 @@
   }
 
   async function fitSoft(f, size, pred, alt, W, lastN) {
-    const cloud = await loadCloud(f);
+    const cloud = await nearCloud(plan.track.id, f, [pred.x, pred.y, pred.z], Math.max(2.5, W + Math.max(size[0], size[1])) + 0.2);
     const g = groundAt(cloud, pred, 2.5) ?? pred.z - size[2] / 2;
     const lo = g + 0.12, hi = g + size[2] + 0.3, reach = W + Math.max(size[0], size[1]), cell = 0.2;
     const X = [], Y = [], cellsOf = new Map(); // object-height points near the prediction, and their 2D cells
@@ -1301,13 +1342,6 @@
     for (const [f, p] of out) pose.set(f, p);
   }
 
-  // The fit button doubles as its progress bar.
-  function progress(x) {
-    const btn = $(".fit"), pct = Math.max(0, Math.min(100, Math.round(x * 100)));
-    btn.style.setProperty("--p", pct + "%");
-    btn.textContent = pct + "%";
-  }
-
   async function pickReference(a, b) {
     const typed = $(".fit-ref").value.trim();
     if (typed !== "") {
@@ -1320,7 +1354,7 @@
     for (const s of plan.shapes) {
       if (s.frame < a || s.frame > b || s.outside) continue;
 
-      const n = countInside(await loadCloud(s.frame), s.points);
+      const F = boxFrame(s.points), n = countInside(await nearCloud(plan.track.id, s.frame, F.center, F.reach), s.points);
       if (!best || n > best.n) best = { f: s.frame, n };
     }
     if (!best) throw new Error("Không có keyframe nào đang hiện để làm frame mẫu.");
@@ -1334,9 +1368,9 @@
     endDrag();
     const run = fitting = { cancelled: false }, gen = editGen;
     const btn = $(".fit");
-    btn.classList.add("busy");
     btn.title = "Bấm để dừng";
-    progress(0);
+    progress(btn, 0);
+    Object.assign(cloudStats, { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: performance.now() });
     const check = () => { if (run.cancelled || gen !== editGen) throw new Error("cancelled"); };
     try {
       const soft = $(".fit-kind").value === "soft", first = plan.shapes[0].frame, stop = frames[frames.length - 1];
@@ -1351,8 +1385,8 @@
       const p0 = ref.points, size = p0.slice(6, 9);
       let P0 = poseOf(p0);
       if (Math.abs(p0[3]) > 0.15 || Math.abs(p0[4]) > 0.15) throw new Error("Box ở frame mẫu đang nghiêng (rx/ry); tự khớp chỉ xoay quanh trục đứng.");
-      progress(0.08);
-      const refCloud = await loadCloud(r);
+      progress(btn, 0.08);
+      const refCloud = await nearCloud(plan.track.id, r, [P0.x, P0.y, P0.z], Math.hypot(size[0], size[1]) / 2 + 2);
       check();
       // The reference box may only be roughly placed (CVAT draws new cuboids at heading 0): turn it
       // to the L-shape heading and fit it to the points when that holds clearly more points.
@@ -1402,7 +1436,7 @@
           const W = Math.min(3, Math.max(0.5, 0.5 + 0.5 * speed * gap));
           const res = soft ? await fitSoft(f, size, pred, st, W, lastN) : await fitFrame(f, T, size, pred, st, W, lastN);
           check();
-          progress(0.1 + 0.85 * ++done / total);
+          progress(btn, 0.1 + 0.85 * ++done / total);
           if (!res.ok) { flagged.add(f); continue; }
           const step = { x: (res.P.x - prev.x) / gap, y: (res.P.y - prev.y) / gap, z: (res.P.z - prev.z) / gap, yaw: wrapAngle(res.P.yaw - prev.yaw) / gap };
           vel = vel ? { x: (vel.x + step.x) / 2, y: (vel.y + step.y) / 2, z: (vel.z + step.z) / 2, yaw: (vel.yaw + step.yaw) / 2 } : step;
@@ -1449,16 +1483,15 @@
       plan.shapes = [...plan.shapes.filter((s) => s.frame < a || s.frame > b), ...inRange].sort((x, y) => x.frame - y.frame);
       plan.flagged = flagged;
       modelChanged();
-      progress(1);
+      progress(btn, 1);
       setStatus("");
     } catch (e) {
       setStatus(e.message === "cancelled" ? "Đã dừng tự khớp, track không đổi." : e.message, e.message !== "cancelled");
     } finally {
       if (fitting === run) fitting = null;
-      btn.classList.remove("busy");
-      btn.style.removeProperty("--p");
       btn.title = "";
-      btn.textContent = "Tự khớp";
+      progress(btn, null, "Tự khớp");
+      logCloudStats("Tự khớp");
     }
   }
 
@@ -1471,7 +1504,7 @@
     pump();
   }
   function pump() {
-    while (loading < 3 && queue.length) {
+    while (loading < 4 && queue.length) {
       queue.sort((a, b) => (b === zoomFrame) - (a === zoomFrame)); // the zoomed frame first
       const f = queue.shift();
       if (!visible.has(f) && f !== zoomFrame) { loadState.delete(f); continue; } // scrolled away

@@ -84,7 +84,7 @@ Frame bạn đã sửa tay được giữ nguyên và dùng làm điểm neo. Fr
 ### Dữ liệu và quyền
 
 - Extension chỉ gọi tới chính server CVAT đang mở (`/api/...`), dùng phiên đăng nhập sẵn có của trang. Không gửi dữ liệu đi nơi khác, không khai báo `permissions` nào.
-- Point cloud và annotation chỉ nằm trong bộ nhớ của tab. `localStorage` chỉ lưu vị trí của panel.
+- Point cloud và annotation chỉ nằm trong bộ nhớ của tab trong lúc xử lý và mất khi đóng hoặc tải lại trang. Không lưu xuống máy, không mã hoá hay sao chép sang nơi khác. `localStorage` chỉ lưu vị trí của panel.
 - Đọc point cloud dạng PCD `ascii` và `binary` (tọa độ float).
 
 ---
