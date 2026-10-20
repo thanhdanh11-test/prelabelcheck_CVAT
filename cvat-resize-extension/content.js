@@ -322,6 +322,8 @@
   .fitgrid input { width: 100%; margin-top: 4px; }
   .fit-kind { margin-top: 0; }
   .btn.fit { width: 100%; height: 44px; margin-top: 12px; }
+  .btn.fit.busy { background: linear-gradient(90deg, var(--primary) var(--p, 0%), var(--elevated) var(--p, 0%));
+                  border-color: var(--primary); font-variant-numeric: tabular-nums; }
   h3 .help-btn { margin-left: auto; width: 28px; height: 28px; padding: 0; font-size: 14px; letter-spacing: 0; border-color: var(--control-border); }
   h3 .help-btn + .close { margin-left: 0; }
   .helpbox { position: absolute; left: 16px; top: 56px; z-index: 3; width: 368px; max-height: calc(100% - 72px); overflow: auto;
@@ -1107,6 +1109,46 @@
     return out;
   }
 
+  // Heading of a vehicle from its points seen from above (L-shape fitting, closeness criterion): the
+  // angle in [0°, 90°) whose rectangle hugs the points best, so it works from one visible side too.
+  function lShapeAngle(xs, ys) {
+    const n = xs.length, p1 = new Float64Array(n), p2 = new Float64Array(n);
+    const closeness = (t) => {
+      const c = Math.cos(t), s = Math.sin(t);
+      let a1 = Infinity, b1 = -Infinity, a2 = Infinity, b2 = -Infinity;
+      for (let i = 0; i < n; i++) {
+        p1[i] = c * xs[i] + s * ys[i]; p2[i] = -s * xs[i] + c * ys[i];
+        if (p1[i] < a1) a1 = p1[i]; if (p1[i] > b1) b1 = p1[i];
+        if (p2[i] < a2) a2 = p2[i]; if (p2[i] > b2) b2 = p2[i];
+      }
+      let sc = 0;
+      for (let i = 0; i < n; i++) {
+        const d = Math.min(b1 - p1[i], p1[i] - a1, b2 - p2[i], p2[i] - a2);
+        sc += 1 / Math.max(d, 0.05);
+      }
+      return sc;
+    };
+    let best = 0, bestSc = -1;
+    for (let deg = 0; deg < 90; deg += 2) { const sc = closeness(deg * Math.PI / 180); if (sc > bestSc) { bestSc = sc; best = deg; } }
+    let fine = best;
+    for (let deg = best - 2; deg <= best + 2; deg += 0.25) { const sc = closeness(deg * Math.PI / 180); if (sc > bestSc) { bestSc = sc; fine = deg; } }
+    return fine * Math.PI / 180;
+  }
+
+  // Poses turned to the L-shape heading of the points around P: both axis choices (the angle is
+  // ambiguous by 90°), each facing the side nearest P's heading.
+  function lShapePoses(Q, P, size, margin) {
+    const xs = [], ys = [];
+    forObjectPoints(Q, P, size, margin, (k, x, y) => { xs.push(x); ys.push(y); });
+    if (xs.length < 20) return [];
+    const a = lShapeAngle(xs, ys);
+    return [a, a + Math.PI / 2].map((t) => {
+      let yaw = wrapAngle(P.yaw + t);
+      if (Math.abs(wrapAngle(yaw - P.yaw)) > Math.PI / 2) yaw = wrapAngle(yaw + Math.PI);
+      return { ...P, yaw };
+    });
+  }
+
   async function fitFrame(f, T, size, pred, alt, W, lastN) {
     const cloud = await loadCloud(f);
     const centers = Math.hypot(alt.x - pred.x, alt.y - pred.y) > 0.3 ? [pred, alt] : [pred];
@@ -1119,10 +1161,17 @@
     let best = null;
     for (const C of centers) {
       for (let dx = -W; dx <= W + 1e-9; dx += step) for (let dy = -W; dy <= W + 1e-9; dy += step) {
-        for (const da of [-10, -5, 0, 5, 10]) {
+        for (const da of [-20, -10, -5, 0, 5, 10, 20]) {
           const P = { x: C.x + dx, y: C.y + dy, z: C.z, yaw: C.yaw + da * Math.PI / 180 };
           const sc = score(T, Qs, P, size);
           if (!best || sc > best.sc) best = { P, sc };
+        }
+      }
+      // the heading the points themselves show, for turns beyond the grid
+      for (const L of lShapePoses(Qs, C, size, 0.5)) {
+        for (let dx = -0.4; dx <= 0.4 + 1e-9; dx += 0.2) for (let dy = -0.4; dy <= 0.4 + 1e-9; dy += 0.2) {
+          const P = { ...L, x: L.x + dx, y: L.y + dy }, sc = score(T, Qs, P, size);
+          if (sc > best.sc) best = { P, sc };
         }
       }
     }
@@ -1252,6 +1301,13 @@
     for (const [f, p] of out) pose.set(f, p);
   }
 
+  // The fit button doubles as its progress bar.
+  function progress(x) {
+    const btn = $(".fit"), pct = Math.max(0, Math.min(100, Math.round(x * 100)));
+    btn.style.setProperty("--p", pct + "%");
+    btn.textContent = pct + "%";
+  }
+
   async function pickReference(a, b) {
     const typed = $(".fit-ref").value.trim();
     if (typed !== "") {
@@ -1263,7 +1319,7 @@
     let best = null;
     for (const s of plan.shapes) {
       if (s.frame < a || s.frame > b || s.outside) continue;
-      setStatus(`Tự khớp: chọn frame mẫu… (frame ${s.frame})`);
+
       const n = countInside(await loadCloud(s.frame), s.points);
       if (!best || n > best.n) best = { f: s.frame, n };
     }
@@ -1278,7 +1334,9 @@
     endDrag();
     const run = fitting = { cancelled: false }, gen = editGen;
     const btn = $(".fit");
-    btn.textContent = "Dừng";
+    btn.classList.add("busy");
+    btn.title = "Bấm để dừng";
+    progress(0);
     const check = () => { if (run.cancelled || gen !== editGen) throw new Error("cancelled"); };
     try {
       const soft = $(".fit-kind").value === "soft", first = plan.shapes[0].frame, stop = frames[frames.length - 1];
@@ -1290,13 +1348,29 @@
       check();
       const ref = stateAt(r);
       if (ref.outside) throw new Error(`Track đang ẩn ở frame mẫu ${r}.`);
-      const p0 = ref.points, size = p0.slice(6, 9), P0 = poseOf(p0);
+      const p0 = ref.points, size = p0.slice(6, 9);
+      let P0 = poseOf(p0);
       if (Math.abs(p0[3]) > 0.15 || Math.abs(p0[4]) > 0.15) throw new Error("Box ở frame mẫu đang nghiêng (rx/ry); tự khớp chỉ xoay quanh trục đứng.");
+      progress(0.08);
+      const refCloud = await loadCloud(r);
+      check();
+      // The reference box may only be roughly placed (CVAT draws new cuboids at heading 0): turn it
+      // to the L-shape heading and fit it to the points when that holds clearly more points.
+      if (!soft) {
+        const Qr = targetPoints(refCloud, [P0], Math.hypot(size[0], size[1]) / 2 + 1.5, size);
+        const inside = (P) => { let n = 0; forObjectPoints(Qr, P, size, 0, () => n++); return n; };
+        let best = P0, bestN = inside(P0);
+        for (const L of lShapePoses(Qr, P0, size, 0.8)) {
+          let P = L;
+          for (let i = 0; i < 4; i++) P = contain(Qr, P, size); // each pass re-centres the region it looks at
+          const n = inside(P);
+          if (n > bestN * 1.05) { best = P; bestN = n; }
+        }
+        P0 = best;
+      }
 
       // template from the reference frame (rigid objects only use it)
-      setStatus(`Tự khớp: lấy mẫu ở frame ${r}…`);
-      const T = newTemplate(size), cr = Math.cos(P0.yaw), sr = Math.sin(P0.yaw), refCloud = await loadCloud(r);
-      check();
+      const T = newTemplate(size), cr = Math.cos(P0.yaw), sr = Math.sin(P0.yaw);
       for (let k = 0; k < refCloud.length; k += 3) {
         const dx = refCloud[k] - P0.x, dy = refCloud[k + 1] - P0.y, z = refCloud[k + 2] - P0.z;
         const x = cr * dx + sr * dy, y = -sr * dx + cr * dy;
@@ -1328,7 +1402,7 @@
           const W = Math.min(3, Math.max(0.5, 0.5 + 0.5 * speed * gap));
           const res = soft ? await fitSoft(f, size, pred, st, W, lastN) : await fitFrame(f, T, size, pred, st, W, lastN);
           check();
-          setStatus(`Tự khớp… ${++done}/${total} frame`);
+          progress(0.1 + 0.85 * ++done / total);
           if (!res.ok) { flagged.add(f); continue; }
           const step = { x: (res.P.x - prev.x) / gap, y: (res.P.y - prev.y) / gap, z: (res.P.z - prev.z) / gap, yaw: wrapAngle(res.P.yaw - prev.yaw) / gap };
           vel = vel ? { x: (vel.x + step.x) / 2, y: (vel.y + step.y) / 2, z: (vel.z + step.z) / 2, yaw: (vel.yaw + step.yaw) / 2 } : step;
@@ -1367,7 +1441,7 @@
       const { id, ...base } = plan.shapes[0];
       const inRange = keep.map((f) => {
         const out = !visible(f), cur = old.get(f);
-        if (anchors.has(f) || f === r) return { ...cur || { ...base, attributes: [] }, frame: f, points: stateAt(f).points, outside: out };
+        if (anchors.has(f)) return { ...cur || { ...base, attributes: [] }, frame: f, points: stateAt(f).points, outside: out };
         const P = pose.get(f), pts = p0.slice();
         pts[0] = P.x; pts[1] = P.y; pts[2] = P.z; pts[5] = wrapAngle(P.yaw);
         return { ...(cur || { ...base, attributes: [] }), frame: f, points: pts, outside: out };
@@ -1375,11 +1449,15 @@
       plan.shapes = [...plan.shapes.filter((s) => s.frame < a || s.frame > b), ...inRange].sort((x, y) => x.frame - y.frame);
       plan.flagged = flagged;
       modelChanged();
+      progress(1);
       setStatus("");
     } catch (e) {
       setStatus(e.message === "cancelled" ? "Đã dừng tự khớp, track không đổi." : e.message, e.message !== "cancelled");
     } finally {
       if (fitting === run) fitting = null;
+      btn.classList.remove("busy");
+      btn.style.removeProperty("--p");
+      btn.title = "";
       btn.textContent = "Tự khớp";
     }
   }
