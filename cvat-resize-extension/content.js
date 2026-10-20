@@ -279,7 +279,9 @@
            box-shadow: 0 4px 8px rgba(0,0,0,.1); color-scheme: dark; }
   .panel[hidden] { display: none; }
   .side { width: 400px; flex: none; max-height: calc(100vh - 80px); overflow: hidden auto; padding: 0 16px 16px; }
+  .panel.wide { left: 0 !important; top: 0 !important; width: 100vw; height: 100vh; border: 0; }
   .panel.wide .side { max-height: none; border-right: 1px solid var(--hairline); }
+  .panel.wide h3 { cursor: default; }
   h3 { margin: 0 -16px 16px; padding: 12px 16px; border-bottom: 1px solid var(--hairline);
        display: flex; align-items: center; gap: 8px; cursor: move; user-select: none; }
   h3 .logo { width: 28px; height: 28px; }
@@ -305,13 +307,29 @@
   .tools { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
   .vals { margin-top: 8px; }
   .vals span { color: var(--body); }
-  .modes { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--control-border); }
-  .modes label { margin: 0; padding: 8px 4px; text-align: center; color: var(--body);
-                 font-size: 11px; font-weight: 600; letter-spacing: .65px; text-transform: uppercase; }
-  .modes label + label { border-left: 1px solid var(--control-border); }
-  .modes input { position: absolute; opacity: 0; pointer-events: none; }
-  .modes label:has(input:checked) { background: var(--elevated); color: var(--ink); box-shadow: inset 0 -2px var(--primary); }
-  .modes label:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: -2px; }
+  .vals { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
+  .vals label { margin: 0; display: flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 600; cursor: default; }
+  .vals input { width: 100% !important; min-width: 0; }
+  .btn.sm.ico { width: 30px; height: 26px; padding: 0; display: inline-flex; align-items: center; justify-content: center; letter-spacing: 0; }
+  .ico svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .ico.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+  .ico.on:disabled { opacity: .7; }
+  .sumtab { width: 100%; border-collapse: collapse; }
+  .sumtab td { padding: 5px 0; border-bottom: 1px solid var(--hairline); color: var(--body); }
+  .sumtab td + td { text-align: right; color: var(--ink); font-weight: 600; }
+  .fitgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
+  .fitgrid label { margin: 0; color: var(--muted); font-size: 11px; cursor: default; }
+  .fitgrid input { width: 100%; margin-top: 4px; }
+  .fit-kind { margin-top: 0; }
+  .btn.fit { width: 100%; height: 44px; margin-top: 12px; }
+  h3 .help-btn { margin-left: auto; width: 28px; height: 28px; padding: 0; font-size: 14px; letter-spacing: 0; border-color: var(--control-border); }
+  h3 .help-btn + .close { margin-left: 0; }
+  .helpbox { position: absolute; left: 16px; top: 56px; z-index: 3; width: 368px; max-height: calc(100% - 72px); overflow: auto;
+             padding: 12px 16px; border: 1px solid var(--control-border); background: var(--canvas); color: var(--body); }
+  .helpbox[hidden] { display: none; }
+  .helpbox h5 { margin: 10px 0 4px; color: var(--ink); font-size: 12px; font-weight: 600; }
+  .helpbox h5:first-child { margin-top: 0; }
+  .helpbox ul { margin: 0; padding-left: 16px; font-size: 12px; }
   .btn { height: 36px; padding: 0 16px; border: 1px solid var(--ink); border-radius: 0; background: transparent;
          color: var(--ink); cursor: pointer;
          font-size: 12px; font-weight: 700; line-height: 1; letter-spacing: 1.4px; text-transform: uppercase; }
@@ -321,55 +339,40 @@
   .btn:disabled { opacity: .35; cursor: default; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
   .actions .btn { height: 44px; }
-  .warn { margin: 0 0 8px; padding: 8px 12px; border: 1px solid var(--hairline); border-left: 2px solid var(--warning); color: var(--body); }
-  .warn b { color: var(--ink); font-weight: 600; }
+  .warn { margin: 0 0 8px; padding: 8px 12px; background: var(--primary); color: var(--on-primary); }
+  .warn b { color: var(--on-primary); font-weight: 700; }
   .status { margin-top: 16px; color: var(--body); white-space: pre-wrap; }
   .status:empty { display: none; }
   .status.err { color: var(--warning); }
   .muted { color: var(--muted); }
   .btn.sm { height: 26px; padding: 0 8px; font-size: 10px; letter-spacing: 1.1px; border-color: var(--control-border); }
-  .summary b { color: var(--ink); font-weight: 600; }
-  .edits { margin: 8px 0 0; padding: 0; list-style: none; }
-  .edits li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--hairline); color: var(--ink); cursor: pointer; }
-  .edits li span { color: var(--body); font-size: 12px; }
-  .edits li button { margin-left: auto; }
-  .edits li.empty { color: var(--muted); font-size: 12px; border: 0; cursor: default; }
-  .help { margin: 8px 0 0; padding-left: 16px; font-size: 12px; }
-  .help b { color: var(--ink); font-weight: 600; }
   kbd { padding: 0 4px; border: 1px solid var(--control-border); border-radius: 2px; color: var(--ink); font-size: 11px; }
 
   .editor { position: relative; flex: 1; min-width: 0; display: flex; flex-direction: column; outline: none; }
   .editor[hidden] { display: none; }
   .fbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; min-height: 53px; padding: 8px 16px; border-bottom: 1px solid var(--hairline); }
-  .fbar .title { color: var(--ink); font-size: 16px; font-weight: 500; }
   .fbar .sp { flex: 1; }
   .fbar label { margin: 0; white-space: nowrap; }
-  .legend { display: flex; gap: 12px; color: var(--muted); font-size: 12px; white-space: nowrap; }
-  .legend i { display: inline-block; width: 8px; height: 8px; margin-right: 6px; }
   .grid { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-content: start; }
   .grid.one { grid-template-columns: 1fr; }
   .cell { position: relative; border: 1px solid var(--hairline); }
-  .cell.is-key::before, .zoom.is-key::before { content: ""; position: absolute; top: 0; left: 0; z-index: 1; width: 9px; height: 9px;
-                                                background: var(--primary); pointer-events: none; }
-  .pick-l { display: inline-flex; align-items: center; gap: 4px; margin: 0; color: var(--muted); font-size: 10px; font-weight: 600;
-            letter-spacing: .65px; text-transform: uppercase; white-space: nowrap; cursor: default; }
-  .chead select, .chead input { height: 24px; padding: 0 4px; border-radius: 2px; font-size: 11px; max-width: 150px; text-transform: none; letter-spacing: 0; }
-  .chead select { width: auto; }
+  .cell.active { outline: 2px solid var(--primary); outline-offset: -1px; }
+  .chead select, .chead input { height: 26px; padding: 0 4px; border-radius: 2px; font-size: 11px; width: 96px; text-transform: none; letter-spacing: 0; }
   .chead input[type=number] { width: 64px; }
   .chead input[type=text] { width: 96px; }
   .chead .cls { color: var(--ink); font-weight: 600; }
   .cell[hidden] { display: none; }
-  .cell.is-key { border-color: var(--control-border); }
   .cell.is-manual { border-color: var(--ink); }
   .cell.flash { outline: 2px solid var(--focus); }
   .cell.hidden-frame canvas { opacity: .55; }
   .chead { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 4px 6px 4px 10px; border-bottom: 1px solid var(--hairline); flex-wrap: wrap; }
-  .chead .f { color: var(--ink); font-weight: 600; letter-spacing: .65px; white-space: nowrap; }
+  .chead .f { min-width: 28px; color: var(--ink); font-weight: 600; letter-spacing: .65px; white-space: nowrap; }
   .chead .n { color: var(--body); font-size: 12px; white-space: nowrap; }
   .tag { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; white-space: nowrap; }
   .tag.hid { color: var(--ink); }
+  .tag.bad { color: var(--warning); }
+  .row .fit-ref { width: 90px; }
   .chead .acts { margin-left: auto; display: flex; gap: 4px; align-items: center; }
-  .btn.sm[data-act=zoom] { width: 30px; padding: 0; font-size: 15px; letter-spacing: 0; }
   .views { display: grid; grid-template-columns: repeat(3, 1fr); }
   .view { position: relative; min-width: 0; }
   .view + .view { border-left: 1px solid var(--hairline); }
@@ -393,7 +396,7 @@
 <div class="panel" hidden>
  <div class="side">
   <h3><img class="logo" alt=""><span class="name">Track Resizer</span><span class="badge job"></span>
-    <button class="close" title="Đóng">✕</button></h3>
+    <button class="btn help-btn" title="Hướng dẫn">?</button><button class="close" title="Đóng">✕</button></h3>
 
   <div class="warn">Bấm <b>Save</b> trong CVAT trước khi áp dụng. Trang sẽ tự tải lại sau khi lưu.</div>
   <div class="lbl">Track</div>
@@ -403,17 +406,12 @@
     <button class="btn refresh">Tải lại</button>
   </div>
   <div class="lbl">Kích thước</div>
-  <div class="modes">
-    <label><input type="radio" name="mode" value="none"> Giữ nguyên</label>
-    <label><input type="radio" name="mode" value="size" checked> Nhập số</label>
-    <label><input type="radio" name="mode" value="scale"> Tỉ lệ</label>
-    <label><input type="radio" name="mode" value="frame"> Từ frame</label>
-  </div>
-  <div class="row vals"></div>
+  <div class="vals"></div>
   <div class="lbl">Tùy chọn</div>
-  <label><input type="checkbox" class="bottom" checked>Giữ đáy box cố định (không giữ thì giữ tâm)</label>
-  <label class="row"><span><input type="checkbox" class="auto" checked>Tự động outside khi box có ≤</span>
-    <input type="number" class="thr" min="0" step="1" value="6"> điểm</label>
+  <label><input type="checkbox" class="bottom" checked>Giữ đáy cố định</label>
+  <label><input type="checkbox" class="lock" checked>Khóa kích thước cả track</label>
+  <label class="row"><span><input type="checkbox" class="auto" checked>Tự động outside ≤</span>
+    <input type="number" class="thr" min="0" step="1" value="6" title="Số điểm tối đa trong box để coi là outside"></label>
   <div class="actions">
     <button class="btn preview">Xem trước</button>
     <button class="btn primary apply" disabled>Áp dụng</button>
@@ -421,26 +419,46 @@
   <div class="status"></div>
   <div class="edit-sec" hidden>
     <div class="lbl">Chỉnh trong xem trước</div>
-    <div class="summary"></div>
-    <label><input type="checkbox" class="lock" checked>Khóa kích thước cho cả track</label>
-    <ul class="edits"></ul>
-    <ul class="help">
-      <li>Kéo <b>trong box</b> để di chuyển, kéo <b>cạnh</b> để đổi kích thước, kéo <b>chấm đỏ</b> ở Top để xoay.</li>
-      <li>Sửa ở frame nào, frame đó thành keyframe; các frame giữa hai keyframe tự nội suy.</li>
-      <li><b>⤢</b> phóng to một frame; <kbd>←</kbd> <kbd>→</kbd> đổi frame, <kbd>Esc</kbd> thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd> hoàn tác.</li>
-    </ul>
+    <table class="sumtab"></table>
+    <div class="lbl">Tự khớp</div>
+    <select class="fit-kind">
+      <option value="rigid">Xe, vật cứng (khớp theo hình dạng)</option>
+      <option value="soft">Người, xe đạp (theo cụm điểm)</option>
+    </select>
+    <div class="fitgrid">
+      <label>Frame đầu<input type="number" class="fit-a" min="0" step="1"></label>
+      <label>Frame cuối<input type="number" class="fit-b" min="0" step="1"></label>
+      <label>Frame mẫu<input type="number" class="fit-ref" min="0" step="1" placeholder="tự chọn"></label>
+    </div>
+    <button class="btn primary fit">Tự khớp</button>
   </div>
+ </div>
+ <div class="helpbox" hidden>
+  <h5>Quy trình</h5>
+  <ul><li>Chọn track, nhập L / W / H, bấm <b>Xem trước</b>.</li><li>Chỉnh box trên các mặt bên phải nếu cần, rồi bấm <b>Áp dụng</b>.</li>
+    <li>Bấm <b>Save</b> trong CVAT trước khi áp dụng; trang sẽ tự tải lại.</li></ul>
+  <h5>Chỉnh box</h5>
+  <ul><li>Kéo <b>trong box</b> để di chuyển, kéo <b>cạnh</b> để đổi kích thước, kéo <b>chấm đỏ</b> ở Top để xoay.</li>
+    <li>Sửa ở frame nào, frame đó thành keyframe; các frame giữa hai keyframe tự nội suy.</li>
+    <li>Nút <b>con mắt</b>: ẩn / hiện frame. Nút <b>chìa khoá</b>: bật / tắt keyframe. Nền đỏ = đang bật.</li>
+    <li>Class và attribute đổi ngay trên đầu mỗi frame (attribute đổi theo frame tạo keyframe).</li></ul>
+  <h5>Tự khớp</h5>
+  <ul><li>Đặt box <b>khít</b> ở frame mẫu (frame vật gần lidar nhất): kích thước và hình dạng lấy từ đó; để trống = keyframe nhiều điểm nhất.</li>
+    <li>Khớp mọi frame từ frame đầu tới frame cuối; frame sửa tay được giữ nguyên.</li>
+    <li><b>Xe, vật cứng</b>: xe đỗ, xe chạy, cột, rào. <b>Người, xe đạp</b>: chỉ khớp vị trí, hướng lấy theo keyframe.</li>
+    <li>Frame khớp không chắc được đánh dấu: lọc bằng <b>Frame khớp kém</b> để xem lại.</li></ul>
+  <h5>Phím tắt</h5>
+  <ul><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
  </div>
  <div class="editor" hidden tabindex="-1">
   <div class="fbar">
-    <span class="title">Xem trước</span><span class="badge fcount"></span>
-    <span class="legend"><span><i style="background:#fff"></i>Trong box</span><span><i style="background:#969696"></i>Ngang box</span>
-      <span><i style="background:#464646"></i>Khác</span><span><i style="background:var(--primary)"></i>Keyframe</span>
-      <span><i style="width:12px;height:0;border-top:2px dashed var(--primary);vertical-align:3px"></i>Sẽ ẩn</span></span>
+    <span class="badge fcount"></span>
     <span class="sp"></span>
-    <button class="btn sm undo" disabled>Hoàn tác</button>
-    <label><input type="checkbox" class="only-key">Chỉ keyframe</label>
-    <label><input type="checkbox" class="only-hid">Chỉ frame sẽ ẩn</label>
+    <label><input type="checkbox" class="only-key">Keyframe</label>
+    <label><input type="checkbox" class="only-hid">Frame ẩn</label>
+    <label><input type="checkbox" class="only-bad">Frame khớp kém</label>
+    <button class="btn sm clear" title="Xoá các keyframe ở giữa, giữ keyframe đầu và cuối">Xoá keyframe</button>
+    <button class="btn sm full" title="Toàn màn hình (ẩn cả thanh trình duyệt)">⛶</button>
     <button class="btn sm eclose" title="Đóng xem trước">✕</button>
   </div>
   <div class="grid"></div>
@@ -472,7 +490,6 @@
     $(".status").className = "status" + (isError ? " err" : "");
   }
 
-  const mode = () => root.querySelector("input[name=mode]:checked").value;
   const selectedTrack = () => annotations && annotations.tracks.find((t) => t.id === Number($(".track").value));
 
   // A setting changed: a preview being built is out of date, and a shown one must be rebuilt
@@ -495,23 +512,16 @@
 
   const confirmDrop = () => !dirty() || confirm("Bỏ các chỉnh tay trong xem trước?");
 
+  // The new size, prefilled with the track's size at the frame on screen (unchanged = size kept).
   function renderInputs() {
     const track = selectedTrack();
-    const dims = track && track.shapes[0].type === "rectangle" ? ["W", "H"] : ["Dài (x)", "Rộng (y)", "Cao (z)"];
-    const box = $(".vals");
-    if (mode() === "none") {
-      box.innerHTML = "";
-    } else if (mode() === "frame") {
-      box.innerHTML = `<span>Frame</span><input type="number" class="v" step="1" min="0" value="${currentFrame() ?? 0}">
-        <span class="muted">(mặc định = frame đang xem)</span>`;
-    } else {
-      let start = dims.map(() => 1);
-      if (mode() === "size" && track) {
-        try { start = sizeAt(track, currentFrame() ?? 0); } catch { start = sizeOf(byFrame(track.shapes)[0]); }
-      }
-      box.innerHTML = dims.map((d, i) =>
-        `<span title="${d}">${d.split(" ")[0]}</span><input type="number" class="v" step="0.01" value="${+start[i].toFixed(3)}">`).join("");
+    const dims = track && track.shapes[0].type === "rectangle" ? ["W", "H"] : ["L", "W", "H"];
+    let start = dims.map(() => 1);
+    if (track) {
+      try { start = sizeAt(track, currentFrame() ?? 0); } catch { start = sizeOf(byFrame(track.shapes)[0]); }
     }
+    const box = $(".vals");
+    box.innerHTML = dims.map((d, i) => `<label title="${({ L: "Dài (x)", W: "Rộng (y)", H: "Cao (z)" })[d]}">${d}<input type="number" class="v" step="0.01" value="${+start[i].toFixed(3)}"></label>`).join("");
     box.querySelectorAll("input").forEach((i) => i.addEventListener("input", markStale));
     markStale();
   }
@@ -544,19 +554,14 @@
     const inputs = [...root.querySelectorAll(".vals input")];
     if (inputs.some((i) => i.value.trim() === "" || !Number.isFinite(Number(i.value)))) throw new Error("Nhập đủ các số.");
     const vals = inputs.map((i) => Number(i.value));
-    let fixed = null, factors = null;
-    if (mode() === "size") fixed = vals;
-    else if (mode() === "frame") fixed = sizeAt(track, vals[0]);
-    else if (mode() === "scale") factors = vals;
-    if (fixed && Math.min(...fixed) <= 0) throw new Error(`Kích thước phải dương, đang là ${fmt(fixed)}.`);
-    if (factors && Math.min(...factors) <= 0) throw new Error("Tỉ lệ phải dương.");
+    const fixed = vals;
+    if (Math.min(...fixed) <= 0) throw new Error(`Kích thước phải dương, đang là ${fmt(fixed)}.`);
     const anchor = $(".bottom").checked ? "bottom" : "center";
 
     const original = byFrame(track.shapes);
     const keys = original.map((s) => {
       const old = sizeOf(s);
-      const size = fixed ? fixed.slice() : factors ? old.map((x, i) => x * factors[i]) : old;
-      return { ...s, points: fixed || factors ? resizedPoints(s, size, anchor) : s.points.slice() };
+      return { ...s, points: resizedPoints(s, fixed.slice(), anchor) };
     });
 
     const auto = $(".auto").checked;
@@ -644,6 +649,7 @@
       $(".preview").disabled = false;
     }
     plan.manual = new Set(); // frames edited by hand in the preview
+    plan.flagged = new Set(); // frames the auto fit could not match well
     plan.track = { ...plan.track, attributes: (plan.track.attributes || []).slice() };
     plan.stale = false;
     const hiddenFrames = [...plan.counts].filter(([, n]) => n <= plan.threshold).map(([f]) => f);
@@ -716,7 +722,7 @@
   const visible = new Set(); // frames whose cell is on screen
   const loadState = new Map(); // frame -> "loading" | Error; absent = nothing pending
   const queue = [];
-  let frames = [], undoStack = [], drag = null, zoomFrame = null, editGen = 0, loading = 0, drawPending = false;
+  let frames = [], undoStack = [], drag = null, zoomFrame = null, activeFrame = null, editGen = 0, loading = 0, drawPending = false;
 
   const mul = (R, v) => R.map((r) => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
   const mulT = (R, v) => [0, 1, 2].map((j) => R[0][j] * v[0] + R[1][j] * v[1] + R[2][j] * v[2]);
@@ -755,12 +761,13 @@
   }
 
   const snapshot = () => ({ shapes: plan.shapes.map((s) => ({ ...s, points: s.points.slice() })), manual: [...plan.manual],
-                            label_id: plan.track.label_id, attributes: plan.track.attributes });
+                            label_id: plan.track.label_id, attributes: plan.track.attributes, flagged: [...plan.flagged] });
   function commit(snap) {
     undoStack.push(snap);
     if (undoStack.length > 100) undoStack.shift();
   }
   function undo() {
+    if (fitting) return;
     endDrag();
     const snap = undoStack.pop();
     if (!snap) return;
@@ -768,6 +775,7 @@
     plan.manual = new Set(snap.manual);
     plan.track.label_id = snap.label_id;
     plan.track.attributes = snap.attributes;
+    plan.flagged = new Set(snap.flagged);
     modelChanged();
   }
 
@@ -775,26 +783,39 @@
   function setGeometry(f, points, size) {
     ensureKey(f).points = points;
     plan.manual.add(f);
+    plan.flagged.delete(f);
     if (size && $(".lock").checked) {
       for (const s of plan.shapes) if (s.frame !== f) s.points = resizedPoints(s, size, anchor());
-      if (mode() === "size") root.querySelectorAll(".vals input").forEach((i, k) => (i.value = +size[k].toFixed(3)));
+      root.querySelectorAll(".vals input").forEach((i, k) => (i.value = +size[k].toFixed(3)));
     }
   }
 
   // Hides or shows only this frame: CVAT keeps a state until the next keyframe, so the next frame is
   // pinned to what it was first.
   function toggleOutside(f) {
+    if (fitting) return;
     endDrag();
     const snap = snapshot(), cur = stateAt(f);
     if (f < frames[frames.length - 1]) ensureKey(f + 1);
     ensureKey(f).outside = !cur.outside;
     plan.manual.add(f);
+    plan.flagged.delete(f);
     commit(snap);
     modelChanged();
   }
 
+  function toggleKey(f) {
+    if (fitting) return;
+    if (keyAt(f)) return dropKey(f);
+    endDrag();
+    commit(snapshot());
+    ensureKey(f);
+    plan.manual.add(f);
+    modelChanged();
+  }
+
   function dropKey(f) {
-    if (isFirstKey(f) || !keyAt(f)) return; // the first keyframe starts the track
+    if (fitting || isFirstKey(f) || !keyAt(f)) return; // the first keyframe starts the track
     endDrag();
     commit(snapshot());
     plan.shapes = plan.shapes.filter((s) => s.frame !== f);
@@ -805,6 +826,13 @@
   // ---- class and attributes ----
   // The class and immutable attributes belong to the track; a mutable attribute is set by
   // keyframes and keeps its value until a later keyframe sets it again, like in CVAT.
+
+  const ICON = {
+    eye: '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    eyeOff: '<svg viewBox="0 0 24 24"><path d="M17.94 17.94A10 10 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9 9 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>',
+    key: '<svg viewBox="0 0 24 24"><circle cx="7" cy="17" r="4.5"/><path d="M10.2 13.8L21 3M16.5 7.5l3 3M13.8 10.2l2.2 2.2"/></svg>',
+    zoom: '<svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>',
+  };
 
   const labelOf = (id) => labels.find((l) => l.id === id);
   const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -867,18 +895,493 @@
 
   function classHtml(f) {
     const label = labelOf(plan.track.label_id);
-    if (!label) return `<span class="pick-l">Class <span class="cls">#${plan.track.label_id}</span></span>`;
+    if (!label) return `<span class="cls" title="Class">#${plan.track.label_id}</span>`;
     const choices = labels.filter((l) => !l.type || l.type === "any" || l.type === "cuboid" || l.id === label.id);
     const vals = attrValues(f);
-    return `<label class="pick-l">Class <select data-f="${f}" data-label>${choices.map((l) =>
-        `<option value="${l.id}"${l.id === label.id ? " selected" : ""}>${esc(l.name)}</option>`).join("")}</select></label>` +
-      (label.attributes || []).map((a) => `<label class="pick-l" title="${a.mutable ? "Đổi theo frame (tạo keyframe)" : "Chung cho cả track"}">${
-        esc(a.name)} ${attrControl(f, a, vals.get(a.id))}</label>`).join("");
+    return `<select data-f="${f}" data-label title="Class">${choices.map((l) =>
+        `<option value="${l.id}"${l.id === label.id ? " selected" : ""}>${esc(l.name)}</option>`).join("")}</select>` +
+      (label.attributes || []).map((a) => attrControl(f, a, vals.get(a.id))
+        .replace(/^<(select|input)/, `<$1 title="${esc(a.name)}${a.mutable ? " (đổi theo frame)" : " (cả track)"}"`)).join("");
+  }
+
+  // Keeps the first keyframe (the track starts there) and the last one (so the track still ends
+  // where it did); everything between is interpolated from those two.
+  function clearKeys() {
+    if (fitting) return;
+    endDrag();
+    const first = plan.shapes[0], last = plan.shapes[plan.shapes.length - 1];
+    const n = plan.shapes.length - (first === last ? 1 : 2);
+    if (n <= 0) return setStatus("Không còn keyframe nào ở giữa để xoá.");
+    if (!confirm(`Xoá ${n} keyframe ở giữa (giữ keyframe đầu ${first.frame} và cuối ${last.frame})?\nCó thể hoàn tác.`)) return;
+    commit(snapshot());
+    plan.shapes = first === last ? [first] : [first, last];
+    plan.manual = new Set([...plan.manual].filter((f) => f === first.frame || f === last.frame));
+    plan.flagged = new Set();
+    modelChanged();
   }
 
   function modelChanged() {
     applyFilters();
     scheduleDraw();
+  }
+
+  // ---- auto fit for rigid objects ----
+  // From a reference frame where the box is right, the points inside it become a template of the
+  // object (box axes, yaw only). Walking frame by frame away from it, the template is searched for
+  // around where the box is expected (constant velocity, or the current keyframes), then aligned
+  // with ICP on x, y, z and yaw; the size stays fixed. Points seen in good fits grow the template, so
+  // sides that come into view later still match. Frames with too few matching points get a box
+  // interpolated from good neighbours and are flagged for review. The dense result is reduced to the
+  // keyframes CVAT's linear interpolation needs.
+
+  const FIT = {
+    voxel: 0.08, // template resolution (m)
+    cells: [0.15, 0.3], // nearest-neighbour grids; the widest is also the widest ICP match distance
+    score: 0.2, // coarse search: a target point scores when within one cell of the template
+    near: 0.15, // final ICP match distance; inlier distance
+    ground: 0.15, // points lower than this above the box floor are treated as ground
+    minPts: 8, // fewer object points than this: not fitted
+    minRatio: 0.5, // fewer template matches than this share: not fitted
+    minDensity: 0.3, // fewer object points than this share of the last good fit: occluded, not fitted
+    learn: 0.85, // template matches needed before a frame's points join the template
+    posTol: 0.05, yawTol: Math.PI / 180, // keyframe reduction tolerance
+  };
+  let fitting = null; // { cancelled } while a fit runs
+
+  const poseOf = (p) => ({ x: p[0], y: p[1], z: p[2], yaw: p[5] });
+  const cellKey = (ix, iy, iz) => (ix + 1024) * 4194304 + (iy + 1024) * 2048 + (iz + 1024);
+  const lerpPose = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: a.z + (b.z - a.z) * t,
+                                   yaw: a.yaw + wrapAngle(b.yaw - a.yaw) * t });
+
+  // occ: a byte per FIT.score cell over the box plus a margin, set around every template point, so
+  // the coarse search scores a point with one array read.
+  function newTemplate(size) {
+    const pad = 0.6, s = FIT.score, dims = size.map((v) => Math.ceil((v + 2 * pad) / s));
+    return { n: 0, seen: new Set(), grids: FIT.cells.map(() => new Map()),
+             occ: { cells: new Uint8Array(dims[0] * dims[1] * dims[2]), dims, origin: size.map((v) => -v / 2 - pad) } };
+  }
+  function addPoint(T, x, y, z) {
+    const v = FIT.voxel, k = cellKey(Math.floor(x / v), Math.floor(y / v), Math.floor(z / v));
+    if (T.seen.has(k)) return;
+    T.seen.add(k);
+    T.n++;
+    FIT.cells.forEach((c, i) => {
+      const g = cellKey(Math.floor(x / c), Math.floor(y / c), Math.floor(z / c)), grid = T.grids[i];
+      if (!grid.has(g)) grid.set(g, []);
+      grid.get(g).push(x, y, z);
+    });
+    const o = T.occ, [nx, ny, nz] = o.dims, s = FIT.score;
+    const ix = Math.floor((x - o.origin[0]) / s), iy = Math.floor((y - o.origin[1]) / s), iz = Math.floor((z - o.origin[2]) / s);
+    for (let a = Math.max(0, ix - 1); a <= Math.min(nx - 1, ix + 1); a++)
+      for (let b = Math.max(0, iy - 1); b <= Math.min(ny - 1, iy + 1); b++)
+        for (let c = Math.max(0, iz - 1); c <= Math.min(nz - 1, iz + 1); c++) o.cells[(a * ny + b) * nz + c] = 1;
+  }
+  // Closest template point within dmax (≤ the widest cell) as [x, y, z, d²], or null. Uses the finest
+  // grid whose cells are at least dmax, so the 27 cells around the point cover the search.
+  function nearest(T, x, y, z, dmax) {
+    const i = FIT.cells.findIndex((c) => c >= dmax), c = FIT.cells[i], grid = T.grids[i];
+    const ix = Math.floor(x / c), iy = Math.floor(y / c), iz = Math.floor(z / c);
+    let best = dmax * dmax, hit = null;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) for (let d = -1; d <= 1; d++) {
+      const pts = grid.get(cellKey(ix + a, iy + b, iz + d));
+      if (!pts) continue;
+      for (let k = 0; k < pts.length; k += 3) {
+        const dx = pts[k] - x, dy = pts[k + 1] - y, dz = pts[k + 2] - z, d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 < best) { best = d2; hit = [pts[k], pts[k + 1], pts[k + 2], d2]; }
+      }
+    }
+    return hit;
+  }
+
+  // Calls visit(world index, lx, ly, lz) for target points in the object region of pose P: above the
+  // floor and within `margin` of the box sides and top.
+  function forObjectPoints(Q, P, size, margin, visit) {
+    const c = Math.cos(P.yaw), s = Math.sin(P.yaw), hx = size[0] / 2 + margin, hy = size[1] / 2 + margin;
+    const floor = -size[2] / 2 + FIT.ground, top = size[2] / 2 + margin;
+    for (let k = 0; k < Q.length; k += 3) {
+      const dx = Q[k] - P.x, dy = Q[k + 1] - P.y, lz = Q[k + 2] - P.z;
+      if (lz < floor || lz > top) continue;
+      const lx = c * dx + s * dy, ly = -s * dx + c * dy;
+      if (Math.abs(lx) > hx || Math.abs(ly) > hy) continue;
+      visit(k, lx, ly, lz);
+    }
+  }
+
+  // Points on the template minus points in the box that are not: a pose that takes in part of a
+  // neighbouring object gains its touching face but loses more where the object itself no longer fits.
+  // (Inlined object-region test: this runs for every point of every search candidate.)
+  function score(T, Q, P, size) {
+    const c = Math.cos(P.yaw), s = Math.sin(P.yaw), hx = size[0] / 2 + 0.15, hy = size[1] / 2 + 0.15;
+    const floor = -size[2] / 2 + FIT.ground, top = size[2] / 2 + 0.15;
+    const { cells, dims, origin } = T.occ, ny = dims[1], nz = dims[2], inv = 1 / FIT.score;
+    let sc = 0;
+    for (let k = 0; k < Q.length; k += 3) {
+      const dx = Q[k] - P.x, dy = Q[k + 1] - P.y, lz = Q[k + 2] - P.z;
+      if (lz < floor || lz > top) continue;
+      const lx = c * dx + s * dy, ly = -s * dx + c * dy;
+      if (lx > hx || lx < -hx || ly > hy || ly < -hy) continue;
+      const i = (((lx - origin[0]) * inv) | 0) * ny + (((ly - origin[1]) * inv) | 0);
+      sc += cells[i * nz + (((lz - origin[2]) * inv) | 0)] ? 1 : -1;
+    }
+    return sc;
+  }
+
+  // Point-to-point ICP over x, y, z and yaw, starting from the coarse search (within ~0.2 m);
+  // correspondences go from what the frame sees to the template.
+  function icp(T, Q, P0, size) {
+    let P = { ...P0 };
+    for (let it = 0; it < 12; it++) {
+      const dmax = it < 5 ? 0.3 : FIT.near;
+      const c = Math.cos(P.yaw), s = Math.sin(P.yaw), pw = [], qw = [];
+      forObjectPoints(Q, P, size, 0.3, (k, x, y, z) => {
+        const m = nearest(T, x, y, z, dmax);
+        if (!m) return;
+        pw.push(P.x + c * m[0] - s * m[1], P.y + s * m[0] + c * m[1], P.z + m[2]);
+        qw.push(Q[k], Q[k + 1], Q[k + 2]);
+      });
+      const n = pw.length / 3;
+      if (n < 5) break;
+      let px = 0, py = 0, qx = 0, qy = 0, dz = 0;
+      for (let k = 0; k < pw.length; k += 3) { px += pw[k]; py += pw[k + 1]; qx += qw[k]; qy += qw[k + 1]; dz += qw[k + 2] - pw[k + 2]; }
+      px /= n; py /= n; qx /= n; qy /= n; dz /= n;
+      let sxx = 0, sxy = 0;
+      for (let k = 0; k < pw.length; k += 3) {
+        const ax = pw[k] - px, ay = pw[k + 1] - py, bx = qw[k] - qx, by = qw[k + 1] - qy;
+        sxx += ax * bx + ay * by;
+        sxy += ax * by - ay * bx;
+      }
+      const t = Math.atan2(sxy, sxx), ct = Math.cos(t), st = Math.sin(t);
+      const ox = P.x - px, oy = P.y - py;
+      const next = { x: qx + ct * ox - st * oy, y: qy + st * ox + ct * oy, z: P.z + dz, yaw: wrapAngle(P.yaw + t) };
+      const moved = Math.hypot(next.x - P.x, next.y - P.y, next.z - P.z);
+      P = next;
+      if (moved < 1e-3 && Math.abs(t) < 1e-4) break;
+    }
+    return P;
+  }
+
+  // Seen mostly from one side, ICP can slide the box along that side. The size is known, so along
+  // length and width: shift the box until the object's points (bar the outer 2%) fit inside it, and
+  // when an outermost layer is dense enough to be a face (bumper, flank), put the box edge on it.
+  function contain(Q, P, size) {
+    const xs = [], ys = [];
+    forObjectPoints(Q, P, size, 0.3, (k, x, y) => { xs.push(x); ys.push(y); });
+    if (xs.length < FIT.minPts) return P;
+    const shift = (v, half) => {
+      v.sort((a, b) => a - b);
+      const lo = v[Math.floor(v.length * 0.02)], hi = v[Math.ceil(v.length * 0.98) - 1];
+      if (hi - lo > 2 * half) return (lo + hi) / 2; // wider than the box: center it
+      if (hi > half) return hi - half;
+      if (lo < -half) return lo + half;
+      let atLo = 0, atHi = 0;
+      for (const x of v) { if (x < lo + 0.08) atLo++; if (x > hi - 0.08) atHi++; }
+      const face = 0.1 * v.length;
+      if (atLo >= face && atLo >= atHi) return lo + half;
+      if (atHi >= face) return hi - half;
+      return 0;
+    };
+    const dx = shift(xs, size[0] / 2), dy = shift(ys, size[1] / 2), c = Math.cos(P.yaw), s = Math.sin(P.yaw);
+    return { ...P, x: P.x + c * dx - s * dy, y: P.y + s * dx + c * dy };
+  }
+
+  // n: object points of the whole frame (compared across frames for occlusion); ratio: the share of a
+  // thinned sample that lies on the template.
+  function matchStats(T, Q, sample, P, size) {
+    let n = 0, m = 0, inliers = 0;
+    forObjectPoints(Q, P, size, 0.15, () => n++);
+    forObjectPoints(sample, P, size, 0.15, (k, x, y, z) => { m++; if (nearest(T, x, y, z, FIT.near)) inliers++; });
+    return { P, n, ratio: m ? inliers / m : 0 };
+  }
+
+  // Object-height points of a frame around the expected spots (no ground, no far clutter).
+  function targetPoints(cloud, centers, radius, size) {
+    const out = [], lo = -size[2] / 2 + FIT.ground - 0.3, hi = size[2] / 2 + 0.8;
+    for (let k = 0; k < cloud.length; k += 3) {
+      for (const C of centers) {
+        const dz = cloud[k + 2] - C.z;
+        if (dz < lo || dz > hi || Math.abs(cloud[k] - C.x) > radius || Math.abs(cloud[k + 1] - C.y) > radius) continue;
+        out.push(cloud[k], cloud[k + 1], cloud[k + 2]);
+        break;
+      }
+    }
+    return out;
+  }
+
+  async function fitFrame(f, T, size, pred, alt, W, lastN) {
+    const cloud = await loadCloud(f);
+    const centers = Math.hypot(alt.x - pred.x, alt.y - pred.y) > 0.3 ? [pred, alt] : [pred];
+    const Q = targetPoints(cloud, centers, W + Math.hypot(size[0], size[1]) / 2 + 0.5, size);
+    // the search and ICP run on a thinned set of points; the final checks use all of them
+    const thin = (max) => { const every = Math.ceil(Q.length / 3 / max); return every > 1 ? Q.filter((_, i) => Math.floor(i / 3) % every === 0) : Q; };
+    const Qs = thin(1500), Qi = thin(2000);
+    // coarse: a grid of positions and headings around each expected spot, scored by template hits
+    const step = Math.max(0.2, W / 6);
+    let best = null;
+    for (const C of centers) {
+      for (let dx = -W; dx <= W + 1e-9; dx += step) for (let dy = -W; dy <= W + 1e-9; dy += step) {
+        for (const da of [-10, -5, 0, 5, 10]) {
+          const P = { x: C.x + dx, y: C.y + dy, z: C.z, yaw: C.yaw + da * Math.PI / 180 };
+          const sc = score(T, Qs, P, size);
+          if (!best || sc > best.sc) best = { P, sc };
+        }
+      }
+    }
+    const r = matchStats(T, Q, thin(4000), contain(Q, icp(T, Qi, best.P, size), size), size);
+    r.ok = r.n >= FIT.minPts && r.n >= FIT.minDensity * lastN && r.ratio >= FIT.minRatio &&
+      Math.hypot(r.P.x - pred.x, r.P.y - pred.y) <= W + 0.5;
+    r.Q = Q;
+    return r;
+  }
+
+  // Fewest keyframes whose linear interpolation stays within tolerance of the fitted poses.
+  function reduceKeys(frames, pose, forced) {
+    const keys = new Set(forced);
+    const err = (a, b, f) => {
+      const p = lerpPose(pose.get(a), pose.get(b), (f - a) / (b - a)), q = pose.get(f);
+      return Math.max(Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z) / FIT.posTol, Math.abs(wrapAngle(p.yaw - q.yaw)) / FIT.yawTol);
+    };
+    const split = (a, b) => {
+      let worst = 1, at = -1;
+      for (let f = a + 1; f < b; f++) if (pose.has(f)) { const e = err(a, b, f); if (e > worst) { worst = e; at = f; } }
+      if (at < 0) return;
+      keys.add(at);
+      split(a, at);
+      split(at, b);
+    };
+    const sorted = [...keys].sort((x, y) => x - y);
+    for (let i = 0; i + 1 < sorted.length; i++) split(sorted[i], sorted[i + 1]);
+    return [...keys].filter((f) => f >= frames[0] && f <= frames[frames.length - 1]).sort((x, y) => x - y);
+  }
+
+  // ---- soft objects (people, cyclists): the point cluster at the expected spot ----
+  // Shapes change from frame to frame, so there is no template: among the object-height points near
+  // the expected spot, mean shift finds the density peak nearest the prediction, and the fixed-size
+  // box is put on it, its floor on the local ground. Heading comes from the
+  // keyframes: in sensor coordinates the apparent motion mixes in the lidar car's own motion, so it
+  // cannot give the object's heading.
+
+  // The ground height around P: a low percentile of the point heights there.
+  function groundAt(cloud, P, r) {
+    const zs = [];
+    for (let k = 0; k < cloud.length; k += 3) {
+      if (Math.abs(cloud[k] - P.x) <= r && Math.abs(cloud[k + 1] - P.y) <= r && cloud[k + 2] < P.z + 0.5) zs.push(cloud[k + 2]);
+    }
+    if (zs.length < 20) return null;
+    zs.sort((a, b) => a - b);
+    return zs[Math.floor(zs.length * 0.05)];
+  }
+
+  async function fitSoft(f, size, pred, alt, W, lastN) {
+    const cloud = await loadCloud(f);
+    const g = groundAt(cloud, pred, 2.5) ?? pred.z - size[2] / 2;
+    const lo = g + 0.12, hi = g + size[2] + 0.3, reach = W + Math.max(size[0], size[1]), cell = 0.2;
+    const X = [], Y = [], cellsOf = new Map(); // object-height points near the prediction, and their 2D cells
+    for (let k = 0; k < cloud.length; k += 3) {
+      const z = cloud[k + 2];
+      if (z < lo || z > hi || Math.abs(cloud[k] - pred.x) > reach || Math.abs(cloud[k + 1] - pred.y) > reach) continue;
+      const key = cellKey(Math.floor(cloud[k] / cell), Math.floor(cloud[k + 1] / cell), 0);
+      if (!cellsOf.has(key)) cellsOf.set(key, []);
+      cellsOf.get(key).push(X.length);
+      X.push(cloud[k]); Y.push(cloud[k + 1]);
+    }
+    // seeds: the prediction and the middle of every cluster of occupied cells (8-way joined)
+    const seeds = [{ x: pred.x, y: pred.y }], seen = new Set();
+    for (const start of cellsOf.keys()) {
+      if (seen.has(start)) continue;
+      const stack = [start];
+      let n = 0, sx = 0, sy = 0;
+      seen.add(start);
+      while (stack.length) {
+        const key = stack.pop(), iy = Math.floor(key / 2048) % 2048 - 1024, ix = Math.floor(key / 4194304) - 1024;
+        for (const i of cellsOf.get(key)) { n++; sx += X[i]; sy += Y[i]; }
+        for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+          const nb = cellKey(ix + a, iy + b, 0);
+          if (cellsOf.has(nb) && !seen.has(nb)) { seen.add(nb); stack.push(nb); }
+        }
+      }
+      if (n >= FIT.minPts) seeds.push({ x: sx / n, y: sy / n });
+    }
+    // mean shift from each seed: the centre moves to the mean of the points within half a box of it,
+    // so it settles on one person even when a neighbour's cluster touches theirs
+    const r = Math.max(size[0], size[1]) / 2, peaks = [];
+    for (const seed of seeds) {
+      let cx = seed.x, cy = seed.y, n = 0;
+      for (let it = 0; it < 20; it++) {
+        let sx = 0, sy = 0;
+        n = 0;
+        for (let i = 0; i < X.length; i++) if (Math.hypot(X[i] - cx, Y[i] - cy) <= r) { n++; sx += X[i]; sy += Y[i]; }
+        if (!n) break;
+        const nx = sx / n, ny = sy / n, moved = Math.hypot(nx - cx, ny - cy);
+        cx = nx; cy = ny;
+        if (moved < 0.005) break;
+      }
+      if (n < FIT.minPts || peaks.some((q) => Math.hypot(q.x - cx, q.y - cy) < 0.1)) continue;
+      peaks.push({ x: cx, y: cy, n, d: Math.hypot(cx - pred.x, cy - pred.y) });
+    }
+    if (!peaks.length) return { P: pred, n: 0, ok: false };
+    peaks.sort((a, b) => a.d - b.d);
+    const best = peaks[0], rival = peaks[1];
+
+    // The peak is the middle of what the lidar sees: the near half of the person. Move it away from
+    // the lidar (the origin, in sensor coordinates) by about how far that half's middle sits from
+    // the body axis. Far from the origin the data is in map coordinates and the lidar is unknown.
+    const dist = Math.hypot(best.x, best.y), back = dist > 0.5 && dist < 80 ? 0.35 * Math.min(size[0], size[1]) / 2 : 0;
+    const P = { x: best.x + (best.x / dist) * back, y: best.y + (best.y / dist) * back, z: g + size[2] / 2, yaw: alt.yaw };
+    const n = best.n;
+    // two people about as close to where this one should be: cannot tell them apart
+    const ambiguous = rival && rival.d < best.d + 0.15;
+    const ok = !ambiguous && n >= FIT.minDensity * lastN && Math.hypot(P.x - pred.x, P.y - pred.y) <= W + 0.3;
+    return { P, n, ok };
+  }
+
+  // Light smoothing of fitted positions (weights 1-2-3-2-1): removes the frame-to-frame jitter of
+  // swinging arms and legs. Neighbours count only in pairs (f - d with f + d), so steady motion is
+  // not pulled, at the ends of a run either.
+  function smoothPoses(pose, fitted) {
+    const out = new Map();
+    for (const f of fitted) {
+      const p = pose.get(f);
+      let w = 3, x = 3 * p.x, y = 3 * p.y, z = 3 * p.z;
+      for (const d of [1, 2]) {
+        if (!fitted.has(f - d) || !fitted.has(f + d)) break;
+        const a = pose.get(f - d), b = pose.get(f + d), k = 3 - d;
+        w += 2 * k; x += k * (a.x + b.x); y += k * (a.y + b.y); z += k * (a.z + b.z);
+      }
+      out.set(f, { ...p, x: x / w, y: y / w, z: z / w });
+    }
+    for (const [f, p] of out) pose.set(f, p);
+  }
+
+  async function pickReference(a, b) {
+    const typed = $(".fit-ref").value.trim();
+    if (typed !== "") {
+      const r = Number(typed);
+      if (!Number.isInteger(r) || r < a || r > b) throw new Error(`Frame mẫu phải nằm trong ${a}–${b}.`);
+      return r;
+    }
+    // the visible keyframe whose box holds the most points
+    let best = null;
+    for (const s of plan.shapes) {
+      if (s.frame < a || s.frame > b || s.outside) continue;
+      setStatus(`Tự khớp: chọn frame mẫu… (frame ${s.frame})`);
+      const n = countInside(await loadCloud(s.frame), s.points);
+      if (!best || n > best.n) best = { f: s.frame, n };
+    }
+    if (!best) throw new Error("Không có keyframe nào đang hiện để làm frame mẫu.");
+    $(".fit-ref").value = best.f;
+    return best.f;
+  }
+
+  async function autoFit() {
+    if (fitting) { fitting.cancelled = true; return; }
+    if (!plan || editor.hidden) return;
+    endDrag();
+    const run = fitting = { cancelled: false }, gen = editGen;
+    const btn = $(".fit");
+    btn.textContent = "Dừng";
+    const check = () => { if (run.cancelled || gen !== editGen) throw new Error("cancelled"); };
+    try {
+      const soft = $(".fit-kind").value === "soft", first = plan.shapes[0].frame, stop = frames[frames.length - 1];
+      const a = Number($(".fit-a").value), b = Number($(".fit-b").value);
+      if (!Number.isInteger(a) || !Number.isInteger(b) || a < first || b > stop || b <= a) {
+        throw new Error(`Frame đầu và frame cuối phải là số nguyên trong ${first}–${stop}, frame cuối sau frame đầu.`);
+      }
+      const r = await pickReference(a, b);
+      check();
+      const ref = stateAt(r);
+      if (ref.outside) throw new Error(`Track đang ẩn ở frame mẫu ${r}.`);
+      const p0 = ref.points, size = p0.slice(6, 9), P0 = poseOf(p0);
+      if (Math.abs(p0[3]) > 0.15 || Math.abs(p0[4]) > 0.15) throw new Error("Box ở frame mẫu đang nghiêng (rx/ry); tự khớp chỉ xoay quanh trục đứng.");
+
+      // template from the reference frame (rigid objects only use it)
+      setStatus(`Tự khớp: lấy mẫu ở frame ${r}…`);
+      const T = newTemplate(size), cr = Math.cos(P0.yaw), sr = Math.sin(P0.yaw), refCloud = await loadCloud(r);
+      check();
+      for (let k = 0; k < refCloud.length; k += 3) {
+        const dx = refCloud[k] - P0.x, dy = refCloud[k + 1] - P0.y, z = refCloud[k + 2] - P0.z;
+        const x = cr * dx + sr * dy, y = -sr * dx + cr * dy;
+        if (Math.abs(x) <= size[0] / 2 + 0.1 && Math.abs(y) <= size[1] / 2 + 0.1 && z >= -size[2] / 2 + FIT.ground && z <= size[2] / 2 + 0.1) addPoint(T, x, y, z);
+      }
+      if (T.n < (soft ? FIT.minPts : 30)) throw new Error(`Frame mẫu ${r} chỉ có ${T.n} điểm trong box. Chọn frame vật ở gần lidar hơn.`);
+
+      const anchors = new Set([...plan.manual].filter((f) => f >= a && f <= b && f !== r && !stateAt(f).outside));
+      const visible = (f) => !stateAt(f).outside;
+      const pose = new Map([[r, P0]]), flagged = new Set();
+      const total = frames.filter((f) => f >= a && f <= b && visible(f)).length;
+      let done = 1;
+      let refN = 0;
+      if (soft) refN = (await fitSoft(r, size, P0, P0, 0.3, 0)).n;
+      else forObjectPoints(targetPoints(refCloud, [P0], Math.hypot(size[0], size[1]) / 2 + 1, size), P0, size, 0.15, () => refN++);
+      for (const dir of [1, -1]) {
+        let prev = P0, prevF = r, vel = null, lastN = refN;
+        for (let f = r + dir; dir > 0 ? f <= b : f >= a; f += dir) {
+          check();
+          if (!visible(f)) continue;
+          const st = poseOf(stateAt(f).points), gap = Math.abs(f - prevF);
+          if (anchors.has(f)) { // trust the hand-placed box and take the motion from it
+            vel = { x: (st.x - prev.x) / gap, y: (st.y - prev.y) / gap, z: (st.z - prev.z) / gap, yaw: wrapAngle(st.yaw - prev.yaw) / gap };
+            prev = st; prevF = f; pose.set(f, st); done++;
+            continue;
+          }
+          const pred = vel ? { x: prev.x + vel.x * gap, y: prev.y + vel.y * gap, z: prev.z + vel.z * gap, yaw: wrapAngle(prev.yaw + vel.yaw * gap) } : st;
+          const speed = vel ? Math.hypot(vel.x, vel.y) : Math.hypot(st.x - prev.x, st.y - prev.y) / gap;
+          const W = Math.min(3, Math.max(0.5, 0.5 + 0.5 * speed * gap));
+          const res = soft ? await fitSoft(f, size, pred, st, W, lastN) : await fitFrame(f, T, size, pred, st, W, lastN);
+          check();
+          setStatus(`Tự khớp… ${++done}/${total} frame`);
+          if (!res.ok) { flagged.add(f); continue; }
+          const step = { x: (res.P.x - prev.x) / gap, y: (res.P.y - prev.y) / gap, z: (res.P.z - prev.z) / gap, yaw: wrapAngle(res.P.yaw - prev.yaw) / gap };
+          vel = vel ? { x: (vel.x + step.x) / 2, y: (vel.y + step.y) / 2, z: (vel.z + step.z) / 2, yaw: (vel.yaw + step.yaw) / 2 } : step;
+          prev = res.P; prevF = f; pose.set(f, res.P); lastN = res.n;
+          if (!soft && T.n < 8000 && res.ratio >= FIT.learn) { // a sure fit: what it shows of the object joins the template
+            const c = Math.cos(res.P.yaw), s = Math.sin(res.P.yaw), Q = res.Q;
+            for (let k = 0; k < Q.length; k += 3) {
+              const dx = Q[k] - res.P.x, dy = Q[k + 1] - res.P.y, z = Q[k + 2] - res.P.z;
+              const x = c * dx + s * dy, y = -s * dx + c * dy;
+              if (Math.abs(x) <= size[0] / 2 + 0.05 && Math.abs(y) <= size[1] / 2 + 0.05 && z >= -size[2] / 2 + FIT.ground && z <= size[2] / 2 + 0.05) addPoint(T, x, y, z);
+            }
+          }
+        }
+      }
+
+      if (soft) smoothPoses(pose, new Set([...pose.keys()].filter((f) => f !== r && !anchors.has(f))));
+
+      // every frame in range gets a pose: fitted, or between the nearest fitted ones
+      const range = frames.filter((f) => f >= a && f <= b), known = [...pose.keys()].sort((x, y) => x - y);
+      for (const f of range) {
+        if (pose.has(f)) continue;
+        const lo = known.filter((k) => k < f).pop(), hi = known.find((k) => k > f);
+        pose.set(f, lo === undefined ? pose.get(hi) : hi === undefined ? pose.get(lo) : lerpPose(pose.get(lo), pose.get(hi), (f - lo) / (hi - lo)));
+      }
+
+      // keyframes: the ends, the reference, hand edits, visibility changes and keys holding attributes stay
+      const forced = new Set([a, b, r, ...anchors]);
+      for (const f of range) if (f > a && visible(f) !== visible(f - 1)) forced.add(f);
+      for (const s of plan.shapes) if (s.frame >= a && s.frame <= b && (s.attributes || []).length && s.frame !== a) forced.add(s.frame);
+      const fitted = new Map([...pose].filter(([f]) => visible(f)));
+      for (const f of forced) if (!fitted.has(f)) fitted.set(f, pose.get(f));
+      const keep = reduceKeys(range, fitted, forced);
+
+      commit(snapshot());
+      const old = new Map(plan.shapes.map((s) => [s.frame, s]));
+      const { id, ...base } = plan.shapes[0];
+      const inRange = keep.map((f) => {
+        const out = !visible(f), cur = old.get(f);
+        if (anchors.has(f) || f === r) return { ...cur || { ...base, attributes: [] }, frame: f, points: stateAt(f).points, outside: out };
+        const P = pose.get(f), pts = p0.slice();
+        pts[0] = P.x; pts[1] = P.y; pts[2] = P.z; pts[5] = wrapAngle(P.yaw);
+        return { ...(cur || { ...base, attributes: [] }), frame: f, points: pts, outside: out };
+      });
+      plan.shapes = [...plan.shapes.filter((s) => s.frame < a || s.frame > b), ...inRange].sort((x, y) => x.frame - y.frame);
+      plan.flagged = flagged;
+      modelChanged();
+      setStatus("");
+    } catch (e) {
+      setStatus(e.message === "cancelled" ? "Đã dừng tự khớp, track không đổi." : e.message, e.message !== "cancelled");
+    } finally {
+      if (fitting === run) fitting = null;
+      btn.textContent = "Tự khớp";
+    }
   }
 
   // ---- clouds for the views ----
@@ -921,11 +1424,14 @@
   }
 
   function headHtml(f, st, extra) {
-    const k = keyAt(f), err = loadState.get(f) instanceof Error;
-    return `<span class="f">FRAME ${f}</span>${classHtml(f)}
-      ${err ? '<span class="tag hid">Lỗi tải</span>' : ""}${st.outside ? '<span class="tag hid">Sẽ ẩn</span>' : ""}
-      <span class="acts"><button class="btn sm" data-act="out" data-f="${f}">${st.outside ? "Hiện" : "Ẩn"}</button>
-      ${k && !isFirstKey(f) ? `<button class="btn sm" data-act="drop" data-f="${f}" title="Bỏ keyframe này">Bỏ key</button>` : ""}
+    const k = !!keyAt(f), err = loadState.get(f) instanceof Error;
+    return `<span class="f">${f}</span>${classHtml(f)}
+      ${err ? '<span class="tag bad" title="Không tải được point cloud">!</span>' : ""}${
+      plan.flagged.has(f) ? '<span class="tag bad" title="Tự khớp không chắc chắn ở frame này: kiểm tra lại">Khớp kém</span>' : ""}
+      <span class="acts"><button class="btn sm ico${st.outside ? " on" : ""}" data-act="out" data-f="${f}"
+          title="${st.outside ? "Đang ẩn: bấm để hiện" : "Ẩn frame này"}">${st.outside ? ICON.eyeOff : ICON.eye}</button>
+        <button class="btn sm ico${k ? " on" : ""}" data-act="key" data-f="${f}" ${k && isFirstKey(f) ? "disabled" : ""}
+          title="${k ? (isFirstKey(f) ? "Keyframe đầu của track" : "Keyframe: bấm để bỏ") : "Đặt keyframe ở frame này"}">${ICON.key}</button>
       ${extra}</span>`;
   }
 
@@ -939,21 +1445,20 @@
     const c = cells.get(f);
     if (!c || c.cell.hidden) return;
     const st = stateAt(f);
-    c.cell.classList.toggle("is-key", !!keyAt(f));
     c.cell.classList.toggle("is-manual", plan.manual.has(f));
     c.cell.classList.toggle("hidden-frame", st.outside);
-    setHead(c.head, headHtml(f, st, `<button class="btn sm" data-act="zoom" data-f="${f}" title="Phóng to frame này">⤢</button>`));
+    setHead(c.head, headHtml(f, st, `<button class="btn sm ico" data-act="zoom" data-f="${f}" title="Phóng to frame này">${ICON.zoom}</button>`));
+    c.cell.classList.toggle("active", f === activeFrame);
     drawFrame(c.canvases, f, st);
   }
 
   function drawZoom() {
     const st = stateAt(zoomFrame), list = eligible();
     const prev = list.filter((x) => x < zoomFrame).pop(), next = list.find((x) => x > zoomFrame);
-    zoom.classList.toggle("is-key", !!keyAt(zoomFrame));
     setHead($(".zhead"), headHtml(zoomFrame, st,
-      `<span class="nav"><button class="btn sm" data-act="go" data-f="${prev}" ${prev === undefined ? "disabled" : ""} title="Frame trước (←)">‹</button>
+      `<span class="nav"><button class="btn sm" data-act="go" data-f="${prev}" ${prev === undefined ? "disabled" : ""} title="Frame trước (D)">‹</button>
        <span class="pos">${frames.indexOf(zoomFrame) + 1} / ${frames.length}</span>
-       <button class="btn sm" data-act="go" data-f="${next}" ${next === undefined ? "disabled" : ""} title="Frame sau (→)">›</button></span>
+       <button class="btn sm" data-act="go" data-f="${next}" ${next === undefined ? "disabled" : ""} title="Frame sau (F)">›</button></span>
        <button class="btn sm" data-act="unzoom" title="Thu nhỏ (Esc)">✕</button>`));
     drawFrame(zoomCanvases, zoomFrame, st);
   }
@@ -1030,19 +1535,15 @@
     const manual = plan.shapes.filter((s) => plan.manual.has(s.frame));
     const hidden = frames.filter((f) => stateAt(f).outside).length;
     $(".fcount").textContent = `${frames.length} frame`;
-    $(".undo").disabled = !undoStack.length;
-    $(".summary").innerHTML = `<b>${plan.shapes.length}</b> keyframe · <b>${manual.length}</b> sửa tay · <b>${hidden}</b> frame sẽ ẩn`;
-    $(".edits").innerHTML = manual.length ? manual.map((s) =>
-      `<li data-f="${s.frame}">Frame ${s.frame}<span>${fmt(s.points.slice(6, 9).map((x) => +x))}${s.outside ? " · ẩn" : ""}</span>
-       ${isFirstKey(s.frame) ? "" : `<button class="btn sm" data-act="drop" data-f="${s.frame}">Bỏ key</button>`}</li>`).join("")
-      : '<li class="empty">Chưa sửa tay frame nào.</li>';
+    $(".sumtab").innerHTML = [["Keyframe", plan.shapes.length], ["Sửa tay", manual.length], ["Frame ẩn", hidden],
+      ["Frame khớp kém", plan.flagged.size]].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
   }
 
   // ---- filters, zoom and navigation ----
 
   function applyFilters() {
-    const onlyKey = $(".only-key").checked, onlyHid = $(".only-hid").checked;
-    for (const [f, c] of cells) c.cell.hidden = (onlyKey && !keyAt(f)) || (onlyHid && !stateAt(f).outside);
+    const onlyKey = $(".only-key").checked, onlyHid = $(".only-hid").checked, onlyBad = $(".only-bad").checked;
+    for (const [f, c] of cells) c.cell.hidden = (onlyKey && !keyAt(f)) || (onlyHid && !stateAt(f).outside) || (onlyBad && !plan.flagged.has(f));
   }
   const eligible = () => frames.filter((f) => !cells.get(f).cell.hidden);
 
@@ -1051,7 +1552,7 @@
     const c = cells.get(f);
     if (!c) return;
     if (c.cell.hidden) {
-      $(".only-key").checked = $(".only-hid").checked = false;
+      $(".only-key").checked = $(".only-hid").checked = $(".only-bad").checked = false;
       applyFilters();
     }
     c.cell.scrollIntoView({ block: flash ? "center" : "nearest" });
@@ -1061,8 +1562,27 @@
     }
   }
 
+  // The frame being worked on gets a red outline; D / F step it like in CVAT.
+  function setActive(f) {
+    if (f === activeFrame) return;
+    const old = cells.get(activeFrame), cur = cells.get(f);
+    if (old) old.cell.classList.remove("active");
+    activeFrame = f;
+    if (cur) cur.cell.classList.add("active");
+  }
+
+  function step(dir) {
+    const list = eligible(), at = zoomFrame ?? activeFrame;
+    const next = at === null ? list[0] : dir < 0 ? list.filter((x) => x < at).pop() : list.find((x) => x > at);
+    if (next === undefined) return;
+    if (zoomFrame !== null) return openZoom(next);
+    setActive(next);
+    cells.get(next).cell.scrollIntoView({ block: "nearest" });
+  }
+
   function openZoom(f) {
     endDrag();
+    setActive(f);
     zoomFrame = f;
     zoom.hidden = false;
     fitZoom();
@@ -1114,6 +1634,9 @@
     }
     editor.hidden = false;
     $(".edit-sec").hidden = false;
+    $(".fit-a").value = plan.shapes[0].frame;
+    $(".fit-b").value = plan.shapes[plan.shapes.length - 1].frame;
+    $(".fit-ref").value = "";
     panel.classList.add("wide");
     fitPanel();
     applyFilters();
@@ -1122,6 +1645,7 @@
 
   function closeEditor() {
     endDrag();
+    if (root.fullscreenElement) document.exitFullscreen().catch(() => {});
     observer.disconnect();
     grid.innerHTML = "";
     cells.clear();
@@ -1130,6 +1654,7 @@
     queue.length = 0;
     undoStack = [];
     zoomFrame = null;
+    activeFrame = null;
     zoom.hidden = true;
     editor.hidden = true;
     $(".edit-sec").hidden = true;
@@ -1139,17 +1664,17 @@
   }
 
   // The wide panel (tool + frames) fills the window below and right of its corner.
+  // The preview fills the window (CSS); a narrow window gets one frame per row.
   function fitPanel() {
-    if (!panel.classList.contains("wide")) {
-      panel.style.width = panel.style.height = "";
-      return;
-    }
-    const w = Math.min(1480, innerWidth - 32);
-    const left = Math.max(16, Math.min(parseFloat(panel.style.left) || 70, innerWidth - w - 16));
-    const top = Math.max(16, Math.min(parseFloat(panel.style.top) || 100, innerHeight - 480));
-    Object.assign(panel.style, { left: left + "px", top: top + "px", width: w + "px", height: Math.max(400, innerHeight - top - 16) + "px" });
-    grid.classList.toggle("one", grid.clientWidth < 760);
+    grid.classList.toggle("one", panel.classList.contains("wide") && grid.clientWidth < 760);
   }
+
+  // Browser fullscreen for the panel; the shadow root knows which of its elements holds it.
+  function toggleFullscreen() {
+    if (root.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else panel.requestFullscreen().catch((e) => setStatus(`Không bật được toàn màn hình: ${e.message}`, true));
+  }
+  document.addEventListener("fullscreenchange", () => { fitPanel(); fitZoom(); scheduleDraw(); });
   addEventListener("resize", () => { fitPanel(); fitZoom(); });
 
   // ---- mouse editing ----
@@ -1171,8 +1696,9 @@
 
   editor.addEventListener("pointerdown", (e) => {
     const cv = e.target.closest("canvas");
-    if (!cv || !plan || drag || e.button !== 0) return;
+    if (!cv || !plan || drag || fitting || e.button !== 0) return;
     editor.focus({ preventScroll: true });
+    setActive(canvasFrame(cv));
     const f = canvasFrame(cv), v = VIEWS[cv.dataset.v], st = stateAt(f), range = viewRange(st.points, v);
     const [u, w] = pointerLocal(cv, e, range), hit = hitTest(cv, st.points, v, u, w, range);
     if (!hit) return;
@@ -1230,9 +1756,11 @@
   editor.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-act]");
     if (!b || !plan) return;
+    if (fitting && b.dataset.act !== "zoom" && b.dataset.act !== "go" && b.dataset.act !== "unzoom") return setStatus("Đang tự khớp: chờ xong hoặc bấm Dừng.");
     const f = Number(b.dataset.f), act = b.dataset.act;
+    if (act !== "unzoom") setActive(act === "go" ? f : zoomFrame ?? f);
     if (act === "out") toggleOutside(f);
-    if (act === "drop") dropKey(f);
+    if (act === "key") toggleKey(f);
     if (act === "zoom") openZoom(f);
     if (act === "go") openZoom(f);
     if (act === "unzoom") closeZoom();
@@ -1240,18 +1768,21 @@
   editor.addEventListener("change", (e) => {
     const el = e.target;
     if (!plan || !el.matches("[data-f]")) return;
+    if (fitting) { // put the picker back to the model's value
+      el.closest(".chead").dataset.html = "";
+      setStatus("Đang tự khớp: chờ xong hoặc bấm Dừng.");
+      return modelChanged();
+    }
+    setActive(Number(el.dataset.f));
     if (el.matches("[data-label]")) setLabel(Number(el.value));
     else if (el.dataset.spec) setAttribute(Number(el.dataset.f), Number(el.dataset.spec), el.value);
   });
-  $(".edits").addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-act=drop]");
-    if (b) return dropKey(Number(b.dataset.f));
-    const li = e.target.closest("li[data-f]");
-    if (li) reveal(Number(li.dataset.f));
-  });
-  $(".undo").addEventListener("click", undo);
+  $(".clear").addEventListener("click", clearKeys);
+  $(".full").addEventListener("click", toggleFullscreen);
   $(".only-key").addEventListener("change", modelChanged);
   $(".only-hid").addEventListener("change", modelChanged);
+  $(".only-bad").addEventListener("change", modelChanged);
+  $(".fit").addEventListener("click", autoFit);
   $(".eclose").addEventListener("click", () => { if (confirmDrop()) closePlan(); });
 
   // Keys reach this only from inside the panel (the shadow root stops them from reaching CVAT).
@@ -1259,11 +1790,11 @@
     if (!plan || editor.hidden || e.target.closest("input, select, textarea, [contenteditable]")) return;
     let handled = true;
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z") undo();
+    else if (e.key === "Escape" && !$(".helpbox").hidden) $(".helpbox").hidden = true;
     else if (e.key === "Escape" && zoomFrame !== null) closeZoom();
-    else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && zoomFrame !== null) {
-      const list = eligible(), next = e.key === "ArrowLeft" ? list.filter((x) => x < zoomFrame).pop() : list.find((x) => x > zoomFrame);
-      if (next !== undefined) openZoom(next);
-    } else handled = false;
+    else if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "d" || e.key === "D")) step(-1);
+    else if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "f" || e.key === "F")) step(1);
+    else handled = false;
     if (handled) e.preventDefault();
   });
 
@@ -1280,6 +1811,8 @@
     }
   }));
   $(".close").addEventListener("click", () => (panel.hidden = true));
+  $(".help-btn").addEventListener("click", () => ($(".helpbox").hidden = !$(".helpbox").hidden));
+  root.addEventListener("pointerdown", (e) => { if (!e.target.closest(".helpbox, .help-btn")) $(".helpbox").hidden = true; });
 
   // Drag the panel by its title so it never has to cover the part of CVAT being worked on.
   const POS_KEY = "cvat-track-resizer-pos";
@@ -1292,7 +1825,7 @@
     if (saved) place(saved.left, saved.top);
   } catch { /* storage unavailable: keep the default spot */ }
   $("h3").addEventListener("pointerdown", (e) => {
-    if (e.target.closest("button")) return;
+    if (e.target.closest("button") || panel.classList.contains("wide")) return;
     const box = panel.getBoundingClientRect(), dx = e.clientX - box.left, dy = e.clientY - box.top;
     const move = (ev) => place(ev.clientX - dx, ev.clientY - dy);
     const stop = () => {
@@ -1318,7 +1851,6 @@
     closePlan();
     renderInputs();
   }));
-  root.querySelectorAll("input[name=mode]").forEach((r) => r.addEventListener("change", guard(renderInputs)));
   $(".bottom").addEventListener("change", markStale);
   $(".auto").addEventListener("change", markStale);
   $(".thr").addEventListener("input", markStale);
