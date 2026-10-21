@@ -1,2 +1,5 @@
 .DS_Store
 __pycache__/
+
+# Local QA screenshots contain CVAT job data.
+docs/evidence/

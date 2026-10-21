@@ -2,7 +2,7 @@
 // holds too few points as outside, and lets the planned boxes be adjusted by hand on Top / Side /
 // Front views of every frame before saving. CVAT interpolates between keyframes, so the box then
 // has that size on every frame.
-// Talks to the CVAT REST API with the page's own login.
+// Applies through the page bridge; CVAT owns Save and Undo/Redo.
 (() => {
   "use strict";
 
@@ -105,24 +105,30 @@
 
   // ---------- CVAT API ----------
 
-  async function api(method, path, body) {
-    const csrf = (document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/) || [])[1];
-    const resp = await fetch(path, {
-      method,
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json", ...(csrf ? { "X-CSRFToken": csrf } : {}) },
-      body: body === undefined ? undefined : JSON.stringify(body),
+  function bridgeRequest(action, payload) {
+    const id = crypto.randomUUID(), channel = "cvat-track-resizer-v2";
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        window.removeEventListener("message", receive);
+        reject(new Error("Không nhận được phản hồi từ CVAT. Reload extension và trang nếu vừa cập nhật. Nếu đang Áp dụng, bấm Tải lại trong tool để kiểm tra trước khi thử lại."));
+      }, 15000);
+      function receive(event) {
+        if (event.source !== window || event.origin !== location.origin || event.data?.channel !== channel ||
+            event.data.direction !== "response" || event.data.id !== id) return;
+        clearTimeout(timer);
+        window.removeEventListener("message", receive);
+        if (event.data.error) reject(new Error(event.data.error)); else resolve(event.data.result);
+      }
+      window.addEventListener("message", receive);
+      window.postMessage({ channel, direction: "request", id, action, payload }, location.origin);
     });
-    const text = await resp.text();
-    if (!resp.ok) throw new Error(`${method} ${path} → HTTP ${resp.status}: ${text.slice(0, 300)}`);
-    return text ? JSON.parse(text) : null;
   }
 
-  // Object numbers the CVAT sidebar shows after a page load: tags, then shapes, then tracks.
+  // Use the actual client IDs from CVAT, including objects that have not been saved.
   function withUiIds(annotations) {
     let n = annotations.tags.length;
-    annotations.shapes.forEach((s) => (s.uiId = ++n));
-    annotations.tracks.forEach((t) => (t.uiId = ++n));
+    annotations.shapes.forEach((s) => (s.uiId = s.clientID ?? ++n));
+    annotations.tracks.forEach((t) => (t.uiId = t.clientID ?? ++n));
     return annotations;
   }
 
@@ -139,9 +145,16 @@
       const [key, ...rest] = line.split(/\s+/);
       header[key.toUpperCase()] = rest;
     }
-    const fields = header.FIELDS, sizes = header.SIZE.map(Number), types = header.TYPE;
+    const fields = header.FIELDS, types = header.TYPE;
+    if (!fields || !header.SIZE || !types) throw new Error("Header PCD thiếu FIELDS, SIZE hoặc TYPE.");
+    const sizes = header.SIZE.map(Number);
     const counts = (header.COUNT || fields.map(() => "1")).map(Number);
-    const n = Number(header.POINTS ? header.POINTS[0] : header.WIDTH[0] * header.HEIGHT[0]);
+    const n = Number(header.POINTS ? header.POINTS[0] : (header.WIDTH || [0])[0] * (header.HEIGHT || [1])[0]);
+    if (!Number.isSafeInteger(n) || n < 0 || n > 10000000 ||
+        sizes.length !== fields.length || types.length !== fields.length || counts.length !== fields.length ||
+        sizes.some((v) => ![1, 2, 4, 8].includes(v)) || counts.some((v) => !Number.isSafeInteger(v) || v < 1)) {
+      throw new Error("Header PCD không hợp lệ hoặc quá lớn.");
+    }
     const idx = ["x", "y", "z"].map((f) => fields.indexOf(f));
     if (idx.some((i) => i < 0)) throw new Error("File PCD không có trường x y z.");
     const xyz = new Float32Array(n * 3);
@@ -153,17 +166,20 @@
       for (const line of lines) {
         if (k >= n) break;
         const v = line.trim().split(/\s+/);
-        if (v.length < fields.length) continue;
+        if (!line.trim() || line.trim().startsWith("#")) continue;
+        if (v.length < counts.reduce((sum, count) => sum + count, 0)) throw new Error("Dòng PCD thiếu cột.");
         for (let j = 0; j < 3; j++) xyz[k * 3 + j] = Number(v[cols[j]]);
         k++;
       }
+      if (k !== n) throw new Error("PCD thiếu dữ liệu điểm.");
     } else if (format === "binary") {
       const offsets = [];
       let row = 0;
       fields.forEach((_, i) => { offsets.push(row); row += sizes[i] * counts[i]; });
+      if (bytes.length - pos < n * row) throw new Error("PCD binary thiếu dữ liệu điểm.");
       const view = new DataView(buffer, pos);
       const read = idx.map((i) => {
-        if (types[i] !== "F") throw new Error("Toạ độ trong PCD không phải số thực.");
+        if (types[i] !== "F" || ![4, 8].includes(sizes[i])) throw new Error("Toạ độ trong PCD không phải số thực.");
         return sizes[i] === 8 ? (o) => view.getFloat64(o, true) : (o) => view.getFloat32(o, true);
       });
       for (let k = 0; k < n; k++) {
@@ -172,7 +188,13 @@
     } else {
       throw new Error(`Chưa hỗ trợ PCD dạng "${format}".`);
     }
-    return xyz;
+    // Invalid lidar returns must never become phantom points at the origin.
+    let kept = 0;
+    for (let k = 0; k < xyz.length; k += 3) {
+      if (!Number.isFinite(xyz[k]) || !Number.isFinite(xyz[k + 1]) || !Number.isFinite(xyz[k + 2])) continue;
+      xyz[kept++] = xyz[k]; xyz[kept++] = xyz[k + 1]; xyz[kept++] = xyz[k + 2];
+    }
+    return xyz.subarray(0, kept);
   }
 
   // Where loading time goes, logged to the console after each preview / auto fit.
@@ -379,6 +401,9 @@
   .fbar label { margin: 0; white-space: nowrap; }
   .grid { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-content: start; }
   .grid.one { grid-template-columns: 1fr; }
+  .filter-empty { position: absolute; top: 72px; left: 16px; right: 16px; padding: 32px 16px; text-align: center; color: var(--body); }
+  .filter-empty[hidden] { display: none; }
+  .filter-empty .btn { margin-top: 16px; }
   .cell { position: relative; border: 1px solid var(--hairline); }
   .cell.active { outline: 2px solid var(--primary); outline-offset: -1px; }
   .chead select, .chead input { height: 26px; padding: 0 4px; border-radius: 2px; font-size: 11px; width: 96px; text-transform: none; letter-spacing: 0; }
@@ -422,7 +447,7 @@
   <h3><img class="logo" alt=""><span class="name">Track Resizer</span><span class="badge job"></span>
     <button class="btn help-btn" title="Hướng dẫn">?</button><button class="close" title="Đóng">✕</button></h3>
 
-  <div class="warn">Bấm <b>Save</b> trong CVAT trước khi áp dụng. Trang sẽ tự tải lại sau khi lưu.</div>
+  <div class="warn">Bấm <b>Áp dụng</b> để xem box ngay trong CVAT. Sau đó bấm <b>Save</b> của CVAT để lưu server.</div>
   <div class="lbl">Track</div>
   <div class="row"><select class="track"></select></div>
   <div class="tools">
@@ -440,7 +465,7 @@
     <button class="btn preview">Xem trước</button>
     <button class="btn primary apply" disabled>Áp dụng</button>
   </div>
-  <div class="status"></div>
+  <div class="status" role="status" aria-live="polite"></div>
   <div class="edit-sec" hidden>
     <div class="lbl">Chỉnh trong xem trước</div>
     <table class="sumtab"></table>
@@ -460,7 +485,7 @@
  <div class="helpbox" hidden>
   <h5>Quy trình</h5>
   <ul><li>Chọn track, nhập L / W / H, bấm <b>Xem trước</b>.</li><li>Chỉnh box trên các mặt bên phải nếu cần, rồi bấm <b>Áp dụng</b>.</li>
-    <li>Bấm <b>Save</b> trong CVAT trước khi áp dụng; trang sẽ tự tải lại.</li></ul>
+    <li>Bấm <b>Áp dụng</b> cập nhật box trong CVAT; bấm <b>Save</b> của CVAT để lưu server.</li></ul>
   <h5>Chỉnh box</h5>
   <ul><li>Kéo <b>trong box</b> để di chuyển, kéo <b>cạnh</b> để đổi kích thước, kéo <b>chấm đỏ</b> ở Top để xoay.</li>
     <li>Sửa ở frame nào, frame đó thành keyframe; các frame giữa hai keyframe tự nội suy.</li>
@@ -486,6 +511,7 @@
     <button class="btn sm eclose" title="Đóng xem trước">✕</button>
   </div>
   <div class="grid"></div>
+  <div class="filter-empty" hidden role="status">Không có frame nào khớp bộ lọc đang chọn.<br><button class="btn reset-filters">Bỏ bộ lọc</button></div>
   <div class="zoom" hidden>
     <div class="chead zhead"></div>
     <div class="zbody">
@@ -507,7 +533,13 @@
   const fab = $(".fab"), panel = $(".panel");
   const logoUrl = globalThis.chrome && chrome.runtime && chrome.runtime.getURL && chrome.runtime.getURL("icons/icon128.png");
   root.querySelectorAll(".logo").forEach((img) => (logoUrl ? (img.src = logoUrl) : img.remove()));
-  let jobId = null, job = null, annotations = null, labels = [], plan = null, planning = 0;
+  let jobId = null, job = null, annotations = null, labels = [], plan = null, planning = 0, dataGeneration = 0, saving = false, previewRun = null;
+
+  for (const type of ["click", "change", "input", "pointerdown", "keydown"]) {
+    root.addEventListener(type, (e) => {
+      if (saving) { e.preventDefault(); e.stopImmediatePropagation(); }
+    }, true);
+  }
 
   // A long-running button doubles as its own progress bar; null puts its label back.
   function progress(btn, x, label) {
@@ -528,7 +560,7 @@
     $(".status").className = "status" + (isError ? " err" : "");
   }
 
-  const selectedTrack = () => annotations && annotations.tracks.find((t) => t.id === Number($(".track").value));
+  const selectedTrack = () => annotations && annotations.tracks.find((t) => t.uiId === Number($(".track").value));
 
   // A setting changed: a preview being built is out of date, and a shown one must be rebuilt
   // before saving. Hand edits stay on screen until then.
@@ -542,10 +574,10 @@
   }
 
   function closePlan() {
+    closeEditor();
     plan = null;
     planning++;
     $(".apply").disabled = true;
-    closeEditor();
   }
 
   const confirmDrop = () => !dirty() || confirm("Bỏ các chỉnh tay trong xem trước?");
@@ -553,9 +585,9 @@
   // The new size, prefilled with the track's size at the frame on screen (unchanged = size kept).
   function renderInputs() {
     const track = selectedTrack();
-    const dims = track && track.shapes[0].type === "rectangle" ? ["W", "H"] : ["L", "W", "H"];
+    const dims = track && track.shapes[0]?.type === "rectangle" ? ["W", "H"] : ["L", "W", "H"];
     let start = dims.map(() => 1);
-    if (track) {
+    if (track && track.shapes.length && ["cuboid", "rectangle"].includes(track.shapes[0].type)) {
       try { start = sizeAt(track, currentFrame() ?? 0); } catch { start = sizeOf(byFrame(track.shapes)[0]); }
     }
     const box = $(".vals");
@@ -566,20 +598,23 @@
 
   async function loadData(keep) {
     setStatus("Đang tải annotation…");
-    [job, annotations] = await Promise.all([api("GET", `/api/jobs/${jobId}`), api("GET", `/api/jobs/${jobId}/annotations`)]);
-    // Classes and their attributes for the pickers; without them the preview just shows the label id.
-    labels = await api("GET", `/api/labels?job_id=${jobId}&page_size=500`).then((r) => r.results || r, () => []);
+    const id = jobId, generation = ++dataGeneration;
+    const loaded = await bridgeRequest("snapshot", { jobId: id });
+    if (generation !== dataGeneration || id !== jobId) return;
+    job = loaded.job;
+    annotations = loaded.annotations;
+    labels = loaded.labels;
     withUiIds(annotations);
     const sel = $(".track");
     sel.innerHTML = annotations.tracks.length
       ? annotations.tracks.map((t) => {
           const frames = t.shapes.map((s) => s.frame);
-          return `<option value="${t.id}">#${t.uiId} · id ${t.id} · ${t.shapes[0].type} · frame ${
+          return `<option value="${t.uiId}"${!t.shapes.length || !["cuboid", "rectangle"].includes(t.shapes[0].type) ? " disabled" : ""}>#${t.uiId} · ${t.id == null ? "chưa lưu" : `id ${t.id}`} · ${t.shapes[0]?.type || "rỗng"} · frame ${
             Math.min(...frames)}–${Math.max(...frames)} · ${t.shapes.length} keyframe</option>`;
         }).join("")
       : `<option value="">(job này không có track nào)</option>`;
-    if (keep && annotations.tracks.some((t) => t.id === keep)) sel.value = String(keep);
-    setStatus(`${annotations.tracks.length} track. Số # là số hiện trên sidebar CVAT.`);
+    if (keep && annotations.tracks.some((t) => t.uiId === keep)) sel.value = String(keep);
+    setStatus(`${annotations.tracks.length} track. Dữ liệu đang mở trong CVAT, gồm cả thay đổi chưa Save.`);
     renderInputs();
   }
 
@@ -587,7 +622,9 @@
   async function buildPlan(token) {
     const track = selectedTrack();
     if (!track) throw new Error("Chưa chọn track.");
+    if (!track.shapes.length) throw new Error("Track không có keyframe.");
     const kind = track.shapes[0].type;
+    if (!["cuboid", "rectangle"].includes(kind)) throw new Error(`Không hỗ trợ loại ${kind}.`);
     const dims = kind === "cuboid" ? 3 : 2;
     const inputs = [...root.querySelectorAll(".vals input")];
     if (inputs.some((i) => i.value.trim() === "" || !Number.isFinite(Number(i.value)))) throw new Error("Nhập đủ các số.");
@@ -614,13 +651,15 @@
         if (pos && !pos.outside) frames.push(f);
       }
       let done = 0;
-      const total = frames.length, next = () => frames.shift();
+      let cursor = 0;
+      const total = frames.length, next = () => frames[cursor++];
       const worker = async () => {
         for (let f = next(); f !== undefined; f = next()) {
-          const box = positionAt(keys, f).points, key = `${jobId}:${track.id}:${f}:${box.join(",")}`;
+          if (token !== planning) throw new Error("cancelled");
+          const box = positionAt(keys, f).points, key = `${jobId}:${track.clientID ?? track.id}:${f}:${box.join(",")}`;
           let n = counted.get(key);
           if (n === undefined) {
-            const b = boxFrame(box), xyz = await nearCloud(track.id, f, b.center, b.reach);
+            const b = boxFrame(box), xyz = await nearCloud(track.clientID ?? track.id, f, b.center, b.reach);
             if (token !== planning) throw new Error("cancelled");
             n = countInside(xyz, box);
             counted.set(key, n);
@@ -640,7 +679,8 @@
     // so every other frame keeps exactly the position it had.
     const result = new Map(keys.map((s) => [s.frame, { ...s }]));
     const setKey = (f, outside) => {
-      const s = result.get(f) || { ...keys[0], id: undefined, frame: f, points: positionAt(keys, f).points };
+      const left = [...keys].reverse().find((s) => s.frame <= f);
+      const s = result.get(f) || { ...left, id: undefined, attributes: [], frame: f, points: positionAt(keys, f).points };
       if (!result.has(f)) delete s.id;
       result.set(f, { ...s, outside });
     };
@@ -659,7 +699,7 @@
       }
     }
     const shapes = [...result.values()].sort((a, b) => a.frame - b.frame);
-    return { track, shapes, original, counts, threshold };
+    return { track, baseline: JSON.parse(JSON.stringify(track)), shapes, original, counts, threshold };
   }
 
   function ranges(frames) {
@@ -672,10 +712,18 @@
   }
 
   async function preview() {
+    if (previewRun !== null) {
+      planning++;
+      $(".preview").disabled = true;
+      setStatus("Đang dừng xem trước…");
+      return;
+    }
     if (!confirmDrop()) return;
     closePlan();
     const token = planning;
-    $(".preview").disabled = true;
+    previewRun = token;
+    $(".preview").title = "Bấm lần nữa để dừng xem trước";
+    setStatus($(".auto").checked ? "Đang quét point cloud. Bấm nút tiến độ để dừng." : "Đang dựng xem trước…");
     if ($(".auto").checked) progress($(".preview"), 0);
     Object.assign(cloudStats, { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: performance.now() });
     try {
@@ -686,8 +734,12 @@
       if (token === planning) setStatus(e.message, true);
       return;
     } finally {
+      const cancelled = token !== planning;
+      previewRun = null;
       $(".preview").disabled = false;
+      $(".preview").title = "";
       progress($(".preview"), null, "Xem trước");
+      if (cancelled && job && !plan) setStatus("Đã dừng xem trước. Có thể đổi cài đặt và xem trước lại.");
       logCloudStats("Xem trước");
     }
     plan.manual = new Set(); // frames edited by hand in the preview
@@ -701,34 +753,37 @@
     $(".apply").disabled = false;
     const cuboid = plan.track.shapes[0].type === "cuboid";
     setStatus(`Track #${plan.track.uiId}: ${plan.shapes.length} keyframe sau khi đổi.${hiddenText}\n` +
-      (cuboid ? "Chỉnh box trên các mặt bên phải nếu cần, rồi bấm \"Áp dụng\"." : "Bấm \"Áp dụng\" để lưu."));
+      (cuboid ? "Chỉnh box trên các mặt bên phải nếu cần, rồi bấm \"Áp dụng\"." : "Bấm \"Áp dụng\" để hiện trong CVAT, rồi Save trong CVAT để lưu."));
     if (cuboid) openEditor();
   }
 
   async function apply() {
     endDrag();
-    if (!plan || plan.stale) return;
-    if (!confirm(`Lưu ${plan.shapes.length} keyframe cho track #${plan.track.uiId} và tải lại trang?\n` +
-                 `Thay đổi chưa Save trong CVAT sẽ bị mất.`)) return;
+    if (!plan || plan.stale || saving) return;
+    if (fitting) return setStatus("Chờ tự khớp xong hoặc dừng trước khi áp dụng.", true);
+    saving = true;
+    const applyingPlan = plan, applyingJob = jobId;
     $(".apply").disabled = true;
-    setStatus("Đang lưu…");
+    setStatus("Đang áp dụng vào CVAT…");
+    let applied = false;
     try {
-      const { uiId, ...track } = { ...plan.track, shapes: plan.shapes };
-      await api("PATCH", `/api/jobs/${jobId}/annotations?action=update`,
-        { version: annotations.version, tags: [], shapes: [], tracks: [track] });
-      const saved = (await api("GET", `/api/jobs/${jobId}/annotations`)).tracks.find((t) => t.id === track.id);
-      const want = new Map(plan.shapes.map((s) => [s.frame, s]));
-      const bad = (saved ? saved.shapes : []).filter((s) => !want.has(s.frame) || s.outside !== want.get(s.frame).outside ||
-        s.points.some((v, i) => Math.abs(v - want.get(s.frame).points[i]) > 1e-6)).map((s) => s.frame);
-      if (!saved || bad.length || saved.shapes.length !== want.size) {
-        throw new Error(`Đã gửi nhưng dữ liệu trên server khác ở frame ${bad.join(", ") || "?"}. Kiểm tra lại job.`);
-      }
-      sessionStorage.setItem("cvat-track-resizer-done", `Đã lưu ${want.size} keyframe cho track #${plan.track.uiId}.`);
-      setStatus("Đã lưu. Đang tải lại trang…");
-      location.reload();
+      const result = await bridgeRequest("apply", {
+        jobId: applyingJob,
+        baseline: applyingPlan.baseline,
+        track: { ...applyingPlan.track, shapes: applyingPlan.shapes },
+      });
+      applied = result.applied;
+      if (applyingJob !== jobId || applyingPlan !== plan) return;
+      closePlan();
+      await loadData(result.clientID);
+      setStatus(result.warning || "Đã áp dụng vào CVAT, chưa lưu server. Bấm Save trong CVAT để lưu; Undo/Redo dùng nút của CVAT.", !!result.warning);
     } catch (e) {
-      setStatus(e.message, true);
-      $(".apply").disabled = false;
+      if (applyingJob === jobId) {
+        if (plan === applyingPlan) plan.stale = true;
+        setStatus((applied ? "Đã áp dụng vào CVAT nhưng chưa tải lại danh sách tool. " : "") + e.message + (e.message.includes("Tải lại") ? "" : " Bấm Tải lại trong tool trước khi tiếp tục."), true);
+      }
+    } finally {
+      saving = false;
     }
   }
 
@@ -737,14 +792,14 @@
     if (ui === null) return setStatus("Chưa chọn object nào trên CVAT (bấm vào object ở sidebar).", true);
     const track = annotations && annotations.tracks.find((t) => t.uiId === ui);
     if (!track) {
-      return setStatus(`Object #${ui} không phải track, hoặc vừa tạo mà chưa tải lại trang (Save rồi F5).`, true);
+      return setStatus(`Object #${ui} không có trong danh sách track hiện tại. Bấm Tải lại trong tool để đọc thay đổi mới nhất.`, true);
     }
-    if (plan && plan.track.id === track.id) return setStatus(`Track #${ui} đang được xem trước.`);
+    if (plan && plan.track.clientID === track.clientID) return setStatus(`Track #${ui} đang được xem trước.`);
     if (!confirmDrop()) return;
     closePlan();
-    $(".track").value = String(track.id);
+    $(".track").value = String(track.uiId);
     renderInputs();
-    setStatus(`Đã chọn track #${ui} (id ${track.id}).`);
+    setStatus(`Đã chọn track #${ui}${track.id == null ? " (chưa lưu)" : ` (id ${track.id})`}.`);
   }
 
   // ---------- preview editor: three views per frame ----------
@@ -796,14 +851,14 @@
     if (old) return old;
     const pos = stateAt(f);
     const { id, ...left } = [...plan.shapes].reverse().find((s) => s.frame < f) || plan.shapes[0];
-    const key = { ...left, frame: f, points: pos.points, outside: pos.outside };
+    const key = { ...left, attributes: [], frame: f, points: pos.points, outside: pos.outside };
     plan.shapes.push(key);
     plan.shapes.sort((a, b) => a.frame - b.frame);
     return key;
   }
 
   const snapshot = () => ({ shapes: plan.shapes.map((s) => ({ ...s, points: s.points.slice() })), manual: [...plan.manual],
-                            label_id: plan.track.label_id, attributes: plan.track.attributes, flagged: [...plan.flagged] });
+                            inputs: [...root.querySelectorAll(".vals input")].map((i) => i.value), label_id: plan.track.label_id, attributes: plan.track.attributes, flagged: [...plan.flagged] });
   function commit(snap) {
     undoStack.push(snap);
     if (undoStack.length > 100) undoStack.shift();
@@ -814,6 +869,7 @@
     const snap = undoStack.pop();
     if (!snap) return;
     plan.shapes = snap.shapes;
+    root.querySelectorAll(".vals input").forEach((input, i) => (input.value = snap.inputs[i]));
     plan.manual = new Set(snap.manual);
     plan.track.label_id = snap.label_id;
     plan.track.attributes = snap.attributes;
@@ -1192,7 +1248,7 @@
   async function fitFrame(f, T, size, pred, alt, W, lastN) {
     const centers = Math.hypot(alt.x - pred.x, alt.y - pred.y) > 0.3 ? [pred, alt] : [pred];
     const radius = W + Math.hypot(size[0], size[1]) / 2 + 0.5;
-    const cloud = await nearCloud(plan.track.id, f, [pred.x, pred.y, pred.z], radius + Math.hypot(alt.x - pred.x, alt.y - pred.y));
+    const cloud = await nearCloud(plan.track.clientID ?? plan.track.id, f, [pred.x, pred.y, pred.z], radius + Math.hypot(alt.x - pred.x, alt.y - pred.y));
     const Q = targetPoints(cloud, centers, radius, size);
     // the search and ICP run on a thinned set of points; the final checks use all of them
     const thin = (max) => { const every = Math.ceil(Q.length / 3 / max); return every > 1 ? Q.filter((_, i) => Math.floor(i / 3) % every === 0) : Q; };
@@ -1262,7 +1318,7 @@
   }
 
   async function fitSoft(f, size, pred, alt, W, lastN) {
-    const cloud = await nearCloud(plan.track.id, f, [pred.x, pred.y, pred.z], Math.max(2.5, W + Math.max(size[0], size[1])) + 0.2);
+    const cloud = await nearCloud(plan.track.clientID ?? plan.track.id, f, [pred.x, pred.y, pred.z], Math.max(2.5, W + Math.max(size[0], size[1])) + 0.2);
     const g = groundAt(cloud, pred, 2.5) ?? pred.z - size[2] / 2;
     const lo = g + 0.12, hi = g + size[2] + 0.3, reach = W + Math.max(size[0], size[1]), cell = 0.2;
     const X = [], Y = [], cellsOf = new Map(); // object-height points near the prediction, and their 2D cells
@@ -1354,7 +1410,7 @@
     for (const s of plan.shapes) {
       if (s.frame < a || s.frame > b || s.outside) continue;
 
-      const F = boxFrame(s.points), n = countInside(await nearCloud(plan.track.id, s.frame, F.center, F.reach), s.points);
+      const F = boxFrame(s.points), n = countInside(await nearCloud(plan.track.clientID ?? plan.track.id, s.frame, F.center, F.reach), s.points);
       if (!best || n > best.n) best = { f: s.frame, n };
     }
     if (!best) throw new Error("Không có keyframe nào đang hiện để làm frame mẫu.");
@@ -1386,11 +1442,11 @@
       let P0 = poseOf(p0);
       if (Math.abs(p0[3]) > 0.15 || Math.abs(p0[4]) > 0.15) throw new Error("Box ở frame mẫu đang nghiêng (rx/ry); tự khớp chỉ xoay quanh trục đứng.");
       progress(btn, 0.08);
-      const refCloud = await nearCloud(plan.track.id, r, [P0.x, P0.y, P0.z], Math.hypot(size[0], size[1]) / 2 + 2);
+      const refCloud = await nearCloud(plan.track.clientID ?? plan.track.id, r, [P0.x, P0.y, P0.z], Math.hypot(size[0], size[1]) / 2 + 2);
       check();
       // The reference box may only be roughly placed (CVAT draws new cuboids at heading 0): turn it
       // to the L-shape heading and fit it to the points when that holds clearly more points.
-      if (!soft) {
+      if (!soft && !plan.manual.has(r)) {
         const Qr = targetPoints(refCloud, [P0], Math.hypot(size[0], size[1]) / 2 + 1.5, size);
         const inside = (P) => { let n = 0; forObjectPoints(Qr, P, size, 0, () => n++); return n; };
         let best = P0, bestN = inside(P0);
@@ -1457,25 +1513,30 @@
       // every frame in range gets a pose: fitted, or between the nearest fitted ones
       const range = frames.filter((f) => f >= a && f <= b), known = [...pose.keys()].sort((x, y) => x - y);
       for (const f of range) {
+        if (!visible(f)) { pose.set(f, poseOf(stateAt(f).points)); continue; }
         if (pose.has(f)) continue;
         const lo = known.filter((k) => k < f).pop(), hi = known.find((k) => k > f);
         pose.set(f, lo === undefined ? pose.get(hi) : hi === undefined ? pose.get(lo) : lerpPose(pose.get(lo), pose.get(hi), (f - lo) / (hi - lo)));
       }
 
       // keyframes: the ends, the reference, hand edits, visibility changes and keys holding attributes stay
-      const forced = new Set([a, b, r, ...anchors]);
+      const forced = new Set([a, b, r, ...[...plan.manual].filter((f) => f >= a && f <= b)]);
       for (const f of range) if (f > a && visible(f) !== visible(f - 1)) forced.add(f);
       for (const s of plan.shapes) if (s.frame >= a && s.frame <= b && (s.attributes || []).length && s.frame !== a) forced.add(s.frame);
       const fitted = new Map([...pose].filter(([f]) => visible(f)));
       for (const f of forced) if (!fitted.has(f)) fitted.set(f, pose.get(f));
       const keep = reduceKeys(range, fitted, forced);
 
+      check();
       commit(snapshot());
+      // Pin neighbours so fitting a subrange preserves interpolation outside it.
+      if (a > first) ensureKey(a - 1);
+      if (b < stop) ensureKey(b + 1);
       const old = new Map(plan.shapes.map((s) => [s.frame, s]));
       const { id, ...base } = plan.shapes[0];
       const inRange = keep.map((f) => {
         const out = !visible(f), cur = old.get(f);
-        if (anchors.has(f)) return { ...cur || { ...base, attributes: [] }, frame: f, points: stateAt(f).points, outside: out };
+        if (anchors.has(f) || plan.manual.has(f) || out) return { ...cur || { ...base, attributes: [] }, frame: f, points: stateAt(f).points, outside: out };
         const P = pose.get(f), pts = p0.slice();
         pts[0] = P.x; pts[1] = P.y; pts[2] = P.z; pts[5] = wrapAngle(P.yaw);
         return { ...(cur || { ...base, attributes: [] }), frame: f, points: pts, outside: out };
@@ -1484,7 +1545,7 @@
       plan.flagged = flagged;
       modelChanged();
       progress(btn, 1);
-      setStatus("");
+      setStatus(`Đã tự khớp frame ${a}–${b}. ${flagged.size} frame cần kiểm tra lại. Có thể hoàn tác bằng Ctrl/⌘Z.`);
     } catch (e) {
       setStatus(e.message === "cancelled" ? "Đã dừng tự khớp, track không đổi." : e.message, e.message !== "cancelled");
     } finally {
@@ -1510,8 +1571,8 @@
       if (!visible.has(f) && f !== zoomFrame) { loadState.delete(f); continue; } // scrolled away
       const gen = editGen, p = stateAt(f).points;
       loading++;
-      nearCloud(plan.track.id, f, p.slice(0, 3), viewReach(p), 1)
-        .then(() => loadState.delete(f), (e) => loadState.set(f, e))
+      nearCloud(plan.track.clientID ?? plan.track.id, f, p.slice(0, 3), viewReach(p), 1)
+        .then(() => { if (gen === editGen) loadState.delete(f); }, (e) => { if (gen === editGen) loadState.set(f, e); })
         .finally(() => {
           loading--;
           if (gen === editGen) scheduleDraw();
@@ -1578,7 +1639,7 @@
   // doesn't slide under the mouse; they re-center on release.
   function drawFrame(canvases, f, st) {
     const live = drag && drag.f === f, ref = live ? drag.ref : st.points;
-    const crop = nearCached(plan.track.id, f);
+    const crop = nearCached(plan.track.clientID ?? plan.track.id, f);
     if (!live && !(crop && cropCovers(crop, ref.slice(0, 3), viewReach(ref)))) ensureLoad(f);
     const err = loadState.get(f) instanceof Error ? loadState.get(f) : null;
     canvases.forEach((cv, i) => drawView(cv, crop && crop.xyz, st, ref, live ? drag.ranges[i] : viewRange(ref, VIEWS[i]), VIEWS[i], err));
@@ -1645,7 +1706,8 @@
   function updateSummary() {
     const manual = plan.shapes.filter((s) => plan.manual.has(s.frame));
     const hidden = frames.filter((f) => stateAt(f).outside).length;
-    $(".fcount").textContent = `${frames.length} frame`;
+    const shown = eligible().length;
+    $(".fcount").textContent = shown === frames.length ? `${frames.length} frame` : `${shown} / ${frames.length} frame`;
     $(".sumtab").innerHTML = [["Keyframe", plan.shapes.length], ["Sửa tay", manual.length], ["Frame ẩn", hidden],
       ["Frame khớp kém", plan.flagged.size]].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
   }
@@ -1655,6 +1717,7 @@
   function applyFilters() {
     const onlyKey = $(".only-key").checked, onlyHid = $(".only-hid").checked, onlyBad = $(".only-bad").checked;
     for (const [f, c] of cells) c.cell.hidden = (onlyKey && !keyAt(f)) || (onlyHid && !stateAt(f).outside) || (onlyBad && !plan.flagged.has(f));
+    $(".filter-empty").hidden = !cells.size || eligible().length > 0;
   }
   const eligible = () => frames.filter((f) => !cells.get(f).cell.hidden);
 
@@ -1757,6 +1820,7 @@
   function closeEditor() {
     endDrag();
     if (root.fullscreenElement) document.exitFullscreen().catch(() => {});
+    if (fitting) fitting.cancelled = true;
     observer.disconnect();
     grid.innerHTML = "";
     cells.clear();
@@ -1884,12 +1948,21 @@
       setStatus("Đang tự khớp: chờ xong hoặc bấm Dừng.");
       return modelChanged();
     }
+    if (!el.checkValidity()) {
+      el.reportValidity();
+      return setStatus("Giá trị attribute nằm ngoài giới hạn cho phép.", true);
+    }
     setActive(Number(el.dataset.f));
     if (el.matches("[data-label]")) setLabel(Number(el.value));
     else if (el.dataset.spec) setAttribute(Number(el.dataset.f), Number(el.dataset.spec), el.value);
   });
   $(".clear").addEventListener("click", clearKeys);
   $(".full").addEventListener("click", toggleFullscreen);
+  $(".reset-filters").addEventListener("click", () => {
+    $(".only-key").checked = $(".only-hid").checked = $(".only-bad").checked = false;
+    modelChanged();
+    editor.focus({ preventScroll: true });
+  });
   $(".only-key").addEventListener("change", modelChanged);
   $(".only-hid").addEventListener("change", modelChanged);
   $(".only-bad").addEventListener("change", modelChanged);
@@ -1958,7 +2031,7 @@
   }));
   $(".pick").addEventListener("click", guard(pickActive));
   $(".track").addEventListener("change", guard(() => {
-    if (!confirmDrop()) return void ($(".track").value = String(plan.track.id));
+    if (!confirmDrop()) return void ($(".track").value = String(plan.track.uiId));
     closePlan();
     renderInputs();
   }));
@@ -1973,6 +2046,7 @@
     const m = location.pathname.match(JOB_PATH);
     const id = m ? Number(m[1]) : null;
     if (id !== jobId) {
+      dataGeneration++;
       jobId = id;
       closePlan();
       job = annotations = null;
@@ -1986,10 +2060,5 @@
   sync();
   setInterval(sync, 1000);
 
-  const done = sessionStorage.getItem("cvat-track-resizer-done");
-  if (done && jobId) {
-    sessionStorage.removeItem("cvat-track-resizer-done");
-    panel.hidden = false;
-    guard(() => loadData())().then(() => setStatus(done));
-  }
+
 })();

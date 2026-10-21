@@ -11,7 +11,9 @@ Gồm hai phần:
 
 CVAT nội suy tuyến tính giữa các keyframe. Cả hai công cụ đều làm việc bằng cách sửa hoặc thêm keyframe, nên kết quả hiển thị đúng như nhau trên mọi frame.
 
-> **Bấm Save trong CVAT trước khi áp dụng.** Cả hai công cụ ghi thẳng lên server, nên thay đổi chưa lưu trên trang sẽ bị mất. Extension tự tải lại trang sau khi lưu.
+> **Extension v1.8:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
+>
+> **Script Python:** vẫn ghi trực tiếp lên server. Save trong CVAT trước khi chạy script, rồi tải lại trang CVAT để xem kết quả.
 
 ---
 
@@ -19,13 +21,22 @@ CVAT nội suy tuyến tính giữa các keyframe. Cả hai công cụ đều l�
 
 ### Cài đặt
 
-1. Mở `chrome://extensions` và bật **Developer mode**.
+1. Dùng Chrome hiện đại (111 trở lên), mở `chrome://extensions` và bật **Developer mode**.
 2. Bấm **Load unpacked**, chọn thư mục `cvat-resize-extension`.
 3. Mở một trang job CVAT, ở góc dưới bên phải sẽ có nút **Resize track**.
 
-Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.vantixapps.net`. Nếu dùng server CVAT khác, thêm domain đó vào hai mục `matches` trong `manifest.json` rồi reload extension.
+Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.vantixapps.net`. Nếu dùng server CVAT khác, thêm domain đó vào cả hai mục `content_scripts[].matches` và mục `web_accessible_resources[].matches` trong `manifest.json` rồi reload extension.
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
+
+### Mới trong v1.8.0
+
+- Áp dụng trực tiếp vào annotation đang mở; hỗ trợ Undo/Redo của CVAT.
+- Đọc cả thay đổi chưa Save và chặn ghi đè nếu track đã đổi trong lúc xem trước.
+- Dừng được quét preview; bộ lọc rỗng có thông báo và nút bỏ lọc.
+- Sửa kế thừa attribute, hoàn tác kích thước, dữ liệu PCD lỗi và nội suy ngoài khoảng tự khớp.
+
+**Nâng cấp:** reload extension tại `chrome://extensions`, rồi tải lại trang CVAT một lần để nạp bridge mới. Những lần **Áp dụng** sau không cần tải lại trang.
 
 ### Quy trình
 
@@ -35,8 +46,13 @@ Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` r�
    - **Giữ đáy cố định**: khi đổi chiều cao, đáy box không đổi (bỏ chọn thì giữ tâm).
    - **Khóa kích thước cả track**: kéo đổi kích thước ở một frame thì cả track đổi theo.
    - **Tự động outside ≤ N**: frame nào box chứa từ N điểm trở xuống thì bị ẩn.
-4. Bấm **Xem trước**. Màn hình chỉnh sửa mở toàn cửa sổ.
-5. Chỉnh nếu cần, rồi bấm **Áp dụng**.
+4. Bấm **Xem trước**. Màn hình chỉnh sửa mở toàn cửa sổ. Nếu đang quét point cloud, bấm lại nút tiến độ để dừng; các lượt tải đang chạy sẽ kết thúc trước khi nút sẵn sàng lại.
+5. Chỉnh nếu cần, rồi bấm **Áp dụng**: box cập nhật ngay trong CVAT, không tải lại trang.
+6. Bấm **Save của CVAT** để lưu lên server. Undo/Redo của CVAT hoàn tác/làm lại cả lần áp dụng.
+
+Nếu bạn sửa chính track đó trong CVAT sau khi mở tool, **Áp dụng** sẽ từ chối ghi đè. Bấm **Tải lại trong tool** rồi xem trước lại. Những thay đổi chưa Save của các object khác được giữ nguyên.
+
+Tool dùng API Commit của CVAT, nên số **# trên sidebar có thể đổi** sau khi áp dụng. Undo/Redo dùng cơ chế gốc của CVAT và có thể khiến CVAT cấp lại ID khi Save. Khi CVAT không có plugin API phù hợp, tool báo lỗi và không tự chuyển sang ghi server.
 
 ### Màn hình xem trước
 
@@ -50,6 +66,7 @@ Mỗi frame hiện 3 mặt nhìn theo trục của box: Top (x–y), Side (x–z
   - **chìa khoá**: bật / tắt keyframe (nền đỏ = đang bật);
   - **phóng to** một frame.
 - Thanh trên cùng có bộ lọc **Keyframe / Frame ẩn / Frame khớp kém**, nút **Xoá keyframe** (giữ keyframe đầu và cuối), **⛶** toàn màn hình và **✕** đóng.
+- Nếu bộ lọc không có kết quả, màn hình báo rõ và có nút **Bỏ bộ lọc**. Số frame trên thanh công cụ hiển thị số khớp / tổng số khi đang lọc.
 - Frame đang thao tác có viền đỏ.
 - Nút **?** cạnh tiêu đề mở hướng dẫn đầy đủ.
 
@@ -83,7 +100,7 @@ Frame bạn đã sửa tay được giữ nguyên và dùng làm điểm neo. Fr
 
 ### Dữ liệu và quyền
 
-- Extension chỉ gọi tới chính server CVAT đang mở (`/api/...`), dùng phiên đăng nhập sẵn có của trang. Không gửi dữ liệu đi nơi khác, không khai báo `permissions` nào.
+- Extension đọc annotation đang mở qua plugin API của CVAT và chỉ tải point cloud từ chính server CVAT (`/api/...`). **Áp dụng** chỉ sửa bộ nhớ của CVAT; việc ghi server thuộc nút Save hoặc Auto Save nếu bạn đã bật trong CVAT. Không gửi dữ liệu đi nơi khác, không khai báo `permissions` nào.
 - Point cloud và annotation chỉ nằm trong bộ nhớ của tab trong lúc xử lý và mất khi đóng hoặc tải lại trang. Không lưu xuống máy, không mã hoá hay sao chép sang nơi khác. `localStorage` chỉ lưu vị trí của panel.
 - Đọc point cloud dạng PCD `ascii` và `binary` (tọa độ float).
 
@@ -113,6 +130,20 @@ python3 cvat_resize_track.py --job 97 --track 45 --scale 1.1 --dry-run
 | `--dry-run` | Chỉ in ra thay đổi, không lưu |
 
 Đăng nhập bằng `--token` / `CVAT_TOKEN`, hoặc `--user` / `--password` (`CVAT_USER` / `CVAT_PASSWORD`). Nên đặt token qua biến môi trường, không gõ trên dòng lệnh, để token không nằm lại trong lịch sử shell. Sau khi lưu, script đọc lại dữ liệu từ server để kiểm tra.
+
+---
+
+## Kiểm thử
+
+Dùng Node.js 18 trở lên, không cần cài package:
+
+```sh
+node --check cvat-resize-extension/content.js
+node --check cvat-resize-extension/page-bridge.js
+node --test tests/*.test.cjs
+```
+
+21 kiểm thử tự động bao phủ hình học, PCD, preview, xung đột và áp dụng qua bridge. Đã thử luồng cập nhật box/class, Undo/Redo và không reload trên CVAT 3D thật qua Ego; dữ liệu server không đổi trong lần kiểm thử. Xem [báo cáo Apply trực tiếp](docs/LIVE-APPLY.md) và [báo cáo trải nghiệm](docs/EGO-UX-AUDIT.md) để biết phạm vi và giới hạn đã kiểm chứng.
 
 ---
 

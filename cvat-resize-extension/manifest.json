@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CVAT Track Resizer",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Resize every frame of a CVAT track (3D cuboid or 2D rectangle) to one size.",
   "icons": {
     "16": "icons/icon16.png",
@@ -10,6 +10,19 @@
     "128": "icons/icon128.png"
   },
   "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://app.cvat.ai/*",
+        "https://cvat-test.vantixapps.net/*"
+      ],
+      "js": [
+        "page-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
     {
       "matches": [
         "http://localhost/*",
@@ -35,5 +48,6 @@
         "https://cvat-test.vantixapps.net/*"
       ]
     }
-  ]
+  ],
+  "minimum_chrome_version": "111"
 }
