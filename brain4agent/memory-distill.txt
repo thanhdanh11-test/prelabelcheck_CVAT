@@ -11,9 +11,10 @@
 </agent_startup_protocol>
 
 <project_foundation>
-- Tech Stack: [Cập nhật công nghệ chính của dự án]
-- Data/State: [Cập nhật cơ chế lưu trữ dữ liệu chính]
+- Tech Stack: Chrome MV3 extension, JavaScript thuần, Canvas/WebGL; Node built-in test runner (không npm dependencies).
+- Data/State: CVAT MAIN bridge Apply/Undo; Save native; point cloud RAM/IndexedDB; checklist localStorage theo origin/job/server track ID.
 - Planning & RFCs: Thư mục `planning/` lưu trữ các bản kế hoạch theo định dạng `[STT]_[YYYY-MM-DD]_[Ten-Ngan]` (25-35 ký tự, cố định path).
+- Release: v1.12.0 trên main; giữ camera, checklist item, khớp một frame và UI gọn. 80/80 tests; xem docs/REVIEW-WORKFLOW.md.
 </project_foundation>
 
 <brain_file_roles>

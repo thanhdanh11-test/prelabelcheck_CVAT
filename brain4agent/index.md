@@ -18,6 +18,7 @@ Khi nhận nhiệm vụ, Agent tra cứu bảng này để đọc **chính xác*
 | **Kiến trúc dữ liệu & Data Flow** | [`-data-architecture.md`](-data-architecture.md) | Cấu trúc dữ liệu, cơ chế lưu trữ và State Flow. |
 | **Lộ trình nâng cấp & Ý tưởng** | [`roadmap.md`](roadmap.md) | Active tasks, Kho Ý Tưởng (Idea Vault) và các mốc đã hoàn thành. |
 | **Lịch sử cập nhật** | [`changelog.md`](changelog.md) | Lịch sử Semantic Releases (vX.Y.Z). |
+| **Extension review workflow v1.12.0** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Camera, checklist, UI; khớp một frame trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
 | **Tài liệu kỹ thuật module** | [`docs/`](../docs/) | Thư mục chứa tài liệu chuyên trách 1-1 cho từng module. |
 
 ---
@@ -38,6 +39,8 @@ project-root/
 ├── CLAUDE.md                         # [SHIM] Điểm nạp tự động của Claude Code — chỉ chứa @AGENTS.md
 ├── brain4agent-v1.7.1.md   # [MARKER] Phiên bản khung não — soi nhanh ở root
 ├── README.md                         # Tài liệu giới thiệu và hướng dẫn build dự án
+├── cvat-resize-extension/            # MV3 manifest, content, page-bridge, cloud-cache, lidar-view, review-state, track-split
+├── tests/                            # Node tests + IndexedDB browser harness
 ├── brain4agent/                      # [BỘ NHỚ DỰ ÁN] Single Source of Truth
 │   ├── memory/hot/                   # [HOT MEMORY] Ký ức nóng phiên (today.md, state.json)
 │   ├── memory-distill.txt            # [KERNEL] Bản cô đọng tối thượng (< 100 dòng)

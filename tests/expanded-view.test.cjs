@@ -57,12 +57,12 @@ test('camera basis stays orthonormal through orbit angles',()=>{
 test('late 3D cloud cannot overwrite a newer frame or reopen a closed preview',async()=>{
   const context=vm.createContext({});
   vm.runInContext(`
-    let lidarRequest=0,zoomFrame=1,lidar=null,plan={track:{uiId:7}};
+    let lidarRequest=0,zoomFrame=1,lidar=null,lidarCamera=null,plan={track:{uiId:7}};
     const pending={},clouds=[],messages={textContent:''};
     const $=selector=>selector==='.lidar-message'?messages:{checked:true};
     const stateAt=()=>({points:[1,2,3],outside:false}),boxFrame=p=>p;
     const loadCloud=f=>new Promise(resolve=>pending[f]=resolve);
-    globalThis.CvatLidarView={create:()=>({clear(){},setBox(){},reset(){},resize(){},setCloud(x){clouds.push(x)}})};
+    globalThis.CvatLidarView={create:()=>({clear(){},getCamera(){return null;},setBox(){},restoreCamera(){},resize(){},setCloud(x){clouds.push(x)}})};
   `+source.slice(source.indexOf('  async function loadLidar('),source.indexOf('  function selectKeyboardView(')),context);
   const run=code=>vm.runInContext(code,context);
   const first=run('loadLidar(1)');run('zoomFrame=2');const second=run('loadLidar(2)');

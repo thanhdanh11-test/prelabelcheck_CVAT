@@ -380,6 +380,16 @@
   .row input[type=number] { width: 76px; }
   label.row { flex-wrap: nowrap; }
   .tools { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
+  .review-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+  .review-row label { margin: 0; }
+  .review-count { color: var(--muted); font-size: 12px; }
+  .review-next { width: 100%; margin-top: 8px; }
+  .option-grid { display: grid; gap: 0; }
+  .option-grid > label, .option-row { min-height: 40px; display: flex; align-items: center; margin: 0; }
+  .option-row { display: grid; grid-template-columns: minmax(0, 1fr) 68px 42px; gap: 8px; }
+  .option-row label { margin: 0; }
+  .option-row input[type=number] { width: 100%; }
+  .option-row > span { color: var(--muted); font-size: 12px; }
   .vals { margin-top: 8px; }
   .vals span { color: var(--body); }
   .vals { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
@@ -417,8 +427,6 @@
   .btn:disabled { opacity: .35; cursor: default; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
   .actions .btn { height: 44px; }
-  .warn { margin: 0 0 8px; padding: 8px 12px; background: var(--primary); color: var(--on-primary); }
-  .warn b { color: var(--on-primary); font-weight: 700; }
   .status { margin-top: 16px; color: var(--body); white-space: pre-wrap; }
   .status:empty { display: none; }
   .status.err { color: var(--warning); }
@@ -473,19 +481,18 @@
   .lidar-slot .cap { top: 8px; bottom: auto; }
   .lidar-slot .reset-camera { position: absolute; top: 8px; right: 8px; }
   .lidar-message { position: absolute; left: 12px; bottom: 8px; pointer-events: none; color: var(--body); }
-  .zoom-hint { padding: 4px 12px; border-top: 1px solid var(--hairline); font-size: 11px; }
   .zoom-status { padding: 0 12px; color: var(--warning); max-height: 60px; overflow: auto; }
   .zoom-status:empty { display: none; }
+  .frame-fitbar { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; padding: 7px 12px; border-bottom: 1px solid var(--hairline); }
+  .frame-fitbar label { margin: 0; }
+  .frame-fit-msg:empty { display: none; }
+  .frame-fit-msg { flex: 1; min-width: 180px; font-size: 12px; }
+  .fit-before { color: #ffbd69; }
+  .fit-after { color: #44e5ff; }
+  .frame-fitbar [hidden] { display: none; }
   .zbody canvas { display: block; touch-action: none; }
   .zbody .cap { left: 12px; bottom: 8px; font-size: 11px; }
   .view .cap { top: 6px; bottom: auto; }
-  .view-tools { position: absolute; bottom: 4px; right: 4px; display: flex; gap: 2px; }
-  .view-tools .btn { height: 24px; min-width: 24px; padding: 0 4px; font-size: 11px; background: #181818; }
-  .orientation-options { display: flex; gap: 14px; }
-  .orientation-options label { margin: 0; }
-  .orientation-options .x { color: #ff5252; }
-  .orientation-options .y { color: #61d66b; }
-  .orientation-options .z { color: #5f8fff; }
   .nav { display: flex; gap: 4px; align-items: center; }
   .nav .pos { min-width: 72px; text-align: center; color: var(--body); font-size: 12px; }
 </style>
@@ -495,22 +502,25 @@
   <h3><img class="logo" alt=""><span class="name">Track Resizer</span><span class="badge job"></span>
     <button class="btn help-btn" title="Hướng dẫn">?</button><button class="close" title="Đóng">✕</button></h3>
 
-  <div class="warn">Bấm <b>Áp dụng</b> để xem box ngay trong CVAT. Sau đó bấm <b>Save</b> của CVAT để lưu server.</div>
   <div class="lbl">Track</div>
   <div class="row"><select class="track"></select></div>
   <div class="tools">
     <button class="btn pick">Lấy object đang chọn</button>
     <button class="btn refresh">Tải lại</button>
   </div>
+  <div class="review-row"><label><input type="checkbox" class="review-done">Đã kiểm tra</label><span class="review-count"></span></div>
+  <button class="btn review-next">Item chưa kiểm tra tiếp</button>
   <div class="lbl">Kích thước</div>
   <div class="vals"></div>
   <div class="lbl">Tùy chọn</div>
-  <label><input type="checkbox" class="bottom" checked>Giữ đáy cố định</label>
-  <label><input type="checkbox" class="lock" checked>Khóa kích thước cả track</label>
-  <label class="row"><span><input type="checkbox" class="auto" checked>Tự động outside ≤</span>
-    <input type="number" class="thr" min="0" step="1" value="6" title="Số điểm tối đa trong box để coi là outside"></label>
-  <label class="row"><span><input type="checkbox" class="split-outside" checked>Tách object khi outside ≥</span>
-    <input type="number" class="split-gap" min="1" step="1" value="6" title="Số frame outside liên tiếp trước khi xuất hiện lại"><span>frame</span></label>
+  <div class="option-grid">
+    <label><input type="checkbox" class="bottom" checked>Giữ đáy cố định</label>
+    <label><input type="checkbox" class="lock" checked>Khóa kích thước cả track</label>
+    <div class="option-row"><label><input type="checkbox" class="auto" checked>Tự động outside ≤</label>
+      <input id="outside-threshold" type="number" class="thr" min="0" step="1" value="6" aria-label="Ngưỡng điểm outside"><span>điểm</span></div>
+    <div class="option-row"><label><input type="checkbox" class="split-outside" checked>Tách khi outside ≥</label>
+      <input id="outside-gap" type="number" class="split-gap" min="1" step="1" value="6" aria-label="Ngưỡng frame tách object"><span>frame</span></div>
+  </div>
   <div class="actions">
     <button class="btn preview">Xem trước</button>
     <button class="btn primary apply" disabled>Áp dụng</button>
@@ -518,24 +528,17 @@
   <div class="status" role="status" aria-live="polite"></div>
   <div class="split-summary" role="status" aria-live="polite" hidden></div>
   <div class="cache-controls">
-    <div class="lbl">Point cloud dùng chung · cache tối đa 1 GB</div>
+    <div class="lbl">Point cloud</div>
     <div class="tools"><button class="btn cache-toggle">Tải nền toàn job</button><button class="btn cache-clear">Xóa cache</button></div>
-    <div class="cache-status" role="status" aria-live="polite">Tự tải nền khi mở job 3D. Item đang xem được ưu tiên.</div>
+    <div class="cache-status" role="status" aria-live="polite"></div>
   </div>
   <div class="edit-sec" hidden>
-    <div class="lbl">Cuboid orientation</div>
-    <div class="orientation-options">
-      <label class="x"><input type="checkbox" class="orient-x" checked>X</label>
-      <label class="y"><input type="checkbox" class="orient-y" checked>Y</label>
-      <label class="z"><input type="checkbox" class="orient-z" checked>Z</label>
-    </div>
-    <p>Kéo chấm tròn để xoay theo view; giữ Shift để bước 15°. ↶ / ↷ xoay 5°, 180° đảo hướng.</p>
     <div class="lbl">Chỉnh trong xem trước</div>
     <table class="sumtab"></table>
     <div class="lbl">Tự khớp</div>
     <select class="fit-kind">
-      <option value="rigid">Xe, vật cứng (khớp theo hình dạng)</option>
-      <option value="soft">Người, xe đạp (theo cụm điểm)</option>
+      <option value="rigid">Xe, vật cứng</option>
+      <option value="soft">Người, xe đạp</option>
     </select>
     <div class="fitgrid">
       <label>Frame đầu<input type="number" class="fit-a" min="0" step="1"></label>
@@ -551,7 +554,7 @@
     <li>Bấm <b>Áp dụng</b> cập nhật box trong CVAT; bấm <b>Save</b> của CVAT để lưu server.</li></ul>
   <h5>Chỉnh box</h5>
   <ul><li>Kéo <b>trong box</b> để di chuyển, kéo <b>cạnh</b> để đổi kích thước, kéo <b>chấm tròn phía trên box</b> để xoay theo view: Top quanh Z, Side quanh Y, Front quanh X.</li>
-    <li>Giữ <b>Shift</b> khi xoay để bước 15°. Các nút ↶ / ↷ xoay 5° theo màn hình; <b>180°</b> đảo hướng theo view. Cuboid orientation bật/tắt mũi tên X đỏ, Y xanh lá, Z xanh dương.</li>
+    <li>Giữ <b>Shift</b> khi kéo tay nắm xoay để bước 15°. Hướng box luôn hiện: X đỏ, Y xanh lá, Z xanh dương.</li>
     <li>Sửa ở frame nào, frame đó thành keyframe; các frame giữa hai keyframe tự nội suy.</li>
     <li>Nút <b>con mắt</b>: ẩn / hiện frame. Nút <b>chìa khoá</b>: bật / tắt keyframe. Nền đỏ = đang bật.</li>
     <li>Class và attribute đổi ngay trên đầu mỗi frame (attribute đổi theo frame tạo keyframe).</li></ul>
@@ -560,8 +563,17 @@
     <li>Khớp mọi frame từ frame đầu tới frame cuối; frame sửa tay được giữ nguyên.</li>
     <li><b>Xe, vật cứng</b>: xe đỗ, xe chạy, cột, rào. <b>Người, xe đạp</b>: chỉ khớp vị trí, hướng lấy theo keyframe.</li>
     <li>Frame khớp không chắc được đánh dấu: lọc bằng <b>Frame khớp kém</b> để xem lại.</li></ul>
+  <h5>Khớp frame này</h5>
+  <ul><li>Mặc định dịch tâm XY, giữ độ cao, kích thước và hướng; bật <b>Cho phép xoay</b> để chỉnh yaw tối đa ±15°. Dịch tối đa 50 cm, yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
+    <li>Cam là box hiện tại, xanh là đề xuất. <b>Chấp nhận</b> chỉ đổi bản nháp của frame đó; <b>Hủy</b> bỏ đề xuất. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
+  <h5>Camera và kiểm tra item</h5>
+  <ul><li>3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom. Đổi frame giữ hướng nhìn và mức zoom tương đối, camera đi theo box. <b>Về box</b> hoặc double-click đặt lại góc nhìn.</li>
+    <li><b>Đã kiểm tra</b> là dấu thủ công trên trình duyệt theo job và ID server; không tự đánh dấu sau khi khớp và không Save annotation. Item chưa có ID server chỉ giữ dấu trong phiên tab. Có thể bỏ dấu để kiểm tra lại.</li></ul>
+  <h5>Tùy chọn và cache</h5>
+  <ul><li>Giữ đáy khi đổi kích thước; khóa kích thước áp dụng thay đổi kích thước cho cả track. Tự động outside dựa vào số điểm; tách object theo số frame outside liên tiếp.</li>
+    <li>Point cloud dùng chung giữa các item. Tự tải nền toàn job, ưu tiên frame đang xem; cache trình duyệt tối đa 1 GiB mỗi server. Xóa cache không xóa annotation hoặc dấu đã kiểm tra.</li></ul>
   <h5>Phím tắt</h5>
-  <ul><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
+  <ul><li>Chọn view rồi dùng ← ↑ ↓ → để dịch 5 cm; Shift: 1 cm, Alt: 20 cm; PageUp/Down: nâng/hạ.</li><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
  </div>
  <div class="editor" hidden tabindex="-1">
   <div class="fbar">
@@ -578,13 +590,19 @@
   <div class="filter-empty" hidden role="status">Không có frame nào khớp bộ lọc đang chọn.<br><button class="btn reset-filters">Bỏ bộ lọc</button></div>
   <div class="zoom" hidden>
     <div class="chead zhead"></div>
+    <div class="frame-fitbar">
+      <button class="btn sm fit-current">Khớp frame này</button>
+      <label><input type="checkbox" class="fit-current-yaw">Cho phép xoay</label>
+      <span class="frame-fit-msg" role="status" aria-live="polite"></span>
+      <span class="fit-legend" hidden><span class="fit-before">Cam: hiện tại</span> · <span class="fit-after">Xanh: đề xuất</span></span>
+      <button class="btn sm primary fit-accept" hidden>Chấp nhận</button><button class="btn sm fit-cancel" hidden>Hủy</button>
+    </div>
     <div class="zbody">
       <div class="lidar-slot"><canvas class="lidar-canvas" aria-label="LiDAR 3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom"></canvas><div class="cap">LiDAR 3D · item đang chọn</div><button class="btn sm reset-camera" title="Đưa camera về box đang chọn">Về box</button><div class="lidar-message" role="status"></div></div>
       <div class="view"><canvas data-v="0" width="0" height="0"></canvas><div class="cap">Top · x–y</div></div>
       <div class="view"><canvas data-v="1" width="0" height="0"></canvas><div class="cap">Side · x–z</div></div>
       <div class="view"><canvas data-v="2" width="0" height="0"></canvas><div class="cap">Front · y–z</div></div>
     </div>
-    <div class="zoom-hint">3D: kéo trái xoay góc nhìn · kéo phải pan · cuộn zoom. Chọn view rồi dùng ← ↑ ↓ →: 5 cm · Shift: 1 cm · Alt: 20 cm · PageUp/Down: cao/thấp · Ctrl/⌘Z: Undo · D/F: đổi frame · Esc: thu nhỏ.</div>
     <div class="zoom-status" role="status" aria-live="polite"></div>
   </div>
  </div>
@@ -602,6 +620,7 @@
   root.querySelectorAll(".logo").forEach((img) => (logoUrl ? (img.src = logoUrl) : img.remove()));
   let jobId = null, job = null, annotations = null, labels = [], plan = null, planning = 0, dataGeneration = 0, saving = false, previewRun = null;
   let previewSettled = Promise.resolve(), switchGeneration = 0;
+  const reviews = globalThis.CvatReviewState.create({ getItem: key => localStorage.getItem(key), setItem: (key, value) => localStorage.setItem(key, value) });
   const previews = new Map(); // Per-item drafts only live in this tab; no point clouds/DOM here.
 
   for (const type of ["click", "change", "input", "pointerdown", "keydown"]) {
@@ -631,6 +650,35 @@
   }
 
   const selectedTrack = () => annotations && annotations.tracks.find((t) => t.uiId === Number($(".track").value));
+
+  function renderReviewState() {
+    const track = selectedTrack(), tracks = annotations?.tracks || [];
+    $(".review-done").disabled = !track;
+    $(".review-done").checked = !!track && reviews.has(jobId, track);
+    const done = tracks.filter(t => reviews.has(jobId, t)).length;
+    $(".review-count").textContent = `${done}/${tracks.length} đã kiểm tra`;
+    $(".review-next").disabled = !tracks.some(t => t.uiId !== track?.uiId && !reviews.has(jobId, t) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
+    for (const option of $(".track").options) {
+      option.dataset.baseLabel ??= option.textContent;
+      const item = tracks.find(t => t.uiId === Number(option.value));
+      option.textContent = `${item && reviews.has(jobId, item) ? "✓ " : ""}${option.dataset.baseLabel}`;
+    }
+  }
+
+  function toggleItemReviewed() {
+    const track = selectedTrack();
+    if (!track) return;
+    const checked = $(".review-done").checked, result = reviews.set(jobId, track, checked);
+    renderReviewState();
+    if (!result.persistent) setStatus("Dấu kiểm tra chỉ được giữ trong phiên tab này.", track.id != null);
+  }
+
+  async function nextUncheckedItem() {
+    const tracks = annotations?.tracks || [], current = selectedTrack();
+    const at = tracks.indexOf(current), ordered = [...tracks.slice(at + 1), ...tracks.slice(0, at)];
+    const next = ordered.find(t => !reviews.has(jobId, t) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
+    if (next) await switchTrack(next.uiId);
+  }
 
   // A setting changed: a preview being built is out of date, and a shown one must be rebuilt
   // before saving. Hand edits stay on screen until then.
@@ -666,9 +714,9 @@
       const gap = readSplitGap();
       plan.cuts = CvatTrackSplit.cuts(plan.shapes, gap, job.start_frame, job.stop_frame);
       summary.textContent = !gap ? "Không tách object theo outside." : !plan.cuts.length ?
-        `Giữ 1 object: không có lần xuất hiện lại sau ≥ ${gap} frame outside.` :
-        `Sẽ tạo ${plan.cuts.length + 1} object riêng. ` + plan.cuts.map((cut, i) =>
-          `Object ${i + 2} bắt đầu frame ${cut.reappearFrame} (mất dấu ${cut.hiddenFrames} frame).`).join(" ");
+        "Giữ 1 object." :
+        `Sẽ tạo ${plan.cuts.length + 1} object riêng · ` + plan.cuts.map((cut, i) =>
+          `Object ${i + 2}: frame ${cut.reappearFrame}`).join(" ");
       $(".apply").disabled = plan.stale || saving;
     } catch (error) {
       plan.cuts = [];
@@ -711,7 +759,8 @@
         }).join("")
       : `<option value="">(job này không có track nào)</option>`;
     if (keep && annotations.tracks.some((t) => t.uiId === keep)) sel.value = String(keep);
-    setStatus(`${annotations.tracks.length} track. Dữ liệu đang mở trong CVAT, gồm cả thay đổi chưa Save.`);
+    renderReviewState();
+    setStatus(`${annotations.tracks.length} track.`);
     renderInputs();
     await prepareCache(job);
   }
@@ -824,7 +873,7 @@
     let settled;
     previewSettled = new Promise(resolve => { settled = resolve; });
     $(".preview").title = "Bấm lần nữa để dừng xem trước";
-    setStatus($(".auto").checked ? "Đang quét point cloud. Bấm nút tiến độ để dừng." : "Đang dựng xem trước…");
+    setStatus($(".auto").checked ? "Đang quét point cloud…" : "Đang dựng xem trước…");
     if ($(".auto").checked) progress($(".preview"), 0);
     Object.assign(cloudStats, { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: performance.now() });
     try {
@@ -840,7 +889,7 @@
       $(".preview").disabled = false;
       $(".preview").title = "";
       progress($(".preview"), null, "Xem trước");
-      if (cancelled && job && !plan) setStatus("Đã dừng xem trước. Có thể đổi cài đặt và xem trước lại.");
+      if (cancelled && job && !plan) setStatus("Đã dừng xem trước.");
       logCloudStats("Xem trước");
       settled();
     }
@@ -854,8 +903,7 @@
       ? `\nOutside (≤ ${plan.threshold} điểm): frame ${ranges(hiddenFrames).map(([a, b]) => a === b ? a : `${a}–${b}`).join(", ")}.`
       : `\nKhông frame nào có ≤ ${plan.threshold} điểm.`;
     const cuboid = plan.track.shapes[0].type === "cuboid";
-    setStatus(`Track #${plan.track.uiId}: ${plan.shapes.length} keyframe sau khi đổi.${hiddenText}\n` +
-      (cuboid ? "Chỉnh box trên các mặt bên phải nếu cần, rồi bấm \"Áp dụng\"." : "Bấm \"Áp dụng\" để hiện trong CVAT, rồi Save trong CVAT để lưu."));
+    setStatus(`Track #${plan.track.uiId}: ${plan.shapes.length} keyframe.${hiddenText}`);
     if (cuboid) openEditor();
   }
 
@@ -881,7 +929,7 @@
       if (applyingJob !== jobId || applyingPlan !== plan) return;
       closePlan();
       await loadData(result.clientID);
-      setStatus(result.warning || `Đã áp dụng ${result.trackCount || 1} object vào CVAT, chưa lưu server. Bấm Save trong CVAT để lưu; Undo/Redo dùng nút của CVAT.`, !!result.warning);
+      setStatus(result.warning || `Đã áp dụng ${result.trackCount || 1} object vào CVAT, chưa lưu server.`, !!result.warning);
     } catch (e) {
       if (applyingJob === jobId) {
         if (plan === applyingPlan) plan.stale = true;
@@ -906,12 +954,14 @@
   async function switchTrack(id) {
     if (fitting) {
       $(".track").value = String(plan.track.uiId);
+      renderReviewState();
       return setStatus("Dừng tự khớp trước khi chuyển item.", true);
     }
     const generation = ++switchGeneration;
     savePreview();
     closePlan();
     $(".track").value = String(id);
+    renderReviewState();
     renderInputs();
     // Let an old outside scan finish cancellation before building the next item.
     await previewSettled;
@@ -964,7 +1014,8 @@
   const loadState = new Map(); // frame -> "loading" | Error; absent = nothing pending
   const queue = [];
   let frames = [], undoStack = [], drag = null, zoomFrame = null, activeFrame = null, editGen = 0, loading = 0, drawPending = false;
-  let lidar = null, lidarRequest = 0, keyboardView = 0, nudgeKey = null;
+  let lidar = null, lidarRequest = 0, keyboardView = 0, nudgeKey = null, lidarCamera = null;
+  let frameFit = null, frameFitEpoch = 0;
 
   const mul = (R, v) => R.map((r) => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
   const mulT = (R, v) => [0, 1, 2].map((j) => R[0][j] * v[0] + R[1][j] * v[1] + R[2][j] * v[2]);
@@ -1005,13 +1056,6 @@
     setActive(f);
     modelChanged();
   }
-
-  function rotationButtons(v) {
-    return `<div class="view-tools">${[[5, "↶", "ngược chiều kim đồng hồ 5°"], [-5, "↷", "theo chiều kim đồng hồ 5°"], [180, "180°", "180°"]]
-      .map(([degrees, text, label]) => `<button class="btn" data-act="rotate" data-turn="${degrees}" title="${v.cap}: xoay ${label} quanh ${v.axis}" aria-label="${v.cap}: xoay ${label}">${text}</button>`).join("")}</div>`;
-  }
-
-  zoom.querySelectorAll(".view").forEach((view, i) => view.insertAdjacentHTML("beforeend", rotationButtons(VIEWS[i])));
 
   const stateAt = (f) => positionAt(plan.shapes, f);
   const keyAt = (f) => plan.shapes.find((s) => s.frame === f);
@@ -1198,6 +1242,7 @@
   }
 
   function modelChanged() {
+    cancelFrameFit();
     updateSplitPreview();
     applyFilters();
     scheduleDraw();
@@ -1425,6 +1470,114 @@
     });
   }
 
+  // Conservative same-frame proposal: reuse the existing local face alignment,
+  // with a fixed support set so iterations cannot walk onto a neighboring object.
+  function fitCurrentPoints(cloud, points, allowYaw = false) {
+    if (points.length < 9 || !points.slice(0, 9).every(Number.isFinite) || points.slice(6, 9).some(n => n <= 0)) throw new Error("Box không hợp lệ.");
+    if (Math.abs(points[3]) > 0.01 || Math.abs(points[4]) > 0.01) throw new Error("Bản thử chỉ khớp box gần thẳng đứng (rx/ry ≤ 0,01 rad).");
+    const P0 = poseOf(points), size = points.slice(6, 9), support = [];
+    const beforeCount = countInside(cloud, points);
+    if (beforeCount < 30) throw new Error(`Chỉ có ${beforeCount} điểm trong box; cần ít nhất 30 điểm để đề xuất khớp.`);
+    forObjectPoints(cloud, P0, size, 0.35, k => support.push(cloud[k], cloud[k + 1], cloud[k + 2]));
+    if (support.length / 3 < 30) throw new Error("Không đủ điểm phía trên đáy box để khớp.");
+    const stride = Math.max(1, Math.ceil(support.length / 3 / 2000));
+    const sample = support.filter((_, i) => Math.floor(i / 3) % stride === 0);
+    // All candidates score the SAME points. Outside support is penalized; point
+    // count alone is not an accuracy or confidence score.
+    const cost = P => {
+      const c = Math.cos(P.yaw), s = Math.sin(P.yaw);
+      let sum = 0;
+      for (let k = 0; k < sample.length; k += 3) {
+        const dx = sample[k] - P.x, dy = sample[k + 1] - P.y;
+        const x = Math.abs(c * dx + s * dy) - size[0] / 2;
+        const y = Math.abs(-s * dx + c * dy) - size[1] / 2;
+        sum += Math.min(Math.abs(x), Math.abs(y), 0.5) + 2 * Math.hypot(Math.max(0, x), Math.max(0, y));
+      }
+      return sum / (sample.length / 3);
+    };
+    let best = { ...P0 }, bestCost = cost(P0);
+    const seeds = [P0];
+    if (allowYaw) {
+      for (const deg of [-15, -10, -5, 5, 10, 15]) seeds.push({ ...P0, yaw: wrapAngle(P0.yaw + deg * Math.PI / 180) });
+      seeds.push(...lShapePoses(sample, P0, size, 0.35));
+    }
+    for (const seed of seeds) {
+      let candidate = seed;
+      if (Math.abs(wrapAngle(candidate.yaw - P0.yaw)) > Math.PI / 12 + 1e-9) continue;
+      for (let i = 0; i < 4; i++) candidate = contain(sample, candidate, size);
+      if (Math.hypot(candidate.x - P0.x, candidate.y - P0.y) > 0.5) continue;
+      const value = cost(candidate);
+      if (value < bestCost - 1e-6) { best = candidate; bestCost = value; }
+    }
+    const proposed = points.slice();
+    proposed[0] = best.x; proposed[1] = best.y;
+    if (allowYaw) proposed[5] = best.yaw;
+    const distance = Math.hypot(best.x - P0.x, best.y - P0.y);
+    const angle = wrapAngle(proposed[5] - points[5]) * 180 / Math.PI;
+    return { points: proposed, beforeCount, afterCount: countInside(cloud, proposed), distance, angle,
+      changed: distance > 1e-4 || Math.abs(angle) > 0.01 };
+  }
+
+  function renderFrameFit(message = "") {
+    const pending = frameFit?.pending, proposal = frameFit && !pending;
+    $(".fit-current").disabled = !!pending || !!fitting || zoomFrame === null || !!(plan && stateAt(zoomFrame)?.outside);
+    $(".fit-current-yaw").disabled = !!pending;
+    $(".fit-accept").hidden = !proposal;
+    $(".fit-cancel").hidden = !frameFit;
+    $(".fit-legend").hidden = !proposal;
+    $(".frame-fit-msg").textContent = message || (pending ? "Đang tính đề xuất…" : proposal ?
+      `Frame ${frameFit.f} · dịch ${(frameFit.distance * 100).toFixed(1)} cm · xoay ${frameFit.angle.toFixed(1)}° · ${frameFit.beforeCount} → ${frameFit.afterCount} điểm.` :
+      "");
+  }
+
+  function cancelFrameFit() {
+    frameFitEpoch++;
+    frameFit = null;
+    renderFrameFit();
+    scheduleDraw();
+  }
+
+  async function proposeFrameFit() {
+    if (!plan || zoomFrame === null || fitting || saving) return;
+    endDrag();
+    cancelFrameFit();
+    const f = zoomFrame, owner = plan, before = stateAt(f);
+    if (before.outside) return renderFrameFit("Frame đang outside. Chọn frame đang hiện để khớp.");
+    const source = JSON.stringify(plan.shapes), epoch = frameFitEpoch, allowYaw = $(".fit-current-yaw").checked;
+    frameFit = { f, owner, source, pending: true };
+    renderFrameFit();
+    try {
+      const F = boxFrame(before.points);
+      const xyz = await nearCloud(plan.track.clientID ?? plan.track.id, f, F.center, F.reach + 1);
+      if (epoch !== frameFitEpoch || owner !== plan || zoomFrame !== f) return;
+      if (source !== JSON.stringify(plan.shapes)) { cancelFrameFit(); return; }
+      const result = fitCurrentPoints(xyz, before.points, allowYaw);
+      if (!result.changed) { cancelFrameFit(); return renderFrameFit("Chưa tìm thấy điều chỉnh tốt hơn trong phạm vi 50 cm. Box giữ nguyên."); }
+      frameFit = { ...result, f, owner, source };
+      renderFrameFit(); scheduleDraw();
+    } catch (error) {
+      if (epoch !== frameFitEpoch) return;
+      cancelFrameFit(); renderFrameFit(error.message);
+    }
+  }
+
+  function acceptFrameFit() {
+    const proposal = frameFit;
+    if (!proposal || proposal.pending || fitting || saving) return;
+    if (proposal.owner !== plan || proposal.f !== zoomFrame || proposal.source !== JSON.stringify(plan.shapes) || plan.stale) {
+      cancelFrameFit(); return renderFrameFit("Box hoặc dữ liệu đã đổi. Chạy khớp lại trước khi chấp nhận.");
+    }
+    const before = snapshot(), f = proposal.f;
+    // Pin adjacent states BEFORE editing, so this local operation affects only f.
+    if (f > plan.shapes[0].frame) ensureKey(f - 1);
+    if (f < job.stop_frame) ensureKey(f + 1);
+    setGeometry(f, proposal.points.slice(), null);
+    commit(before);
+    modelChanged();
+    renderFrameFit(`Đã nhận frame ${f} vào bản nháp.`);
+    editor.focus({ preventScroll: true });
+  }
+
   async function fitFrame(f, T, size, pred, alt, W, lastN) {
     const centers = Math.hypot(alt.x - pred.x, alt.y - pred.y) > 0.3 ? [pred, alt] : [pred];
     const radius = W + Math.hypot(size[0], size[1]) / 2 + 0.5;
@@ -1601,6 +1754,7 @@
   async function autoFit() {
     if (fitting) { fitting.cancelled = true; return; }
     if (!plan || editor.hidden) return;
+    cancelFrameFit();
     endDrag();
     const run = fitting = { cancelled: false }, gen = editGen;
     const btn = $(".fit");
@@ -1725,7 +1879,7 @@
       plan.flagged = flagged;
       modelChanged();
       progress(btn, 1);
-      setStatus(`Đã tự khớp frame ${a}–${b}. ${flagged.size} frame cần kiểm tra lại. Có thể hoàn tác bằng Ctrl/⌘Z.`);
+      setStatus(`Đã tự khớp frame ${a}–${b}. ${flagged.size} frame cần kiểm tra lại.`);
     } catch (e) {
       setStatus(e.message === "cancelled" ? "Đã dừng tự khớp, track không đổi." : e.message, e.message !== "cancelled");
     } finally {
@@ -1829,7 +1983,8 @@
        <button class="btn sm" data-act="go" data-f="${next}" ${next === undefined ? "disabled" : ""} title="Frame sau (F)">›</button></span>
        <button class="btn sm" data-act="unzoom" title="Thu nhỏ (Esc)">✕</button>`));
     drawFrame(zoomCanvases, zoomFrame, st);
-    if (lidar) lidar.setBox(boxFrame(st.points), st.outside, [..."xyz"].map(axis => $(".orient-" + axis).checked));
+    if (lidar) lidar.setBox(boxFrame(st.points), st.outside, [true, true, true],
+      frameFit && !frameFit.pending && frameFit.f === zoomFrame ? boxFrame(frameFit.points) : null);
   }
 
   // While a frame is dragged its views keep the box from the drag start as reference, so the view
@@ -1839,10 +1994,11 @@
     const crop = nearCached(plan.track.clientID ?? plan.track.id, f);
     if (!live && !(crop && cropCovers(crop, ref.slice(0, 3), viewReach(ref)))) ensureLoad(f);
     const err = loadState.get(f) instanceof Error ? loadState.get(f) : null;
-    canvases.forEach((cv, i) => drawView(cv, crop && crop.xyz, st, ref, live ? drag.ranges[i] : viewRange(ref, VIEWS[i]), VIEWS[i], err));
+    const proposed = canvases === zoomCanvases && frameFit && !frameFit.pending && frameFit.f === f ? frameFit.points : null;
+    canvases.forEach((cv, i) => drawView(cv, crop && crop.xyz, st, ref, live ? drag.ranges[i] : viewRange(ref, VIEWS[i]), VIEWS[i], err, proposed));
   }
 
-  function drawView(cv, xyz, st, ref, range, v, err) {
+  function drawView(cv, xyz, st, ref, range, v, err, proposed = null) {
     const W = cv.width;
     if (!W) return;
     const ctx = cv.getContext("2d"), mid = W / 2, scale = mid / range, dot = dotOf(cv);
@@ -1875,7 +2031,7 @@
     const P = (w) => { const q = toLocal(R, w); return [mid + q[v.a] * scale, mid - q[v.b] * scale]; };
     const corners = [];
     for (const i of [-1, 1]) for (const j of [-1, 1]) for (const k of [-1, 1]) corners.push(P(toWorld(S, [i * hs[0], j * hs[1], k * hs[2]])));
-    ctx.strokeStyle = st.outside ? "#da291c" : "#d2d2d2";
+    ctx.strokeStyle = proposed ? "#ffbd69" : st.outside ? "#da291c" : "#d2d2d2";
     ctx.lineWidth = 2 * dot;
     ctx.setLineDash(st.outside ? [8 * dot, 6 * dot] : []);
     ctx.beginPath();
@@ -1885,16 +2041,23 @@
     }
     ctx.stroke();
     ctx.setLineDash([]);
+    if (proposed) {
+      const B = boxFrame(proposed), comparison = [];
+      for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) comparison.push(P(toWorld(B, [x * B.half[0], y * B.half[1], z * B.half[2]])));
+      ctx.strokeStyle = "#44e5ff";
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) for (const bit of [1, 2, 4]) if (!(i & bit)) {
+        ctx.moveTo(...comparison[i]); ctx.lineTo(...comparison[i | bit]);
+      }
+      ctx.stroke();
+    }
     const colors = ["#ff5252", "#61d66b", "#5f8fff"];
     for (let axis = 0; axis < 3; axis++) {
-      if (!$(".orient-" + "xyz"[axis]).checked) continue;
       const direction = orientationInView(st.points, ref, v, axis);
       ctx.strokeStyle = ctx.fillStyle = colors[axis];
       ctx.lineWidth = 2 * dot; ctx.font = `${16 * dot}px sans-serif`;
       ctx.textAlign = "left";
       if (Math.hypot(direction.u, direction.w) < 0.08) {
-        // End-on axis: dot points toward the viewer, cross points away.
-        ctx.fillText(`${direction.depth >= 0 ? "⊙" : "⊗"} ${"XYZ"[axis]}`, 10 * dot, W - 12 * dot);
         continue;
       }
       const end = [0, 0, 0]; end[axis] = hs[axis] * 0.8;
@@ -1977,10 +2140,12 @@
 
   function openZoom(f) {
     endDrag();
+    cancelFrameFit();
     nudgeKey = null;
     setActive(f);
     const changed = zoomFrame !== f;
     zoomFrame = f;
+    renderFrameFit();
     zoom.hidden = false;
     panel.classList.add("frame-expanded");
     selectKeyboardView(keyboardView);
@@ -1991,6 +2156,7 @@
   }
   function closeZoom() {
     if (zoomFrame === null) return;
+    cancelFrameFit();
     endDrag();
     const f = zoomFrame;
     zoomFrame = null;
@@ -2029,7 +2195,7 @@
     editGen++;
     frames = [];
     for (let f = plan.shapes[0].frame; f <= job.stop_frame; f++) frames.push(f);
-    const views = VIEWS.map((v, i) => `<div class="view"><canvas data-v="${i}" width="0" height="0"></canvas><div class="cap">${v.cap}</div>${rotationButtons(v)}</div>`).join("");
+    const views = VIEWS.map((v, i) => `<div class="view"><canvas data-v="${i}" width="0" height="0"></canvas><div class="cap">${v.cap}</div></div>`).join("");
     grid.innerHTML = frames.map((f) => `<div class="cell" data-f="${f}"><div class="chead"></div><div class="views">${views}</div></div>`).join("");
     for (const cell of grid.children) {
       cells.set(Number(cell.dataset.f), { cell, head: cell.firstElementChild, canvases: [...cell.querySelectorAll("canvas")] });
@@ -2048,7 +2214,9 @@
 
   function closeEditor() {
     endDrag();
+    cancelFrameFit();
     clearLidar();
+    lidarCamera = null;
     if (root.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (fitting) fitting.cancelled = true;
     observer.disconnect();
@@ -2087,12 +2255,14 @@
   function clearLidar() {
     lidarRequest++;
     nudgeKey = null;
+    lidarCamera = lidar?.getCamera() || lidarCamera;
     lidar?.clear();
     $(".lidar-message").textContent = "";
   }
 
   async function loadLidar(f) {
     const request = ++lidarRequest;
+    lidarCamera = lidar?.getCamera() || lidarCamera;
     try {
       if (lidar?.lost) {
         const old = $(".lidar-canvas");
@@ -2101,8 +2271,8 @@
       }
       if (!lidar) lidar = globalThis.CvatLidarView.create($(".lidar-canvas"), message => { $(".lidar-message").textContent = message; });
       lidar.clear();
-      lidar.setBox(boxFrame(stateAt(f).points), stateAt(f).outside, [..."xyz"].map(axis => $(".orient-" + axis).checked));
-      lidar.reset();
+      lidar.setBox(boxFrame(stateAt(f).points), stateAt(f).outside, [true, true, true]);
+      lidar.restoreCamera(lidarCamera);
       lidar.resize();
       $(".lidar-message").textContent = "Đang tải LiDAR 3D…";
       const xyz = await loadCloud(f);
@@ -2173,6 +2343,7 @@
     const f = canvasFrame(cv), v = VIEWS[cv.dataset.v], st = stateAt(f), range = viewRange(st.points, v);
     const [u, w] = pointerLocal(cv, e, range), hit = hitTest(cv, st.points, v, u, w, range);
     if (!hit) return;
+    cancelFrameFit();
     e.preventDefault();
     try { cv.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
     drag = { cv, f, vi: Number(cv.dataset.v), pointerId: e.pointerId, ref: st.points, u0: u, w0: w, ...hit,
@@ -2273,8 +2444,11 @@
   $(".only-key").addEventListener("change", modelChanged);
   $(".only-hid").addEventListener("change", modelChanged);
   $(".only-bad").addEventListener("change", modelChanged);
-  for (const axis of "xyz") $(".orient-" + axis).addEventListener("change", scheduleDraw);
   $(".fit").addEventListener("click", autoFit);
+  $(".fit-current").addEventListener("click", proposeFrameFit);
+  $(".fit-current-yaw").addEventListener("change", cancelFrameFit);
+  $(".fit-accept").addEventListener("click", acceptFrameFit);
+  $(".fit-cancel").addEventListener("click", cancelFrameFit);
   $(".eclose").addEventListener("click", () => { if (confirmDrop()) closePlan(); });
 
   // Keys reach this only from inside the panel (the shadow root stops them from reaching CVAT).
@@ -2284,6 +2458,7 @@
     let handled = true;
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z") undo();
     else if (e.key === "Escape" && !$(".helpbox").hidden) $(".helpbox").hidden = true;
+    else if (e.key === "Escape" && frameFit) cancelFrameFit();
     else if (e.key === "Escape" && zoomFrame !== null) closeZoom();
     else if (!e.metaKey && !e.ctrlKey && zoomFrame !== null && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(e.key)) nudgeFrame(e);
     else if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "d" || e.key === "D")) step(-1);
@@ -2359,6 +2534,9 @@
       scheduleDraw();
     }
   }));
+  $(".review-done").addEventListener("change", toggleItemReviewed);
+  $(".review-next").addEventListener("click", guard(nextUncheckedItem));
+  addEventListener("storage", e => { if (e.key === reviews.key(jobId) || e.key === null) renderReviewState(); });
   $(".pick").addEventListener("click", guard(pickActive));
   $(".track").addEventListener("change", guard(() => switchTrack(Number($(".track").value))));
   $(".bottom").addEventListener("change", markStale);

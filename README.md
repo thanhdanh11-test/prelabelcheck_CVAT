@@ -29,12 +29,26 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
+### Mới trong v1.12.0
+
+- **Giữ camera khi đổi frame:** giữ góc xoay, mức zoom tương đối và độ lệch pan; tâm nhìn đi theo box của frame mới. Thu nhỏ/mở lại cùng item vẫn giữ góc. **Về box** đặt lại; đổi item hoặc dựng lại preview bắt đầu góc mặc định.
+- **Đã kiểm tra:** đánh dấu thủ công ở dưới danh sách track; item có dấu ✓ và bộ đếm đã kiểm tra. **Item chưa kiểm tra tiếp** bỏ qua các item đã đánh dấu. Dấu của item có ID server được lưu trên trình duyệt theo server/job/ID, dùng lại sau F5. Item chưa có ID server chỉ giữ dấu trong tab. Dấu không Save annotation, không tự bỏ khi chỉnh box và không đồng bộ sang trình duyệt khác.
+- **Giao diện gọn:** hướng dẫn nằm trong nút **?**; các hàng tùy chọn căn đều. Hướng box mặc định luôn bật, không còn bảng Cuboid orientation. Bỏ ký hiệu trục nhìn thẳng ở góc dưới và các nút ↶ / ↷ / 180°; vẫn xoay được bằng tay nắm tròn. Thanh khớp khi phóng to mặc định chỉ hiện **Khớp frame này** và **Cho phép xoay**; kết quả/Chấp nhận/Hủy xuất hiện khi cần.
+
+Các thay đổi từ `experiment/review-queue` đã được đưa vào bản v1.12.0 trên `main`. Chi tiết và kiểm thử: [Camera và dấu kiểm tra item](docs/REVIEW-WORKFLOW.md).
+
+Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại màu cam và đề xuất màu xanh trên cả bốn view. Mặc định chỉ dịch tâm XY, giữ độ cao, kích thước và hướng; bật **Cho phép xoay** để thử yaw tối đa ±15°. Giới hạn dịch tâm 50 cm, yêu cầu ít nhất 30 điểm trong box và box gần thẳng đứng.
+
+**Chấp nhận** chỉ sửa frame đang chọn trong bản nháp; tool ghim trạng thái frame liền kề để không kéo theo nội suy cả đoạn. **Hủy** hoặc Esc bỏ đề xuất, Ctrl/⌘Z hoàn tác lần chấp nhận. Chuyển frame, đổi item hoặc chỉnh box sẽ bỏ đề xuất cũ. Thu nhỏ rồi **Áp dụng**, sau đó **Save trong CVAT** khi muốn lưu.
+
+Đây là đề xuất hình học cần kiểm tra bằng mắt; số điểm tăng không chứng minh box chính xác hơn. Hướng dẫn và kết quả kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md).
+
 ### Mới trong v1.11.0
 
 - Phóng to frame thành **bốn view**: LiDAR 3D phía trên, Top / Side / Front phía dưới; ẩn thanh công cụ bên trái. Nút Undo nằm trên đầu frame; nhấn Esc để về thanh bên trái khi cần Áp dụng.
 - View 3D dùng point cloud toàn frame từ cache chung, chỉ vẽ box của item đang chọn. Kéo chuột trái để xoay camera, kéo chuột phải/giữa để pan, cuộn để zoom; bấm **Về box** hoặc double-click để đặt lại camera.
-- Cuboid orientation: mũi tên X đỏ, Y xanh lá, Z xanh dương. Bật/tắt từng trục ở thanh công cụ khi chưa phóng to.
-- Xoay box trong cả ba view bằng tay nắm tròn hoặc nút ↶ / ↷ (5°) / 180°; giữ Shift khi kéo để bước 15°.
+- Cuboid orientation: mũi tên X đỏ, Y xanh lá, Z xanh dương. Mặc định luôn hiển thị trên box; không còn nút bật/tắt ở sidebar.
+- Xoay box trong cả ba view bằng tay nắm tròn; giữ Shift khi kéo để bước 15°.
 - Chọn view rồi dùng phím mũi tên để dịch box 5 cm; Shift = 1 cm, Alt = 20 cm. PageUp / PageDown nâng/hạ theo trục Z thế giới. Giữ phím liên tục là một bước Undo.
 
 ### Từ v1.10.0
@@ -121,7 +135,7 @@ Mỗi frame hiện 3 mặt nhìn theo trục của box: Top (x–y), Side (x–z
 | `PageUp` / `PageDown` | Nâng / hạ box 5 cm theo Z thế giới (cũng dùng Shift / Alt) |
 | `⌘Z` / `Ctrl+Z` | Hoàn tác |
 
-Trong view 3D, phím mũi tên dịch theo mặt phẳng camera; trong Top / Side / Front, dịch theo trục cục bộ của box. Click vào vùng canvas để chọn view; gõ trong ô class/attribute không dịch box. Xoay camera không thay đổi annotation. Chỉnh hình học bằng chuột ở ba view bên dưới cập nhật ngay box 3D. Khi đổi frame, camera trở về box của frame mới. Cần WebGL để hiển thị LiDAR 3D; nếu không có WebGL, ba view chỉnh sửa vẫn dùng được.
+Trong view 3D, phím mũi tên dịch theo mặt phẳng camera; trong Top / Side / Front, dịch theo trục cục bộ của box. Click vào vùng canvas để chọn view; gõ trong ô class/attribute không dịch box. Xoay camera không thay đổi annotation. Chỉnh hình học bằng chuột ở ba view bên dưới cập nhật ngay box 3D. Khi đổi frame, camera giữ hướng nhìn, zoom tương đối và độ lệch pan quanh box mới. Cần WebGL để hiển thị LiDAR 3D; nếu không có WebGL, ba view chỉnh sửa vẫn dùng được.
 
 ### Tự khớp
 
@@ -193,9 +207,9 @@ node --check cvat-resize-extension/lidar-view.js
 node --test tests/*.test.cjs
 ```
 
-65 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh. Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
+80 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
 
-Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã được thử trên CVAT 3D thật qua Ego; dữ liệu server không đổi trong lần kiểm thử. Xem [báo cáo Apply trực tiếp](docs/LIVE-APPLY.md), [báo cáo trải nghiệm](docs/EGO-UX-AUDIT.md), [báo cáo bốn view và orientation](docs/ORIENTATION-FOUR-VIEW.md) và [cache v1.9](docs/BACKGROUND-CACHE.md) để biết phạm vi và giới hạn đã kiểm chứng.
+Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã được thử trên CVAT 3D thật qua Ego; dữ liệu server không đổi trong lần kiểm thử. Xem [báo cáo Apply trực tiếp](docs/LIVE-APPLY.md), [báo cáo trải nghiệm](docs/EGO-UX-AUDIT.md), [báo cáo bốn view và orientation](docs/ORIENTATION-FOUR-VIEW.md), [kiểm thử tách object trên CVAT thật](docs/TRACK-SPLIT.md) và [cache v1.9](docs/BACKGROUND-CACHE.md) để biết phạm vi và giới hạn đã kiểm chứng.
 
 ---
 

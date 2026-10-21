@@ -5,9 +5,9 @@ Expanded frames hide the left tools and show a full-width LiDAR 3D viewport abov
 ## Controls
 
 - 3D: left drag orbits, right/middle drag pans, wheel zooms, double-click or **Về box** recenters. These change only the camera.
-- Only the selected item's cuboid is rendered over the whole frame's point cloud. The cloud comes from the existing shared RAM/IndexedDB loader, not a separate download path. Leaving expanded mode frees its GPU point buffer. Changing frames resets the camera onto the new box; late responses cannot replace a newer frame.
-- Top / Side / Front retain mouse move and resize, plus a round rotation handle above each box. Shift-drag snaps to 15°. Buttons turn counterclockwise/clockwise 5° or flip 180° in the view plane.
-- Orientation arrows use local positive X (red), Y (green), Z (blue). End-on axes in orthographic views use dot/cross symbols. Sidebar toggles control these arrows across all four views.
+- Only the selected item's cuboid is rendered over the whole frame's point cloud. The cloud comes from the existing shared RAM/IndexedDB loader, not a separate download path. Leaving expanded mode frees its GPU point buffer. Changing frames preserves orbit, relative zoom and pan offset while following the new box; late responses cannot replace a newer frame.
+- Top / Side / Front retain mouse move and resize, plus a round rotation handle above each box. Shift-drag snaps to 15°. Rotation buttons were removed in the review-workflow update; the mouse handle remains.
+- Orientation arrows use local positive X (red), Y (green), Z (blue). Arrows are always enabled across all four views. End-on dot/cross footer labels and sidebar orientation toggles were removed in the review-workflow update.
 - Click a canvas to select the keyboard view, marked yellow. Arrows move 5 cm in that view plane; Shift uses 1 cm, Alt 20 cm. In 3D the plane follows the camera; the orthographic planes follow the box's local axes. PageUp/Down moves world Z, using the same step modifiers.
 - Editing creates a keyframe, preserves dimensions/rotation when translating, and interpolates neighboring frames normally. A held arrow is one Undo step. Inputs/selects keep their normal keyboard behavior. D/F changes frame, Escape closes expanded mode, Ctrl/Cmd+Z undoes.
 
@@ -24,6 +24,10 @@ Rotation composes in the cuboid's local coordinate system and converts back to C
 - Actual rotation-handle drags passed in all three views, including Shift in Side; Undo restored each preview. D/F frame changes and Escape/reopening restored the expected layout. Earlier orientation button checks covered 5° and 180° in each view.
 - Before the follow-up UI change removed Apply from the expanded header, that button sent preview geometry into CVAT without reloading. Native CVAT Undo restored the original annotation content. Auto Save was off; no Save was used; the server annotation response remained unchanged.
 
-Browser checks loaded the repository scripts into real MAIN and isolated execution worlds in Ego, in manifest order. They did not install an unpacked extension. Live coverage is one local job and desktop viewport, not every CVAT deployment or GPU. The six standalone IndexedDB fixture checks and the outside-splitting live flow are outside this test pass; see their separate reports.
+Browser checks loaded the repository scripts into real MAIN and isolated execution worlds in Ego, in manifest order. They did not install an unpacked extension. Live coverage is one local job and desktop viewport, not every CVAT deployment or GPU. The six standalone IndexedDB fixture checks are outside this test pass. Outside splitting was subsequently tested through Apply, Undo/Redo, Save and reload on a separate QA job; see `TRACK-SPLIT.md`.
 
 Local screenshots and machine-readable results are under ignored `docs/evidence/four-view-*` and `docs/evidence/orientation-*` paths. Reload the extension and the job page once to load the new scripts; later Apply operations do not need a reload.
+
+## Review workflow update — 2026-10-22
+
+Camera state is retained for frame navigation and reopening expanded mode within the same item. Reset returns the default view; changing item/rebuilding preview resets camera state. See [REVIEW-WORKFLOW.md](REVIEW-WORKFLOW.md) for the local checklist, compact UI and current 80-test/live QA results. Historical checks above describe the earlier controls.

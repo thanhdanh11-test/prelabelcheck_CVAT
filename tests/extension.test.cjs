@@ -108,7 +108,7 @@ test('auto fit preserves manual reference, anchors and frames outside selected r
   vm.runInContext(geometry + `
     let fitting = null; const editGen = 0, editor = {hidden: false}, frames = [0,1,2,3,4,5,6];
     const $ = s => controls[s], endDrag = () => {}, progress = () => {}, cloudStats = {};
-    const checkNoop = () => {}, logCloudStats = checkNoop, modelChanged = checkNoop;
+    const checkNoop = () => {}, logCloudStats = checkNoop, modelChanged = checkNoop, cancelFrameFit = checkNoop;
     const setStatus = (text, isError) => { if (isError) throw Error(text); };
     const pickReference = async () => 2;
     const stateAt = f => positionAt(plan.shapes, f), keyAt = f => plan.shapes.find(s => s.frame === f);
