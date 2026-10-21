@@ -10,6 +10,27 @@ The first segment adopts current server IDs. Additional tracks have no track/sha
 
 ## Verification
 
-48 Node tests pass across the suite. Added coverage includes 5/6/7-frame boundaries, repeated outside keys, multiple gaps, leading/trailing/all-outside tracks, disabled splitting, job boundaries, rectangle tracks, attribute inheritance, no source mutation and 64 visibility patterns checked frame-by-frame for identical visible geometry and exactly one visible object. Bridge tests assert one commit, fresh IDs on additional segments, preservation of unrelated tracks, stale/invalid-input rejection and whole-operation Undo/Redo using the test collection. UI tests verify manual visibility changes update the split preview, invalid thresholds disable Apply, and per-item switching retains split settings.
+65 Node tests pass across the current suite. Added coverage includes 5/6/7-frame boundaries, repeated outside keys, multiple gaps, leading/trailing/all-outside tracks, disabled splitting, job boundaries, rectangle tracks, attribute inheritance, no source mutation and 64 visibility patterns checked frame-by-frame for identical visible geometry and exactly one visible object. Bridge tests assert one commit, fresh IDs on additional segments, preservation of unrelated tracks, stale/invalid-input rejection and whole-operation Undo/Redo using the test collection. UI tests verify manual visibility changes update the split preview, invalid thresholds disable Apply, and per-item switching retains split settings.
 
-Live v1.10 CVAT and actual server Save have not been exercised. The existing Ego task space was handed to the user during v1.9 testing and has not been reclaimed without authorization. No new live-browser pass is claimed.
+### Live CVAT verification — 2026-10-21
+
+Tested commit `81a753f` through Ego on local CVAT, using a new synthetic task **84**, job **105**, named `QA extension outside split 2026-10-21`. The task contains 24 PCD frames and four labeled tracks (`five`, `six`, `multi`, `control`). Existing work tasks were not modified. The QA task remains available for inspection at `http://localhost:8080/tasks/84/jobs/105`.
+
+| Case | Expected | Observed |
+|---|---|---|
+| Outside frames 3–7; reappear 8 (5 hidden frames) | One object | Preview and Apply retained one object; Undo restored the original |
+| Outside frames 3–8; reappear 9 (6 hidden frames) | Two objects, starts 0 and 9 | Correct preview, Apply, Undo/Redo, Save and reload |
+| Outside 2–7 and 12–17 | Three objects, starts 0, 8, 18 | Correct preview, Apply, Undo/Redo, Save and reload |
+| Disable splitting | No planned split | Correct preview |
+| Raise threshold to 7 for the two six-frame gaps | No planned split | Correct preview |
+| Unrelated tracks | Preserve content | Exact exported content unchanged by each tested split Apply |
+
+For the six-frame case, the first segment ended with an outside key at frame 3. The additional track had no server ID before Save. A mutable attribute changed to `hidden` at frame 6, while outside; the new object inherited `hidden` at frame 9 and changed to `returned` at frame 14. Immutable case attributes and the label were preserved. Undo/Redo restored the whole operation, verified by normalized full annotation content in the single-gap case.
+
+After native Undo/Redo and Save, the two six-frame segments had distinct server IDs **55, 56**. The multi-gap segments received **57, 58, 59**. Reload retained all seven resulting tracks. This also demonstrates the documented CVAT caveat: native Undo/Redo may cause the first segment to receive a new server ID on Save, even though its original server ID was retained on the initial Apply.
+
+After the final reload, native `job.annotations.get` was checked for all 24 frames across all four cases: **96 visibility checks passed**, with exactly one visible segment wherever the original was visible, none during its outside interval, and the control object continuously visible. The saved geometry was also compared frame-by-frame to the baseline; no geometry changes were introduced by splitting. Apply retained the page time origin (no reload). Auto Save was off; persistence was tested through CVAT's Save button.
+
+The scripts were loaded in manifest order into real MAIN/isolated execution worlds; this was not an unpacked-extension installation test. Automatic outside-by-point-count was disabled to isolate splitting of explicit source outside flags. No new defect was found in the exercised flows. Real-world occlusion detection and automatic outside generation are separate behaviors.
+
+Local evidence: ignored `docs/evidence/split-*.json` files contain baseline, Apply, saved and reloaded annotations; `split-six-preview.png` and `split-reopened-frame9.png` capture the UI.

@@ -30,12 +30,22 @@
     const uniforms = Object.fromEntries(["target", "right", "up", "back", "distance", "aspect", "pointSize", "color"]
       .map(key => [key, gl.getUniformLocation(program, key)]));
     const position = gl.getAttribLocation(program, "position"), cloud = gl.createBuffer(), lines = gl.createBuffer();
-    let count = 0, box = null, axes = [true, true, true], outside = false, pointer = null, lost = false;
+    let count = 0, box = null, comparison = null, axes = [true, true, true], outside = false, pointer = null, lost = false;
     let target = [0, 0, 0], yaw = -Math.PI / 4, pitch = Math.PI / 6, distance = 12;
     function reset() {
       if (!box) return;
       target = box.center.slice(); yaw = -Math.PI / 4; pitch = Math.PI / 6;
       distance = Math.max(3, Math.hypot(...box.half) * 4); draw();
+    }
+    function getCamera() {
+      return box ? { yaw, pitch, zoom: distance / Math.max(3, Math.hypot(...box.half) * 4),
+        offset: target.map((n, i) => n - box.center[i]) } : null;
+    }
+    function restoreCamera(camera) {
+      if (!box || !camera || ![camera.yaw, camera.pitch, camera.zoom, ...(camera.offset || [])].every(Number.isFinite) || camera.offset?.length !== 3 || camera.zoom <= 0) return reset();
+      yaw = camera.yaw; pitch = Math.max(-1.5, Math.min(1.5, camera.pitch));
+      distance = Math.max(.5, Math.min(3000, camera.zoom * Math.max(3, Math.hypot(...box.half) * 4)));
+      target = box.center.map((n, i) => n + camera.offset[i]); draw();
     }
     function draw() {
       if (lost || !canvas.width || !canvas.height) return;
@@ -52,17 +62,23 @@
       gl.uniform3fv(uniforms.color, [.65, .7, .75]); gl.drawArrays(gl.POINTS, 0, count);
       if (!box) return;
       const world = local => box.R.map((row, i) => dot(row, local) + box.center[i]);
-      const corners = [];
-      for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) corners.push(world([x * box.half[0], y * box.half[1], z * box.half[2]]));
-      const edges = [];
-      for (let i = 0; i < 8; i++) for (const bit of [1, 2, 4]) if (!(i & bit)) edges.push(...corners[i], ...corners[i | bit]);
+      const edgesOf = B => {
+        const corners = [], edges = [];
+        for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) {
+          const local = [x * B.half[0], y * B.half[1], z * B.half[2]];
+          corners.push(B.R.map((row, i) => dot(row, local) + B.center[i]));
+        }
+        for (let i = 0; i < 8; i++) for (const bit of [1, 2, 4]) if (!(i & bit)) edges.push(...corners[i], ...corners[i | bit]);
+        return edges;
+      };
       function stroke(vertices, color) {
         gl.bindBuffer(gl.ARRAY_BUFFER, lines); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.DYNAMIC_DRAW);
         gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 0, 0); gl.uniform3fv(uniforms.color, color);
         gl.drawArrays(gl.LINES, 0, vertices.length / 3);
       }
       // Keep the selected box visible through its point cloud, like annotation handles.
-      gl.disable(gl.DEPTH_TEST); stroke(edges, outside ? [1, .2, .15] : [.25, .9, 1]);
+      gl.disable(gl.DEPTH_TEST); stroke(edgesOf(box), comparison ? [1, .74, .41] : outside ? [1, .2, .15] : [.25, .9, 1]);
+      if (comparison) stroke(edgesOf(comparison), [.27, .9, 1]);
       for (let axis = 0; axis < 3; axis++) if (axes[axis]) {
         const end = [0, 0, 0]; end[axis] = box.half[axis] * 1.25;
         const arrow = [...box.center, ...world(end)], length = Math.min(.3, box.half[axis] * .25);
@@ -107,15 +123,15 @@
       setCloud(xyz) {
         count = xyz.length / 3; gl.bindBuffer(gl.ARRAY_BUFFER, cloud); gl.bufferData(gl.ARRAY_BUFFER, xyz, gl.STATIC_DRAW); draw();
       },
-      setBox(value, hidden, enabled) { box = value; outside = hidden; axes = enabled; draw(); },
+      setBox(value, hidden, enabled, proposed = null) { comparison = proposed; box = value; outside = hidden; axes = enabled; draw(); },
       resize() {
         const ratio = Math.min(2, globalThis.devicePixelRatio || 1);
         canvas.width = Math.max(1, Math.round(canvas.clientWidth * ratio));
         canvas.height = Math.max(1, Math.round(canvas.clientHeight * ratio)); draw();
       },
       screenDelta(x, y) { const camera = basis(yaw, pitch); return camera.right.map((v, i) => x * v + y * camera.up[i]); },
-      reset,
-      clear() { stop(); box = null; count = 0; gl.bindBuffer(gl.ARRAY_BUFFER, cloud); gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW); draw(); },
+      reset, getCamera, restoreCamera,
+      clear() { stop(); comparison = null; box = null; count = 0; gl.bindBuffer(gl.ARRAY_BUFFER, cloud); gl.bufferData(gl.ARRAY_BUFFER, 0, gl.STATIC_DRAW); draw(); },
       get lost() { return lost; },
     };
   }

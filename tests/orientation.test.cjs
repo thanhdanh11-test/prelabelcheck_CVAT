@@ -71,7 +71,7 @@ test('rotate button creates one key/undo, keeps other frames and size lock intac
     const endDrag=()=>{},modelChanged=()=>updates++,setActive=f=>active=f,anchor=()=> 'bottom';
   `+source.slice(source.indexOf('  function ensureKey('),source.indexOf('  // Locked size:'))+
     source.slice(source.indexOf('  function setGeometry('),source.indexOf('  // Hides or shows only this frame'))+
-    source.slice(source.indexOf('  function rotateFrame('),source.indexOf('  function rotationButtons(')),ctx);
+    source.slice(source.indexOf('  function rotateFrame('),source.indexOf('  const stateAt =')),ctx);
   vm.runInContext('rotateFrame(5,VIEWS[1],5)',ctx);
   assert.equal(vm.runInContext('plan.shapes.length',ctx),3);
   assert.equal(vm.runInContext('undoStack.length',ctx),1);
@@ -84,7 +84,7 @@ test('rotate button creates one key/undo, keeps other frames and size lock intac
   assert.equal(vm.runInContext('JSON.stringify(plan.shapes)===original',ctx),true);
 });
 
-test('orientation toggles control canvas arrows while rotation handle remains available',()=>{
+test('orientation is always drawn without end-on footer labels; rotation handle remains available',()=>{
   const texts=[],arcs=[];
   const canvasContext={createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),putImageData:()=>{},
     beginPath:()=>{},stroke:()=>{},fill:()=>{},setLineDash:()=>{},
@@ -99,14 +99,15 @@ test('orientation toggles control canvas arrows while rotation handle remains av
   for(let i=0;i<3;i++) {
     texts.length=0;arcs.length=0;
     vm.runInContext(`drawView(cv,cloud,{points,outside:false},points,4,VIEWS[${i}],null)`,ctx);
-    assert.equal(texts.length,3); assert.equal(arcs.length,1);
-    assert.ok(texts.some(text=>text.includes(VIEWS[i].axis)));
+    assert.equal(texts.length,2); assert.equal(arcs.length,1);
+    assert.ok(texts.every(text=>text.startsWith("+")));
+    assert.ok(!texts.some(text=>text.includes(VIEWS[i].axis)));
     assert.ok(arcs[0].every(Number.isFinite));
   }
   Object.values(controls).forEach(control=>control.checked=false);
   texts.length=0;arcs.length=0;
   vm.runInContext('drawView(cv,cloud,{points,outside:false},points,4,VIEWS[0],null)',ctx);
-  assert.equal(texts.length,0); assert.equal(arcs.length,1);
+  assert.equal(texts.length,2); assert.equal(arcs.length,1);
 });
 
 test('drag rotation follows each view and Shift snaps to 15-degree increments',()=>{

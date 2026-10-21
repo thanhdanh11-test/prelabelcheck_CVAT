@@ -17,7 +17,7 @@ function setup() {
     let plan = makePlan(tracks[0]), undoStack = [{undo:1}], activeFrame = 2, zoomFrame = 2, fitting = null;
     let switchGeneration = 0, previewSettled = Promise.resolve(), built = 0, status='';
     const previews = new Map(), grid = {scrollTop:345}, cells = new Map([[0,{}],[1,{}],[2,{}]]);
-    const setStatus = text => status=text, endDrag=()=>{};
+    const setStatus = text => status=text, endDrag=()=>{}, renderReviewState=()=>{};
     const closePlan = () => {plan=null;undoStack=[];activeFrame=null;zoomFrame=null;grid.scrollTop=0;};
     const renderInputs = () => inputs.forEach((input,i) => input.value=String(selectedTrack().shapes[0].points[i+6]));
     const openEditor = () => {undoStack=[];activeFrame=null;zoomFrame=null;};
