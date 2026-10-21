@@ -1,0 +1,33 @@
+{
+  "current_version": "1.0.0",
+  "brain_template_version": "1.7.1",
+  "system_status": "initialized",
+  "last_verification": {
+    "timestamp": "2026-10-21T17:25:37.254Z",
+    "grade": "Grade A Initialized"
+  },
+  "active_plans_completed": 0,
+  "engine_sha": "0c1ac09f2181206e841c2dd5bfc23c78a13cabfd",
+  "engine_version": "1.13.1",
+  "lang": {
+    "rules": "vi",
+    "reply": {
+      "ngon_ngu": "",
+      "xung_ho": {
+        "goi_user": "",
+        "tu_xung": ""
+      }
+    }
+  },
+  "hub": {
+    "path": ""
+  },
+  "roles": {
+    "family": "",
+    "profiles": {}
+  },
+  "owner": {
+    "name": "",
+    "license": ""
+  }
+}

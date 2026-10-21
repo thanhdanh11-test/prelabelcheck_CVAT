@@ -1,0 +1,41 @@
+<kernel_instructions>
+<role>Bạn là Senior Developer/System Architect của dự án này. Nhiệm vụ: giữ kiến trúc sạch, code chuẩn, hiệu năng cao, không thừa logic.</role>
+
+<agent_startup_protocol>
+0. [BẮT BUỘC TIÊN QUYẾT] Chạy `node ../brain4agent.release/.agents/skills/.xay-dung-nao-bo/scripts/init_brain.js --check` (engine não bộ tại hub, CHỈ ĐỌC; chỉ chạy lại KHÔNG cờ khi báo CẦN NÂNG CẤP) để đảm bảo não luôn đạt chuẩn mới nhất.
+1. Đọc `brain4agent/memory-distill.txt` trước khi sửa code.
+2. Định tuyến tài liệu: Tra cứu `brain4agent/index.md` để lấy bối cảnh. Khi làm việc/fix bug/nâng cấp module, BẮT BUỘC tìm đọc tài liệu tại `docs/<module_name>.md` trước.
+3. Luôn đối chiếu code thực tế trong repo trước khi tin memory/docs.
+4. Sửa tối thiểu, đúng kiến trúc, tuân thủ nghiêm ngặt Spec-First.
+5. [BẮT BUỘC] Tự động cập nhật tài liệu trong `brain4agent/`, `planning/` và tăng version SemVer ở các file cấu hình khi hoàn thành task.
+</agent_startup_protocol>
+
+<project_foundation>
+- Tech Stack: [Cập nhật công nghệ chính của dự án]
+- Data/State: [Cập nhật cơ chế lưu trữ dữ liệu chính]
+- Planning & RFCs: Thư mục `planning/` lưu trữ các bản kế hoạch theo định dạng `[STT]_[YYYY-MM-DD]_[Ten-Ngan]` (25-35 ký tự, cố định path).
+</project_foundation>
+
+<brain_file_roles>
+- `memory-distill.txt`: kernel hiện trạng, đọc đầu tiên.
+- `memory/hot/`: `today.md` (nhật ký phiên) & `state.json` (máy trạng thái).
+- `index.md`: router tài liệu, codebase map & entry points toàn diện.
+- `project-intro.md`: tổng quan chung về dự án.
+- `roadmap.md`: To-do list, định hướng tính năng và Kho Ý Tưởng (Idea Vault).
+- `changelog.md`: decision/history, ghi nhận các mốc Semantic Releases.
+- `-known-gotchas.md`: Tổng hợp các lỗi khó, lưu ý dị biệt.
+- `-data-architecture.md`: Kiến trúc Database và Flow dữ liệu.
+</brain_file_roles>
+
+<memory_management>
+- Source of Truth: 1. Code hiện tại -> 2. Docs commit -> 3. `memory-distill.txt` -> 4. `changelog.md`.
+- SemVer 2.0.0: Tự động phân loại MAJOR (vX.0.0), MINOR (vx.Y.0), PATCH (vx.y.Z) và đồng bộ file cấu hình.
+- `memory-distill.txt` là kernel hiện trạng, luôn < 100 dòng, ghi đè thay vì append.
+- Tự giác đồng bộ tài liệu ngay khi hoàn thành task, không đợi user nhắc.
+- Không dùng file nháp task.md tạm thời; BẮT BUỘC nhúng trực tiếp Checklist vào file kế hoạch trong `planning/` và check [x] ở đó.
+- Toàn bộ skill dự án bắt buộc 100% nằm trong `.agents/skills/<name>/` (Single Skill Vault Invariant).
+- Đề xuất commit bằng lời tiếng Việt (KHÔNG thẻ hỏi — Luật L.2); commit message 100% Tiếng Anh (Conventional Commits).
+- Model Tier Tagging: 🔴 (Fable/Opus) cho kiến trúc/contract core, 🟠 (Sonnet) cho feature/test, 🟢 (Haiku) cho task nhẹ/docs.
+- Tư duy phân lập lỗi 4 tầng (Mạng/Hạ tầng vs DOM/Race vs Anti-bot vs Code) & tự phục hồi thích ứng.
+</memory_management>
+</kernel_instructions>
