@@ -163,19 +163,20 @@ test('Apply sends an immutable baseline through bridge, then refreshes without s
   const ctx=vm.createContext({plan,controls,requests});
   vm.runInContext(`
     let saving=false,jobId=97,fitting=null;
-    const endDrag=()=>{},$=s=>controls[s];
+    const endDrag=()=>{},$=s=>controls[s],readSplitGap=()=>6;
     let status='',refreshed=false;
     const setStatus=(text)=>status=text;
     const bridgeRequest=async(action,payload)=>{requests.push({action,payload});return {applied:true,warning:''};};
     const closePlan=()=>{plan=null;},loadData=async()=>{refreshed=true;};
     const fetch=()=>{throw Error('Must not write server');};
     const location={reload:()=>{throw Error('Must not reload');}};
-  `+source.slice(source.indexOf('  async function apply('),source.indexOf('  function pickActive(')),ctx);
+  `+source.slice(source.indexOf('  async function apply('),source.indexOf('  function savePreview(')),ctx);
   await vm.runInContext('apply()',ctx);
   assert.equal(requests.length,1);assert.equal(requests[0].action,'apply');
   assert.equal(requests[0].payload.baseline.label_id,1);
   assert.equal(requests[0].payload.track.label_id,2);
   assert.equal(requests[0].payload.track.shapes[0].points[6],5);
+  assert.equal(requests[0].payload.splitGap,6);
   assert.equal(vm.runInContext('plan',ctx),null);
   assert.equal(vm.runInContext('refreshed',ctx),true);
   assert.equal(vm.runInContext('saving',ctx),false);

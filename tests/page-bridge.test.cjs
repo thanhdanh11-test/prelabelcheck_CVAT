@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync('cvat-resize-extension/page-bridge.js', 'utf8');
+const splitSource = fs.readFileSync('cvat-resize-extension/track-split.js', 'utf8');
 const clone = value => structuredClone(value);
 const box = (frame = 0) => ({ id: 100 + frame, frame, type: 'cuboid', outside: false, occluded: false, rotation: 0, z_order: 0, points: [1,2,3,0,0,0,4,2,2], attributes: [] });
 const track = () => ({ id: 49, clientID: 1, frame: 0, label_id: 2, source: 'manual', group: 0, attributes: [], elements: [], shapes: [box()] });
@@ -28,8 +29,8 @@ function setup(options = {}) {
       commit: async (added, removed, frame) => {
         calls.push(clone({added, removed, frame}));
         const before = clone(exports);
-        const replacement = { ...clone(added.tracks[0]), clientID: nextID++ };
-        exports.tracks = exports.tracks.filter(t => !removed.tracks.some(r => r.clientID === t.clientID)).concat(replacement);
+        const replacements = added.tracks.map(t => ({ ...clone(t), clientID: nextID++ }));
+        exports.tracks = exports.tracks.filter(t => !removed.tracks.some(r => r.clientID === t.clientID)).concat(replacements);
         undo.push({before, after: clone(exports)}); redo = [];
       },
     },
@@ -42,7 +43,7 @@ function setup(options = {}) {
     postMessage: message => { window.lastReply = message; },
     cvatUI: options.noPlugin ? undefined : {registerComponent: fn => fn({store})},
   };
-  vm.runInNewContext(source, {window, location: {origin: 'http://localhost:8080'}, structuredClone});
+  vm.runInNewContext(splitSource + '\n' + source, {window, location: {origin: 'http://localhost:8080'}, structuredClone});
   return {
     state, calls, job,
     get data() { return exports; },
@@ -117,4 +118,34 @@ test('render failure after commit is reported as applied, not a retryable mutati
   const reply=await app.request('apply',{jobId:97,baseline,track:baseline});
   assert.equal(reply.result.applied,true); assert.match(reply.result.warning,/render failed/);
   assert.equal(app.calls.length,1);
+});
+
+test('six outside frames split into distinct tracks in one native commit with Undo/Redo', async () => {
+  const app=setup(); app.job.stopFrame=40;
+  app.data.tracks[0].shapes=[box(0),{...box(10),outside:true},box(16),{...box(20),outside:true},box(26)];
+  const baseline=clone(app.data.tracks[0]), before=clone(app.data);
+  const reply=await app.request('apply',{jobId:97,baseline,track:baseline,splitGap:6});
+  assert.equal(reply.result.trackCount,3); assert.equal(app.calls.length,1);
+  const added=app.calls[0].added.tracks;
+  assert.equal(added.length,3); assert.equal(added[0].id,49); assert.equal(added[0].shapes[0].id,100);
+  for(const part of added.slice(1)) {
+    assert.equal(part.id,undefined); assert.equal(part.clientID,undefined);
+    assert.ok(part.shapes.every(shape=>shape.id===undefined));
+  }
+  assert.deepEqual(added.map(part=>part.frame),[0,16,26]);
+  assert.deepEqual(app.data.tracks.find(t=>t.clientID===2),before.tracks[1]);
+  const after=clone(app.data);
+  app.undo(); assert.deepEqual(app.data,before);
+  app.redo(); assert.deepEqual(app.data,after);
+});
+
+test('invalid split threshold or stale split baseline never commits', async () => {
+  for(const splitGap of [-1,1.5,'6',NaN]) {
+    const app=setup(),baseline=clone(app.data.tracks[0]);
+    const reply=await app.request('apply',{jobId:97,baseline,track:baseline,splitGap});
+    assert.ok(reply.error); assert.equal(app.calls.length,0);
+  }
+  const app=setup(),baseline=clone(app.data.tracks[0]); app.data.tracks[0].group=123;
+  const reply=await app.request('apply',{jobId:97,baseline,track:baseline,splitGap:6});
+  assert.match(reply.error,/Track đã/); assert.equal(app.calls.length,0);
 });

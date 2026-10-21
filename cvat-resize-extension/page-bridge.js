@@ -36,7 +36,8 @@
     const annotations = await job.annotations.export();
     current(jobId);
     return {
-      job: { id: job.id, start_frame: job.startFrame, stop_frame: job.stopFrame },
+      job: { id: job.id, start_frame: job.startFrame, stop_frame: job.stopFrame,
+        task_id: job.taskId, created_date: job.createdDate, dimension: job.dimension },
       annotations,
       labels: job.labels.map((label) => label.toJSON()),
     };
@@ -71,7 +72,7 @@
   }
 
   async function apply(payload) {
-    const { jobId, baseline, track } = payload;
+    const { jobId, baseline, track, splitGap = 0 } = payload;
     const { job, annotation } = current(jobId, true);
     if (typeof baseline?.clientID !== "number" || !Array.isArray(track?.shapes) || !track.shapes.length ||
         !["cuboid", "rectangle"].includes(track.shapes[0].type) || (track.elements || []).length) {
@@ -85,9 +86,8 @@
     const states = await job.annotations.get(original.shapes[0].frame, true, []);
     if (states.find((s) => s.clientID === original.clientID)?.lock) throw new Error("Track đang khóa trong CVAT. Mở khóa trước khi áp dụng.");
     current(jobId, true);
-    const replacement = structuredClone(track);
-    delete replacement.clientID;
-    delete replacement.uiId;
+    const { tracks: replacements } = CvatTrackSplit.split(track, splitGap, job.startFrame, job.stopFrame);
+    const replacement = replacements[0];
     const shapeIDs = new Map(original.shapes.map((shape) => [shape.frame, shape.id]));
     replacement.shapes = replacement.shapes.map((shape) => {
       const next = { ...shape };
@@ -98,7 +98,7 @@
     // Keep current server IDs, including ones assigned by a Save while preview was open.
     if (original.id === undefined) delete replacement.id;
     else replacement.id = original.id;
-    await job.annotations.commit({ tracks: [replacement] }, { tracks: [original] }, current(jobId).annotation.player.frame.number);
+    await job.annotations.commit({ tracks: replacements }, { tracks: [original] }, current(jobId).annotation.player.frame.number);
     // Commit is now in native history; a refresh failure must never cause an automatic second commit.
     let warning = "", clientID;
     try {
@@ -107,7 +107,7 @@
       clientID = updated.tracks.find((t) => !previousIDs.has(t.clientID) && t.id === original.id)?.clientID;
       await refresh(jobId);
     } catch (error) { warning = error.message; }
-    return { applied: true, clientID, warning: warning ? `Đã áp dụng vào bộ nhớ CVAT, chưa lưu server. Chuyển frame để làm mới box hoặc Undo trong CVAT. Chi tiết: ${warning}` : "" };
+    return { applied: true, clientID, trackCount: replacements.length, warning: warning ? `Đã áp dụng vào bộ nhớ CVAT, chưa lưu server. Chuyển frame để làm mới box hoặc Undo trong CVAT. Chi tiết: ${warning}` : "" };
   }
 
   window.addEventListener("message", async (event) => {

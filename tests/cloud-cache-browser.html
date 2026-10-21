@@ -1,0 +1,62 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Track Resizer — IndexedDB tests</title>
+<h1>IndexedDB integration tests</h1>
+<p>Uses a separate temporary database. Does not access CVAT or the extension's real cache.</p>
+<pre id="results">Running…</pre>
+<script src="../cvat-resize-extension/cloud-cache.js"></script>
+<script>
+(async () => {
+  const name = 'cvat-resizer-test-' + crypto.randomUUID(), budget = 36, results = [];
+  const store = CvatCloudCache.openStore({ name, budget });
+  const points = n => new Float32Array([n, 2, 3]);
+  const assert = (value, message) => { if (!value) throw Error(message); };
+  const test = async (name, fn) => {
+    try { await fn(); results.push({ name, passed: true }); }
+    catch (error) { results.push({ name, passed: false, error: error.message }); }
+    document.querySelector('#results').textContent = JSON.stringify(results, null, 2);
+  };
+  await test('typed-array data survives reopening the database', async () => {
+    assert(await store.put('job:0', 'job', points(9)), 'put failed');
+    const reopened = CvatCloudCache.openStore({ name, budget });
+    const data = await reopened.get('job:0');
+    assert(data instanceof Float32Array && data[0] === 9 && data.length === 3, 'incorrect data');
+  });
+  await test('parallel writers respect the total storage budget', async () => {
+    await store.clear();
+    await Promise.all([0, 1, 2, 3, 4].map(n => store.put('job:' + n, 'job', points(n))));
+    assert(await store.count('job') === 3, 'budget not enforced');
+  });
+  await test('prefetch protects its own cached frames from eviction', async () => {
+    assert(await store.put('job:6', 'job', points(6), true) === false, 'should reject over budget');
+    assert(await store.count('job') === 3, 'existing frames evicted');
+  });
+  await test('foreground uses LRU eviction across jobs', async () => {
+    await store.get('job:2');
+    assert(await store.put('next:0', 'next', points(8)), 'write rejected');
+    assert(await store.get('job:2', true), 'recent frame evicted');
+    assert(await store.count('job') === 2 && await store.count('next') === 1, 'incorrect eviction');
+  });
+  await test('expiry removes point data and metadata together', async () => {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(name); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+    });
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('meta', 'readwrite'), meta = tx.objectStore('meta'), read = meta.get('next:0');
+      read.onsuccess = () => meta.put({ ...read.result, created: 0 });
+      tx.oncomplete = resolve; tx.onabort = () => reject(tx.error);
+    });
+    assert(await store.get('next:0') === null, 'expired data returned');
+    assert(await store.count('next') === 0, 'expired metadata retained');
+    db.close();
+  });
+  await test('clear removes all cache records', async () => {
+    await store.clear(); assert(await store.count('job') === 0, 'records remain');
+    assert(await store.get('job:2') === null, 'point data remains');
+  });
+  const request = indexedDB.deleteDatabase(name);
+  await new Promise((resolve, reject) => { request.onsuccess = resolve; request.onerror = () => reject(request.error); });
+  window.testResults = results;
+  document.title = results.every(result => result.passed) ? 'PASS — IndexedDB' : 'FAIL — IndexedDB';
+})();
+</script>
