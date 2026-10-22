@@ -18,7 +18,9 @@ Khi nhận nhiệm vụ, Agent tra cứu bảng này để đọc **chính xác*
 | **Kiến trúc dữ liệu & Data Flow** | [`-data-architecture.md`](-data-architecture.md) | Cấu trúc dữ liệu, cơ chế lưu trữ và State Flow. |
 | **Lộ trình nâng cấp & Ý tưởng** | [`roadmap.md`](roadmap.md) | Active tasks, Kho Ý Tưởng (Idea Vault) và các mốc đã hoàn thành. |
 | **Lịch sử cập nhật** | [`changelog.md`](changelog.md) | Lịch sử Semantic Releases (vX.Y.Z). |
-| **Extension v1.13.1** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Camera, checklist, UI; khớp một frame (đáy/nóc, nút ở view thu nhỏ, zoom view) trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
+| **Extension v1.13.2** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Camera, checklist, UI; khớp một frame (đáy/nóc, nút ở view thu nhỏ, zoom view) trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
+| **Đường đi item v1.13.0** | [`TRACK-PATH.md`](../docs/TRACK-PATH.md), [`planning/01_2026-10-22_track-path-trace/`](../planning/01_2026-10-22_track-path-trace/plan.md) | Vệt quỹ đạo Top hiện hành; module truy vết thuần và SPEC cũ được giữ, UI bảng/CSV đã gỡ upstream. |
+| **Cache point cloud v1.13.1** | [`BACKGROUND-CACHE.md`](../docs/BACKGROUND-CACHE.md), [`planning/02_2026-10-22_cache-lessons/`](../planning/02_2026-10-22_cache-lessons/plan.md) | Tải nền theo vị trí xem, bài học từ CVAT, số đo. |
 | **Tài liệu kỹ thuật module** | [`docs/`](../docs/) | Thư mục chứa tài liệu chuyên trách 1-1 cho từng module. |
 
 ---
@@ -39,7 +41,7 @@ project-root/
 ├── CLAUDE.md                         # [SHIM] Điểm nạp tự động của Claude Code — chỉ chứa @AGENTS.md
 ├── brain4agent-v1.7.1.md   # [MARKER] Phiên bản khung não — soi nhanh ở root
 ├── README.md                         # Tài liệu giới thiệu và hướng dẫn build dự án
-├── cvat-resize-extension/            # MV3 manifest, content, page-bridge, cloud-cache, lidar-view, review-state, track-split
+├── cvat-resize-extension/            # MV3 manifest, content, page-bridge, cloud-cache, lidar-view, review-state, track-split, track-path
 ├── tests/                            # Node tests + IndexedDB browser harness
 ├── brain4agent/                      # [BỘ NHỚ DỰ ÁN] Single Source of Truth
 │   ├── memory/hot/                   # [HOT MEMORY] Ký ức nóng phiên (today.md, state.json)
@@ -50,7 +52,7 @@ project-root/
 │   ├── -known-gotchas.md             # [GOTCHAS] Tổng hợp lỗi dị biệt & bẫy kỹ thuật
 │   ├── -data-architecture.md         # [DATA ARCH] Kiến trúc dữ liệu & Data Flow
 │   └── project-intro.md              # [INTRO] Tổng quan dự án & Tech stack
-├── planning/                         # [QUẢN LÝ KẾ HOẠCH NÂNG CẤP] Chứa các bản kế hoạch RFCs
+├── planning/                         # [QUẢN LÝ KẾ HOẠCH NÂNG CẤP] 01_…track-path-trace/ (plan+specs), 02_…cache-lessons/ (plan)
 ├── .agents/skills/                   # [WORKSPACE SKILLS] Kỹ năng chuyên dụng cục bộ dự án
 └── docs/                             # [MODULE DOCS] Tài liệu kỹ thuật chi tiết
 ```

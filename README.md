@@ -29,9 +29,13 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
+### Bản hợp nhất v1.13.2
+
+Gộp giao diện/khớp sáu mặt/phím tắt với vệt quỹ đạo Top, cache theo frame đang xem và nhãn ID server của lechibang. Sửa khoảng frame trong dropdown. 113/113 test Node đạt; chưa QA bản hợp nhất trên server công ty. Nhãn ID server không ngăn clientID của CVAT đổi khi Áp dụng. CLI dùng `--track` (ID server), không còn `--ui-id`.
+
 ### Mới trong v1.13.0
 
-- **Khớp ngay ở view thu nhỏ, dùng icon:** mỗi frame có icon khớp (khung có ô vuông); đề xuất (xanh) vẽ ngay trong ba view nhỏ, icon ✓ chấp nhận và ✕ hủy nằm sát bên. View mở rộng dùng cùng ba icon, đứng liền nhau. <kbd>Enter</kbd> chấp nhận, <kbd>Esc</kbd> hủy.
+- **Khớp ngay ở view thu nhỏ, dùng icon:** mỗi frame có icon khớp (khung có ô vuông); đề xuất (xanh) vẽ ngay trong ba view nhỏ, icon ✓ chấp nhận và ✕ hủy nằm sát bên. View mở rộng đặt Chấp nhận/Hủy thành hàng sát dưới hai nút công cụ. <kbd>Enter</kbd> chấp nhận, <kbd>Esc</kbd> hủy.
 - **Khớp mọi mặt** (luôn bật): đầu/đuôi và hai bên theo điểm của vật, đáy lên mặt đường (vành 0,4–1,2 m quanh box), nóc lên điểm cao nhất (phân vị 98%). Mặt chỉ lùi vào khi LiDAR thấy mặt đó; mặt khuất giữ theo kích thước cũ. Mỗi mặt bên đổi tối đa 50 cm, đáy 50 cm, chiều cao 60 cm; vượt giới hạn hoặc thiếu điểm thì giữ nguyên và ghi lý do. Khi **Khóa kích thước cả track** bật, kích thước mới áp cho cả track như khi kéo cạnh.
 - **Xoá keyframe giữ vị trí box:** chỉ bỏ keyframe thừa (nội suy từ keyframe còn lại vẫn cho đúng vị trí, lệch ≤ 5 cm / 1°); giữ keyframe đầu/cuối, chỗ đổi outside và keyframe đặt attribute. Trước đây nút này xoá mọi keyframe ở giữa nên box nhảy về đường thẳng giữa hai đầu.
 - **Kéo vùng để đưa box về (tùy chọn):** bấm icon khung nét đứt bên trái icon khớp để bật (nền đỏ), bấm lại để tắt (không màu, mặc định). Khi bật, trong view mở rộng Top/Side/Front, kéo chuột trái ở vùng trống để khoanh quanh vật; box nhảy về giữa các điểm trong vùng (bỏ lớp mặt đường), đặt mép lên mặt LiDAR thấy nếu có, giữ hướng, kích thước và độ cao. Một lần Undo. Sau đó bấm khớp để chỉnh sát.
@@ -40,6 +44,14 @@ Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` r�
 - **View mở rộng linh hoạt:** nút phóng ở góc mỗi view (LiDAR 3D, Top, Side, Front) để xem riêng một view; Top/Side/Front cuộn chuột để phóng to hoặc thu nhỏ quanh con trỏ (thu nhỏ tới 3× view mặc định, tự tải thêm point cloud xung quanh), kéo vùng trống (khi tắt Kéo vùng) hoặc chuột phải/giữa để di chuyển, double-click về mặc định. Zoom giữ khi đổi frame.
 
 Chi tiết và kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md#bản-v1130-khớp-đáynóc-và-khớp-ở-view-thu-nhỏ-2026-10-22).
+
+### Mới trong v1.13.1
+
+- **Tải nền theo vị trí xem:** cache point cloud bắt đầu từ frame bạn đang xem và ưu tiên phía bạn đang đi tới, thay vì quét từ frame 0; nhảy sang chỗ khác thì tải nền đi theo. Danh sách track có hàng trăm item không còn parse lại checklist cho từng dòng. Chi tiết và số đo: [BACKGROUND-CACHE.md](docs/BACKGROUND-CACHE.md).
+
+### Mới trong v1.13.0
+
+- **Vệt quỹ đạo & Khung mờ (Top view):** bật **Vệt quỹ đạo (Top)** ở Tùy chọn để hiển thị đường chuyển động nét đứt cyan nối tâm box giữa các frame lân cận và khung mờ wireframe của frame trước / sau trên khung nhìn Top, giúp đối chiếu hướng di chuyển và căn chỉnh box liền mạch.
 
 ### Mới trong v1.12.0
 
@@ -189,13 +201,13 @@ export CVAT_TOKEN=...          # CVAT: Profile > Access tokens
 
 python3 cvat_resize_track.py --job 97 --list                          # liệt kê track
 python3 cvat_resize_track.py --job 97 --track 45 --size 4.5 1.9 1.6   # đặt kích thước
-python3 cvat_resize_track.py --job 97 --ui-id 1662 --from-frame 65 --anchor bottom
+python3 cvat_resize_track.py --job 97 --track 45 --from-frame 65 --anchor bottom
 python3 cvat_resize_track.py --job 97 --track 45 --scale 1.1 --dry-run
 ```
 
 | Tuỳ chọn | Ý nghĩa |
 |---|---|
-| `--track` / `--ui-id` | Chọn track theo id trên server, hoặc theo số # trên sidebar CVAT (đếm sau khi tải lại trang) |
+| `--track` | Chọn track theo Server ID (xem từ `--list` hoặc trên extension `id <số>`) |
 | `--size L W H` | Kích thước mới (rectangle 2D: `W H`) |
 | `--scale k` | Nhân kích thước với k (một số, hoặc một số cho mỗi trục) |
 | `--from-frame F` | Dùng kích thước của track ở frame F |

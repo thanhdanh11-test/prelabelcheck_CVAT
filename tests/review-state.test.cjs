@@ -42,3 +42,16 @@ test('next unchecked uses actual track IDs, skips reviewed/unsupported entries a
   await vm.runInContext('nextUncheckedItem()',c);assert.equal(vm.runInContext('selected',c),4);
   await vm.runInContext('nextUncheckedItem()',c);assert.equal(vm.runInContext('selected',c),1);
 });
+test('repeated lookups of an unchanged list do not parse storage again; outside edits are still seen',()=>{
+  let parses=0;
+  const c=vm.createContext({JSON:{parse:(...a)=>{parses++;return JSON.parse(...a);},stringify:JSON.stringify}});
+  vm.runInContext(fs.readFileSync('cvat-resize-extension/review-state.js','utf8'),c);
+  const storage=disk(),state=c.CvatReviewState.create(storage);
+  state.set(97,{id:1},true);state.set(97,{id:2},true);
+  parses=0;
+  for(let i=0;i<500;i++)assert.equal(state.has(97,{id:2}),true);
+  assert.equal(parses,0);
+  const other=create(storage);other.set(97,{id:3},true);
+  assert.equal(state.has(97,{id:3}),true);assert.equal(state.has(97,{id:1}),true);assert.equal(parses,1);
+  state.set(97,{id:1},false);assert.equal(other.has(97,{id:1}),false);assert.equal(other.has(97,{id:3}),true);
+});

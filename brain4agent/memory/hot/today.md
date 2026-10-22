@@ -30,3 +30,20 @@
 
 ## 2026-10-22T17:34:05Z — v1.13.1
 Thanh hai nút, fit luôn yaw/sáu mặt; phím mũi tên ở frame thu nhỏ, dấu phẩy/chấm xoay theo view. 94/94 test. Remote 203456b chỉ đổi nhãn/CLI ID, không đổi Apply; đo dropdown sai Infinity do dùng frames của preview. Không merge remote, không thao tác server. Chi tiết docs/EXPERIMENT-INTERPOLATION.md.
+
+## Phiên 2026-10-22 — Truy vết đường đi cuboid (v1.13.0, chưa commit)
+
+- Yêu cầu: "tracks a cuboid from finish to beginning and tell me their paths". Hiểu là quỹ đạo tâm box từ frame cuối về đầu; quyết định ghi ở `planning/01_2026-10-22_track-path-trace/plan.md`.
+- Thêm `track-path.js`, khối UI *Đường đi* trong `content.js`, `docs/TRACK-PATH.md`. Chỉ đọc, dùng annotation đã tải, không dùng nháp preview.
+- 95/95 test, 0 skip; mutation bỏ `reverse()` → 11 đỏ. Chưa chạy trong Chrome/CVAT thật (2 gate ⬜).
+- Gotcha: `../brain4agent.release` không tồn tại trên máy này nên Bước 0 `init_brain.js --check` thoát 1; chưa kiểm được chuẩn não.
+- Gotcha: mảng sinh trong `vm.createContext` khác realm, `assert.deepEqual` cần `JSON.parse(JSON.stringify())`.
+
+## Phiên 2026-10-22 (tiếp) — Tối ưu cache theo CVAT (v1.13.1, chưa commit)
+
+- Đối chiếu `/media/bang/Work/projects/cvat`: PrefetchAnalyzer, object-state-index. Áp dụng: tải nền quanh frame đang xem; checklist parse một lần. Quyết định và vùng cấm: `planning/02_2026-10-22_cache-lessons/plan.md`.
+- Số đo trái dự đoán: crop `nearCloud` hai lượt chậm hơn (3,2 → 5,4 ms) nên hoàn tác. Luôn đo trước khi giữ tối ưu "hiển nhiên".
+- 100/100 test, 0 skip; mutation → 3 đỏ. Chưa chạy trong Chrome/CVAT thật.
+
+## 2026-10-22T17:42:57Z — gộp v1.13.2
+Người dùng xác nhận gộp và commit. Mốc local 121b01b; gộp origin/main 203456b (kèm ec93fe5). Giữ cả UI/fit/phím tắt và vệt Top/cache/checklist/ID server của lechibang. Sửa dropdown lấy frames từng track, nối frame vào drawView dùng zoom window. 113/113 tests, 0 skip; npm audit ENOLOCK; QA trình duyệt/server còn mở. Các ghi chú “chưa merge” ở phiên trước đã được thay thế bởi mục này. Không push.

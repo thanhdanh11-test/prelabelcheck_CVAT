@@ -8,7 +8,7 @@ Examples:
   export CVAT_TOKEN=...                       # Profile > Access tokens in the CVAT UI
   cvat_resize_track.py --job 97 --list
   cvat_resize_track.py --job 97 --track 45 --size 4.5 1.9 1.6
-  cvat_resize_track.py --job 97 --ui-id 1662 --from-frame 65 --anchor bottom
+  cvat_resize_track.py --job 97 --track 45 --from-frame 65 --anchor bottom
   cvat_resize_track.py --job 97 --track 45 --scale 1.1 --dry-run
 
 Save your work in CVAT before running, and reload the job page afterwards.
@@ -44,11 +44,6 @@ class Cvat:
         except urllib.error.HTTPError as e:
             sys.exit(f"{method} {path} -> HTTP {e.code}: {e.read().decode(errors='replace')[:500]}")
 
-
-def ui_ids(annotations):
-    """Object numbers the CVAT UI shows right after the job is (re)loaded: tags, then shapes, then tracks."""
-    start = len(annotations["tags"]) + len(annotations["shapes"])
-    return {t["id"]: start + i + 1 for i, t in enumerate(annotations["tracks"])}
 
 
 def size_of(shape):
@@ -101,9 +96,7 @@ def main():
     ap.add_argument("--password", default=os.environ.get("CVAT_PASSWORD"))
     ap.add_argument("--job", type=int, required=True)
     ap.add_argument("--list", action="store_true", help="list the job's tracks and exit")
-    which = ap.add_mutually_exclusive_group()
-    which.add_argument("--track", type=int, help="server track id (see --list)")
-    which.add_argument("--ui-id", type=int, help="object number shown in the CVAT sidebar (after a page reload)")
+    ap.add_argument("--track", type=int, help="server track id (see --list)")
     how = ap.add_mutually_exclusive_group()
     how.add_argument("--size", type=float, nargs="+", metavar="N",
                      help="new size: L W H for cuboids (CVAT scale x y z), W H for rectangles")
@@ -112,32 +105,26 @@ def main():
     how.add_argument("--from-frame", type=int, metavar="F",
                      help="use the track's size at frame F for every frame")
     ap.add_argument("--anchor", choices=["center", "bottom"], default="center",
-                    help="keep the box center (default) or its bottom fixed")
+                     help="keep the box center (default) or its bottom fixed")
     ap.add_argument("--dry-run", action="store_true", help="show the changes without saving")
     args = ap.parse_args()
 
     cvat = Cvat(args.url, args.token, args.user, args.password)
     annotations = cvat.request("GET", f"/api/jobs/{args.job}/annotations")
-    ids = ui_ids(annotations)
 
     if args.list:
-        print(f"{'track':>7} {'UI#':>6}  type       frames      keys  size at first keyframe")
+        print(f"{'track (id)':>10}  type       frames      keys  size at first keyframe")
         for t in annotations["tracks"]:
             frames = sorted(s["frame"] for s in t["shapes"])
-            print(f"{t['id']:>7} {ids[t['id']]:>6}  {t['shapes'][0]['type']:<9}  {frames[0]:>4}-{frames[-1]:<5} "
+            print(f"{t['id']:>10}  {t['shapes'][0]['type']:<9}  {frames[0]:>4}-{frames[-1]:<5} "
                   f"{len(frames):>4}  {fmt(size_of(t['shapes'][0]))}")
         return
 
-    if args.track is None and args.ui_id is None:
-        ap.error("give --track or --ui-id (or --list)")
+    if args.track is None:
+        ap.error("give --track (or --list)")
     if not (args.size or args.scale or args.from_frame is not None):
         ap.error("give one of --size, --scale, --from-frame")
 
-    if args.ui_id is not None:
-        matches = [tid for tid, uid in ids.items() if uid == args.ui_id]
-        if not matches:
-            sys.exit(f"No track has UI# {args.ui_id}; reload the job page and check, or use --list.")
-        args.track = matches[0]
     track = next((t for t in annotations["tracks"] if t["id"] == args.track), None)
     if track is None:
         sys.exit(f"Track {args.track} not found in job {args.job}; use --list.")
@@ -152,7 +139,7 @@ def main():
     if fixed is not None and min(fixed) <= 0:
         sys.exit(f"Size must be positive, got {fmt(fixed)}")
 
-    print(f"Track {track['id']} (UI# {ids[track['id']]}), {kind}, {len(track['shapes'])} keyframes, anchor={args.anchor}")
+    print(f"Track id {track['id']}, {kind}, {len(track['shapes'])} keyframes, anchor={args.anchor}")
     for shape in sorted(track["shapes"], key=lambda s: s["frame"]):
         old = size_of(shape)
         if fixed is not None:

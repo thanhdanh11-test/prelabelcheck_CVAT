@@ -1,11 +1,11 @@
 {
-  "current_version": "1.13.1",
+  "current_version": "1.13.2",
   "brain_template_version": "1.7.1",
   "system_status": "unit_verified_browser_pending",
   "last_verification": {
-    "timestamp": "2026-10-22T17:34:05Z",
-    "tests": 94,
-    "passed": 94,
+    "timestamp": "2026-10-22T17:42:57Z",
+    "tests": 113,
+    "passed": 113,
     "failed": 0,
     "skipped": 0,
     "command": "node --test tests/*.test.cjs",
@@ -34,5 +34,6 @@
   "owner": {
     "name": "",
     "license": ""
-  }
+  },
+  "merged_upstream": "203456bf33fe351d22a7aa412ad59d5a0ed9f5c6"
 }

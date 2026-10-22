@@ -12,4 +12,13 @@ Tổng hợp các lỗi khó, các lưu ý dị biệt hoặc cách workaround �
 - `confirm()` của content script chạy trong isolated world: đè `window.confirm` ở MAIN world không có tác dụng. Bấm nút qua `setTimeout` trong `page.evaluate` (để lệnh không bị chặn) rồi `page.acceptDialog()`; nếu tiến trình script thoát khi hộp thoại đang mở thì hộp thoại bị đóng (confirm trả về false).
 - Cửa sổ Ego thu nhỏ thì `page.screenshot` lỗi; lấy ảnh canvas bằng `toDataURL` trong shadow root.
 
-- Upstream `203456b`: đổi nhãn ID server không giữ clientID sau Apply; bridge không đổi. Dropdown bỏ biến frames cục bộ nên dùng frames preview, cho Infinity–-Infinity khi preview trống (đã tái hiện Node VM). Không cherry-pick nguyên commit để chữa nhảy ID.
+- Upstream `203456b`: đổi nhãn ID server không giữ clientID sau Apply; bridge không đổi. Dropdown bỏ biến frames cục bộ nên dùng frames preview, cho Infinity–-Infinity khi preview trống (đã tái hiện Node VM). Đã gộp có sửa lỗi dropdown trong v1.13.2; không coi đổi nhãn là bản sửa nhảy ID.
+
+## Test với `vm.createContext`
+- Mảng/đối tượng tạo trong context khác realm với test; `assert.deepEqual` strict báo "same structure but not reference-equal". Chuẩn hóa bằng `JSON.parse(JSON.stringify(x))` (xem `plain()` trong `tests/track-split.test.cjs`).
+
+## Bước 0 của AGENTS.md
+- Ghi nhận từ máy cộng tác viên (không phải máy Mac hiện tại): engine `../brain4agent.release/.agents/skills/.xay-dung-nao-bo/scripts/init_brain.js` không có trên máy này (exit 1, MODULE_NOT_FOUND, 2026-10-22). Chưa kiểm được chuẩn não; cần người đặt hub đúng chỗ.
+
+## Tối ưu cache cần đo
+- Đếm-rồi-điền Float32Array trong `nearCloud` chậm hơn mảng JS tạm (quét hai lần; crop chỉ giữ ~0,5% điểm). Đừng "tối ưu" lại nếu chưa đo trên frame dày.

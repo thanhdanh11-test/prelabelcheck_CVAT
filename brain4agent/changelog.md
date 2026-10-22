@@ -2,6 +2,14 @@
 
 Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên bản của dự án.
 
+## [v1.13.2] - 2026-10-23: Integrate collaborator changes
+- Merge upstream ec93fe5 and 203456b with local six-face fitting, region selection, expanded zoom and collapsed-frame shortcuts.
+- Preserve Top trajectory/ghost boxes, directional cache preload, checklist optimization, server-ID labels and upstream CLI selection by --track.
+- Resolve drawView contract to accept both zoom-window coordinates and trajectory frame; retain a single set of outside controls in Advanced.
+- Fix dropdown range leaking preview frames; regression checks cover per-track bounds and combined drawing arguments.
+- Validation: 113/113 Node tests, 0 skipped; JS syntax, Python compilation and CLI help checked. npm audit unavailable (no lockfile). Browser/company-server QA pending; Apply/clientID behavior unchanged.
+- Earlier local/upstream v1.13.x entries below are branch history; this entry is the consolidated state.
+
 ## [v1.13.1] - 2026-10-23: Compact fit controls and collapsed-frame keyboard
 - Fit yaw and six faces always enabled; neutral accept/cancel row below expanded tools, hidden after completion.
 - Arrow editing on selected collapsed frames; comma/period rotation (1°, Shift 15°) in the selected view.
@@ -18,6 +26,17 @@ Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên 
 - Sidebar reorganised by workflow: sticky Preview/Apply footer, auto-fit inert until preview, summary chips double as frame filters, rarely used options under a collapsed "Nâng cao".
 - Close buttons by meaning: header "—" while previewing (hide, keep draft), "Thoát xem trước" text button for closing the preview, shrink icon to leave an expanded frame; expanded-view Undo button removed (⌘Z/Ctrl+Z); clear-keyframes as an icon.
 - Validation: 91/91 Node tests; Ego live check on CVAT local job 97.
+
+## [v1.13.1] - 2026-10-22: Cache lessons from CVAT
+- Background preload now starts at the frame being viewed and prefers the direction of travel (CVAT PrefetchAnalyzer lesson); sequential when nothing was viewed yet.
+- review-state reparses localStorage only when the stored text changes; renderReviewState uses a single Map (object-state-index lesson). ~210 ms → <1 ms per render at 500 tracks × 2,000 IDs (micro-benchmark).
+- Tried and reverted a two-pass typed-array crop in nearCloud: 3.2 → 5.4 ms, slower.
+- Validation: 100/100 Node tests (+5); mutation turned 3 red. Chrome/CVAT live gate open (planning/02_2026-10-22_cache-lessons).
+
+## [v1.13.0] - 2026-10-22: Track path trace
+- Add read-only "Truy vết ngược": walks the selected item from its last visible frame back to its first and lists centre, yaw, step, total length, net displacement, hidden gaps; top-down map and CSV copy.
+- New pure module `track-path.js` (isolated world); no bridge, Apply or Save involvement. Reads loaded annotation, never the unapplied preview draft.
+- Validation: 95/95 Node tests (+15); reverse-order mutation turned 11 red. Chrome/CVAT live gate still open (planning/01_2026-10-22_track-path-trace).
 
 ## [v1.12.0] - 2026-10-22: Review workflow
 - Promote experiment/review-queue to main; remove TEST branding.

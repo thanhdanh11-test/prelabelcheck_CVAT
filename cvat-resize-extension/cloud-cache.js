@@ -90,6 +90,7 @@
   function create({ fetchFrame, store = openStore(), onState = () => {}, memoryLimit = 24, memoryBudget = 128 * 1024 ** 2 } = {}) {
     const memory = new Map(), pending = new Map(), queue = [];
     let active = 0, epoch = 0, context = null, run = null, storageError = "", clearing = null, memoryBytes = 0;
+    let viewing = null, heading = 1; // frame last read in the foreground and the way the viewer is moving
     let status = { running: false, done: 0, total: 0, message: "" };
     const emit = patch => { status = { ...status, ...patch, storageError }; onState({ ...status }); };
     async function disk(method, ...args) {
@@ -152,8 +153,19 @@
       for (const task of pending.values()) if (task.background) task.controller.abort();
       emit({ running: false, message: "Đã dừng tải nền. Có thể tiếp tục." });
     }
+    // Like CVAT's prefetch analyzer: preload around where the viewer is, ahead of their direction
+    // of travel first. With no foreground read yet it walks the job from its first frame.
+    function nextFrame(target, seen) {
+      const at = Math.min(Math.max(viewing ?? target.start, target.start), target.stop);
+      for (let d = 0; d <= target.stop - target.start; d++) {
+        for (const frame of [at + heading * d, at - heading * d]) {
+          if (frame >= target.start && frame <= target.stop && !seen.has(frame)) return frame;
+        }
+      }
+      return null;
+    }
     function reset() {
-      stop(); epoch++;
+      stop(); epoch++; viewing = null; heading = 1;
       for (const task of pending.values()) task.controller.abort();
       for (const task of queue.splice(0)) task.reject(abortError());
       pending.clear(); memory.clear(); memoryBytes = 0;
@@ -166,6 +178,8 @@
       },
       async get(frame) {
         if (clearing) await clearing;
+        if (viewing !== null && frame !== viewing) heading = frame > viewing ? 1 : -1;
+        viewing = frame;
         return (await request(frame)).xyz;
       },
       async prefetch() {
@@ -176,7 +190,9 @@
         run = token;
         emit({ running: true, done: 0, message: "Đang tải nền" });
         try {
-          for (let frame = target.start; frame <= target.stop; frame++) {
+          const seen = new Set();
+          for (let frame; (frame = nextFrame(target, seen)) !== null;) {
+            seen.add(frame);
             if (token.cancelled) return;
             const hit = await disk("get", `${target.scope}:${frame}`, true);
             if (token.cancelled) return;
@@ -186,7 +202,7 @@
               if (token.cancelled) return;
               if (!result.persisted) { emit({ message: "Cache đã đầy hoặc không ghi được. Chỉ tải frame cần xem." }); return; }
             }
-            emit({ done: frame - target.start + 1 });
+            emit({ done: seen.size });
             await new Promise(resolve => setTimeout(resolve, 0));
           }
           const count = await disk("count", target.scope);

@@ -560,6 +560,7 @@
   <div class="opt-inline">
     <label><input type="checkbox" class="bottom" checked>Giữ đáy</label>
     <label><input type="checkbox" class="lock" checked>Khóa kích thước cả track</label>
+    <label><input type="checkbox" class="trail" checked>Vệt quỹ đạo (Top)</label>
   </div>
   <div class="edit-sec off" inert>
     <div class="sec"><span>Tự khớp</span><span class="need-preview">cần Xem trước</span></div>
@@ -615,6 +616,8 @@
     <li>Luôn khớp vị trí (dịch tâm XY tối đa 50 cm), hướng (yaw tối đa ±15°) và sáu mặt. Yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
     <li>Sáu mặt: đầu/đuôi và hai bên theo điểm của vật (mặt chỉ lùi vào khi LiDAR thấy mặt đó, mỗi mặt đổi tối đa 50 cm), đáy lên mặt đường, nóc lên điểm cao nhất (cao đổi tối đa 60 cm). Khi <b>Khóa kích thước cả track</b> bật, kích thước mới áp cho cả track.</li>
     <li>Cam là box hiện tại, xanh là đề xuất. Nhận chỉ đổi bản nháp; một lần Undo hoàn tác. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
+  <h5>Vệt quỹ đạo</h5>
+  <ul><li>Bật <b>Vệt quỹ đạo (Top)</b> để hiện đường nối tâm box các frame lân cận và khung mờ (ghost wireframe) của frame trước / sau trên khung nhìn Top, giúp căn chỉnh vị trí và hướng di chuyển mượt mà.</li></ul>
   <h5>Camera và kiểm tra item</h5>
   <ul><li>3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom. Đổi frame giữ hướng nhìn và mức zoom tương đối, camera đi theo box. <b>Về box</b> hoặc double-click đặt lại góc nhìn.</li>
     <li><b>Đã kiểm tra</b> là dấu thủ công trên trình duyệt theo job và ID server; không tự đánh dấu sau khi khớp và không Save annotation. Item chưa có ID server chỉ giữ dấu trong phiên tab. Có thể bỏ dấu để kiểm tra lại.</li></ul>
@@ -703,16 +706,17 @@
 
   function renderReviewState() {
     const track = selectedTrack(), tracks = annotations?.tracks || [];
+    // One lookup table and one pass over the checklist, not a scan of all tracks per option.
+    const checked = new Map(tracks.map(t => [t.uiId, reviews.has(jobId, t)]));
     $(".review-done").disabled = !track;
-    $(".review-done").checked = !!track && reviews.has(jobId, track);
-    const done = tracks.filter(t => reviews.has(jobId, t)).length;
+    $(".review-done").checked = !!track && !!checked.get(track.uiId);
+    const done = tracks.filter(t => checked.get(t.uiId)).length;
     $(".review-count").textContent = `${done}/${tracks.length}`;
     $(".review-count").title = `${done}/${tracks.length} item đã kiểm tra`;
-    $(".review-next").disabled = !tracks.some(t => t.uiId !== track?.uiId && !reviews.has(jobId, t) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
+    $(".review-next").disabled = !tracks.some(t => t.uiId !== track?.uiId && !checked.get(t.uiId) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
     for (const option of $(".track").options) {
       option.dataset.baseLabel ??= option.textContent;
-      const item = tracks.find(t => t.uiId === Number(option.value));
-      option.textContent = `${item && reviews.has(jobId, item) ? "✓ " : ""}${option.dataset.baseLabel}`;
+      option.textContent = `${checked.get(Number(option.value)) ? "✓ " : ""}${option.dataset.baseLabel}`;
     }
   }
 
@@ -805,7 +809,8 @@
     sel.innerHTML = annotations.tracks.length
       ? annotations.tracks.map((t) => {
           const frames = t.shapes.map((s) => s.frame);
-          return `<option value="${t.uiId}"${!t.shapes.length || !["cuboid", "rectangle"].includes(t.shapes[0].type) ? " disabled" : ""}>#${t.uiId} · ${t.id == null ? "chưa lưu" : `id ${t.id}`} · ${t.shapes[0]?.type || "rỗng"} · frame ${
+          const serverText = t.id == null ? "chưa lưu" : `id ${t.id}`;
+          return `<option value="${t.uiId}"${!t.shapes.length || !["cuboid", "rectangle"].includes(t.shapes[0].type) ? " disabled" : ""}>${serverText} (#${t.uiId}) · ${t.shapes[0]?.type || "rỗng"} · frame ${
             Math.min(...frames)}–${Math.max(...frames)} · ${t.shapes.length} keyframe</option>`;
         }).join("")
       : `<option value="">(job này không có track nào)</option>`;
@@ -953,9 +958,9 @@
     const hiddenText = !plan.counts.size ? "" : hiddenFrames.length
       ? `\nOutside (≤ ${plan.threshold} điểm): frame ${ranges(hiddenFrames).map(([a, b]) => a === b ? a : `${a}–${b}`).join(", ")}.`
       : `\nKhông frame nào có ≤ ${plan.threshold} điểm.`;
-    const cuboid = plan.track.shapes[0].type === "cuboid";
-    setStatus(`Track #${plan.track.uiId}: ${plan.shapes.length} keyframe.${hiddenText}`);
-    if (cuboid) openEditor();
+    const serverLabel = plan.track.id != null ? `id ${plan.track.id} (#${plan.track.uiId})` : `#${plan.track.uiId}`;
+    setStatus(`Track ${serverLabel}: ${plan.shapes.length} keyframe.${hiddenText}`);
+    if (plan.track.shapes[0]?.type === "cuboid") openEditor();
   }
 
   async function apply() {
@@ -996,7 +1001,9 @@
     if (!plan) return;
     const values = {}, checks = {};
     for (const name of ["thr", "split-gap", "fit-a", "fit-b", "fit-ref", "fit-kind"]) values[name] = $("." + name).value;
-    for (const name of ["bottom", "auto", "split-outside", "lock", "only-key", "only-hid", "only-bad"]) checks[name] = $("." + name).checked;
+    for (const name of ["bottom", "auto", "split-outside", "lock", "trail", "only-key", "only-hid", "only-bad"]) {
+      if ($("." + name)) checks[name] = $("." + name).checked;
+    }
     previews.set(plan.track.uiId, { plan, undo: undoStack.slice(), values, checks,
       inputs: [...root.querySelectorAll(".vals input")].map(input => input.value),
       active: activeFrame, zoom: zoomFrame, scroll: grid.scrollTop });
@@ -1023,7 +1030,7 @@
     plan = saved.plan;
     // Keep edits visible but disallow Apply if a refresh changed the source track.
     if (JSON.stringify(plan.baseline) !== JSON.stringify(selectedTrack())) plan.stale = true;
-    for (const [name, checked] of Object.entries(saved.checks)) $("." + name).checked = checked;
+    for (const [name, checked] of Object.entries(saved.checks)) if ($("." + name)) $("." + name).checked = checked;
     root.querySelectorAll(".vals input").forEach((input, i) => { input.value = saved.inputs[i]; });
     if (plan.track.shapes[0].type === "cuboid") openEditor();
     for (const [name, value] of Object.entries(saved.values)) $("." + name).value = value;
@@ -2220,7 +2227,7 @@
     const zoomed = canvases === zoomCanvases;
     canvases.forEach((cv, i) => {
       const win = live ? drag.wins[i] : viewWindow(ref, i, zoomed);
-      drawView(cv, crop && crop.xyz, st, ref, win, VIEWS[i], err, proposed);
+      drawView(cv, crop && crop.xyz, st, ref, win, VIEWS[i], err, proposed, f);
       if (zoomed && regionDrag && regionDrag.vi === i && cv.width) drawRegion(cv, win, regionDrag);
     });
   }
@@ -2234,7 +2241,7 @@
     ctx.strokeRect(x, y, wd, ht); ctx.setLineDash([]);
   }
 
-  function drawView(cv, xyz, st, ref, win, v, err, proposed = null) {
+  function drawView(cv, xyz, st, ref, win, v, err, proposed = null, f = null) {
     const W = cv.width;
     if (!W) return;
     const { range, cu, cw } = win, ctx = cv.getContext("2d"), mid = W / 2, scale = mid / range, dot = dotOf(cv);
@@ -2287,6 +2294,9 @@
       }
       ctx.stroke();
     }
+    if (f !== null && typeof plan !== "undefined" && plan?.shapes?.length && $(".trail")?.checked) {
+      drawTrajectoryTrail(ctx, P, f, v, dot);
+    }
     const colors = ["#ff5252", "#61d66b", "#5f8fff"];
     for (let axis = 0; axis < 3; axis++) {
       const direction = orientationInView(st.points, ref, v, axis);
@@ -2320,6 +2330,58 @@
       ctx.textAlign = "center";
       ctx.fillText(err ? "Không tải được point cloud" : "Đang tải…", mid, 20 * dot);
       ctx.textAlign = "start";
+    }
+  }
+
+  function drawTrajectoryTrail(ctx, P, f, v, dot) {
+    if (!v.cap.startsWith("Top") || typeof frames === "undefined" || !frames.length) return;
+    const fMin = Math.max(frames[0], f - 5), fMax = Math.min(frames[frames.length - 1], f + 5);
+    const pts = [];
+    for (let k = fMin; k <= fMax; k++) {
+      const pState = stateAt(k);
+      if (!pState || pState.outside) continue;
+      const c2d = P(pState.points.slice(0, 3));
+      if (Number.isFinite(c2d[0]) && Number.isFinite(c2d[1])) pts.push({ k, c2d });
+    }
+    if (pts.length > 1) {
+      ctx.strokeStyle = "rgba(0, 220, 255, 0.4)";
+      ctx.lineWidth = 1.5 * dot;
+      ctx.setLineDash([3 * dot, 3 * dot]);
+      ctx.beginPath();
+      pts.forEach((p, idx) => {
+        if (idx === 0) ctx.moveTo(p.c2d[0], p.c2d[1]);
+        else ctx.lineTo(p.c2d[0], p.c2d[1]);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (ctx.fillRect) {
+        const s = 1.5 * dot;
+        pts.forEach((p) => {
+          if (p.k === f) return;
+          ctx.fillStyle = p.k < f ? "rgba(0, 220, 255, 0.6)" : "rgba(255, 170, 68, 0.6)";
+          ctx.fillRect(p.c2d[0] - s, p.c2d[1] - s, 2 * s, 2 * s);
+        });
+      }
+    }
+    for (const nf of [f - 1, f + 1]) {
+      if (nf >= frames[0] && nf <= frames[frames.length - 1] && nf !== f) {
+        const nst = stateAt(nf);
+        if (nst && !nst.outside) {
+          const G = boxFrame(nst.points), gh = G.half, gCorners = [];
+          for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) {
+            gCorners.push(P(toWorld(G, [x * gh[0], y * gh[1], z * gh[2]])));
+          }
+          ctx.strokeStyle = nf < f ? "rgba(0, 220, 255, 0.22)" : "rgba(255, 170, 68, 0.22)";
+          ctx.lineWidth = 1 * dot;
+          ctx.setLineDash([3 * dot, 4 * dot]);
+          ctx.beginPath();
+          for (const [i, j] of [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]]) {
+            ctx.moveTo(gCorners[i][0], gCorners[i][1]); ctx.lineTo(gCorners[j][0], gCorners[j][1]);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
     }
   }
 
@@ -2521,7 +2583,8 @@
       const xyz = await loadCloud(f);
       if (request !== lidarRequest || zoomFrame !== f || !plan) return;
       lidar.setCloud(xyz);
-      $(".lidar-message").textContent = `${(xyz.length / 3).toLocaleString()} điểm · chỉ box item #${plan.track.uiId}`;
+      const planLabel = plan.track.id != null ? `id ${plan.track.id} (#${plan.track.uiId})` : `#${plan.track.uiId}`;
+      $(".lidar-message").textContent = `${(xyz.length / 3).toLocaleString()} điểm · chỉ box item ${planLabel}`;
     } catch (error) {
       if (request === lidarRequest) $(".lidar-message").textContent = `Không mở được LiDAR 3D: ${error.message}`;
     }
@@ -2952,6 +3015,7 @@
   $(".thr").addEventListener("input", markStale);
   $(".split-outside").addEventListener("change", modelChanged);
   $(".split-gap").addEventListener("input", modelChanged);
+  if ($(".trail")) $(".trail").addEventListener("change", scheduleDraw);
   $(".preview").addEventListener("click", preview);
   $(".apply").addEventListener("click", apply);
 

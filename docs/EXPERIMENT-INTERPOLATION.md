@@ -126,3 +126,9 @@ Không bấm Áp dụng hay Save. Ước lượng đáy/nóc vẫn là đề xu�
 - `203456b` ưu tiên nhãn ID server trong extension, bỏ `--ui-id` khỏi CLI; thêm vệt quỹ đạo. Không đổi `page-bridge.js`, nơi Apply gọi `job.annotations.commit` thay track và đọc clientID mới. Do đó chưa có bằng chứng commit này ngăn số UI/clientID đổi trên CVAT; nhãn server chỉ giúp nhận diện ổn định. ID server của track đầu đã được code hiện tại giữ lại; track mới do tách outside là trường hợp riêng.
 - Lỗi đo được trong dropdown remote: xóa `const frames = t.shapes.map(...)`, vô tình dùng mảng `frames` của preview bên ngoài. Chạy chính đoạn dựng option bằng Node VM với track frame 10–20 và preview trống cho `frame Infinity–-Infinity`. Không phải lỗi thiếu biến; đây là nhầm phạm vi biến.
 - Kết luận: có thể áp dụng riêng ý tưởng hiển thị ID server, giữ nguyên contract CLI; không nên merge/cherry-pick toàn commit làm bản sửa lỗi ID. Chưa áp dụng thay đổi remote, chưa thao tác annotation/server công ty. Cần tái hiện Apply/Undo/Save trên đúng bản CVAT trước khi đổi bridge để giữ clientID.
+
+## Hợp nhất v1.13.2 (2026-10-23)
+
+Người dùng đã duyệt gộp với lechibang. Đánh giá “chưa áp dụng remote” bên trên là lịch sử, được thay bằng trạng thái: đã gộp `ec93fe5`/`203456b`, sửa dropdown bằng biến frames riêng của từng track và kết hợp chữ ký `drawView` nhận cả `win` lẫn `f`. Giữ thanh hai nút, khớp sáu mặt, phím tắt, zoom/pan và vệt Top/cache/checklist upstream. CLI giữ bản upstream dùng server ID qua `--track`.
+
+113/113 tests, 0 fail/skip; thêm hai hồi quy cho dropdown và truyền frame/window/proposal vào renderer. Cú pháp JavaScript và Python đạt; npm audit không chạy được vì không có lockfile. Chưa kiểm trên trình duyệt/server công ty, chưa đổi bridge hay khẳng định chữa nhảy clientID.
