@@ -35,7 +35,7 @@ Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` r�
 
 ### Mới trong v1.13.0
 
-- **Đường đi (cuối → đầu):** chọn item rồi bấm **Truy vết ngược** ở sidebar. Tool đi từ frame cuối còn hiện về frame đầu, hiện bảng tổng hợp (quãng đường, dịch chuyển đầu↔cuối, bước lớn nhất, đoạn bị ẩn), bản đồ nhìn từ trên xuống và bảng từng frame (x, y, z, hướng, bước). **Sao chép CSV** lấy cả bảng. Chỉ đọc, không sửa annotation. Chi tiết: [TRACK-PATH.md](docs/TRACK-PATH.md).
+- **Vệt quỹ đạo & Khung mờ (Top view):** bật **Vệt quỹ đạo (Top)** ở Tùy chọn để hiển thị đường chuyển động nét đứt cyan nối tâm box giữa các frame lân cận và khung mờ wireframe của frame trước / sau trên khung nhìn Top, giúp đối chiếu hướng di chuyển và căn chỉnh box liền mạch.
 
 ### Mới trong v1.12.0
 
@@ -185,13 +185,13 @@ export CVAT_TOKEN=...          # CVAT: Profile > Access tokens
 
 python3 cvat_resize_track.py --job 97 --list                          # liệt kê track
 python3 cvat_resize_track.py --job 97 --track 45 --size 4.5 1.9 1.6   # đặt kích thước
-python3 cvat_resize_track.py --job 97 --ui-id 1662 --from-frame 65 --anchor bottom
+python3 cvat_resize_track.py --job 97 --track 45 --from-frame 65 --anchor bottom
 python3 cvat_resize_track.py --job 97 --track 45 --scale 1.1 --dry-run
 ```
 
 | Tuỳ chọn | Ý nghĩa |
 |---|---|
-| `--track` / `--ui-id` | Chọn track theo id trên server, hoặc theo số # trên sidebar CVAT (đếm sau khi tải lại trang) |
+| `--track` | Chọn track theo Server ID (xem từ `--list` hoặc trên extension `id <số>`) |
 | `--size L W H` | Kích thước mới (rectangle 2D: `W H`) |
 | `--scale k` | Nhân kích thước với k (một số, hoặc một số cho mỗi trục) |
 | `--from-frame F` | Dùng kích thước của track ở frame F |

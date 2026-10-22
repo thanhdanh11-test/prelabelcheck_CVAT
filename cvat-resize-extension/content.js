@@ -402,20 +402,6 @@
   .sumtab { width: 100%; border-collapse: collapse; }
   .sumtab td { padding: 5px 0; border-bottom: 1px solid var(--hairline); color: var(--body); }
   .sumtab td + td { text-align: right; color: var(--ink); font-weight: 600; }
-  .path-out { margin-top: 8px; }
-  .path-out[hidden] { display: none; }
-  .path-map { display: block; width: 100%; height: auto; margin-top: 8px; border: 1px solid var(--hairline); background: var(--canvas); }
-  .path-map .run { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
-  .path-map .gap { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
-  .path-map text { font-size: 10px; fill: var(--body); }
-  .path-list { margin-top: 8px; }
-  .path-list summary { cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; }
-  .path-scroll { max-height: 220px; overflow: auto; margin-top: 4px; }
-  .path-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 12px; }
-  .path-table th { position: sticky; top: 0; background: var(--canvas); color: var(--muted); font-weight: 600; text-align: right; }
-  .path-table td { padding: 2px 0; border-bottom: 1px solid var(--hairline); text-align: right; color: var(--body); }
-  .path-table tr.skip td { color: var(--muted); }
-  .path-table td:first-child, .path-table th:first-child { text-align: left; color: var(--ink); }
   .fitgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
   .fitgrid label { margin: 0; color: var(--muted); font-size: 11px; cursor: default; }
   .fitgrid input { width: 100%; margin-top: 4px; }
@@ -524,15 +510,13 @@
   </div>
   <div class="review-row"><label><input type="checkbox" class="review-done">Đã kiểm tra</label><span class="review-count"></span></div>
   <button class="btn review-next">Item chưa kiểm tra tiếp</button>
-  <div class="lbl">Đường đi (cuối → đầu)</div>
-  <div class="tools"><button class="btn path-trace">Truy vết ngược</button><button class="btn path-copy" disabled>Sao chép CSV</button></div>
-  <div class="path-out" role="status" aria-live="polite" hidden></div>
   <div class="lbl">Kích thước</div>
   <div class="vals"></div>
   <div class="lbl">Tùy chọn</div>
   <div class="option-grid">
     <label><input type="checkbox" class="bottom" checked>Giữ đáy cố định</label>
     <label><input type="checkbox" class="lock" checked>Khóa kích thước cả track</label>
+    <label><input type="checkbox" class="trail" checked>Vệt quỹ đạo (Top)</label>
     <div class="option-row"><label><input type="checkbox" class="auto" checked>Tự động outside ≤</label>
       <input id="outside-threshold" type="number" class="thr" min="0" step="1" value="6" aria-label="Ngưỡng điểm outside"><span>điểm</span></div>
     <div class="option-row"><label><input type="checkbox" class="split-outside" checked>Tách khi outside ≥</label>
@@ -583,9 +567,8 @@
   <h5>Khớp frame này</h5>
   <ul><li>Mặc định dịch tâm XY, giữ độ cao, kích thước và hướng; bật <b>Cho phép xoay</b> để chỉnh yaw tối đa ±15°. Dịch tối đa 50 cm, yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
     <li>Cam là box hiện tại, xanh là đề xuất. <b>Chấp nhận</b> chỉ đổi bản nháp của frame đó; <b>Hủy</b> bỏ đề xuất. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
-  <h5>Đường đi</h5>
-  <ul><li><b>Truy vết ngược</b> đi từ frame cuối còn hiện về frame đầu của item, liệt kê tâm box (x, y, z), hướng và quãng đường mỗi frame. Chỉ đọc, không sửa annotation.</li>
-    <li>Quãng đường cộng các bước giữa frame liền nhau; frame ẩn (outside) không tính, chỗ nhảy được báo riêng. Dùng keyframe và nội suy tuyến tính như CVAT; <b>Sao chép CSV</b> lấy cả bảng.</li></ul>
+  <h5>Vệt quỹ đạo</h5>
+  <ul><li>Bật <b>Vệt quỹ đạo (Top)</b> để hiện đường nối tâm box các frame lân cận và khung mờ (ghost wireframe) của frame trước / sau trên khung nhìn Top, giúp căn chỉnh vị trí và hướng di chuyển mượt mà.</li></ul>
   <h5>Camera và kiểm tra item</h5>
   <ul><li>3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom. Đổi frame giữ hướng nhìn và mức zoom tương đối, camera đi theo box. <b>Về box</b> hoặc double-click đặt lại góc nhìn.</li>
     <li><b>Đã kiểm tra</b> là dấu thủ công trên trình duyệt theo job và ID server; không tự đánh dấu sau khi khớp và không Save annotation. Item chưa có ID server chỉ giữ dấu trong phiên tab. Có thể bỏ dấu để kiểm tra lại.</li></ul>
@@ -750,7 +733,6 @@
 
   // The new size, prefilled with the track's size at the frame on screen (unchanged = size kept).
   function renderInputs() {
-    clearPath();
     const track = selectedTrack();
     const dims = track && track.shapes[0]?.type === "rectangle" ? ["W", "H"] : ["L", "W", "H"];
     let start = dims.map(() => 1);
@@ -775,8 +757,8 @@
     const sel = $(".track");
     sel.innerHTML = annotations.tracks.length
       ? annotations.tracks.map((t) => {
-          const frames = t.shapes.map((s) => s.frame);
-          return `<option value="${t.uiId}"${!t.shapes.length || !["cuboid", "rectangle"].includes(t.shapes[0].type) ? " disabled" : ""}>#${t.uiId} · ${t.id == null ? "chưa lưu" : `id ${t.id}`} · ${t.shapes[0]?.type || "rỗng"} · frame ${
+          const serverText = t.id == null ? "chưa lưu" : `id ${t.id}`;
+          return `<option value="${t.uiId}"${!t.shapes.length || !["cuboid", "rectangle"].includes(t.shapes[0].type) ? " disabled" : ""}>${serverText} (#${t.uiId}) · ${t.shapes[0]?.type || "rỗng"} · frame ${
             Math.min(...frames)}–${Math.max(...frames)} · ${t.shapes.length} keyframe</option>`;
         }).join("")
       : `<option value="">(job này không có track nào)</option>`;
@@ -924,9 +906,9 @@
     const hiddenText = !plan.counts.size ? "" : hiddenFrames.length
       ? `\nOutside (≤ ${plan.threshold} điểm): frame ${ranges(hiddenFrames).map(([a, b]) => a === b ? a : `${a}–${b}`).join(", ")}.`
       : `\nKhông frame nào có ≤ ${plan.threshold} điểm.`;
-    const cuboid = plan.track.shapes[0].type === "cuboid";
-    setStatus(`Track #${plan.track.uiId}: ${plan.shapes.length} keyframe.${hiddenText}`);
-    if (cuboid) openEditor();
+    const serverLabel = plan.track.id != null ? `id ${plan.track.id} (#${plan.track.uiId})` : `#${plan.track.uiId}`;
+    setStatus(`Track ${serverLabel}: ${plan.shapes.length} keyframe.${hiddenText}`);
+    if (plan.track.shapes[0]?.type === "cuboid") openEditor();
   }
 
   async function apply() {
@@ -967,7 +949,9 @@
     if (!plan) return;
     const values = {}, checks = {};
     for (const name of ["thr", "split-gap", "fit-a", "fit-b", "fit-ref", "fit-kind"]) values[name] = $("." + name).value;
-    for (const name of ["bottom", "auto", "split-outside", "lock", "only-key", "only-hid", "only-bad"]) checks[name] = $("." + name).checked;
+    for (const name of ["bottom", "auto", "split-outside", "lock", "trail", "only-key", "only-hid", "only-bad"]) {
+      if ($("." + name)) checks[name] = $("." + name).checked;
+    }
     previews.set(plan.track.uiId, { plan, undo: undoStack.slice(), values, checks,
       inputs: [...root.querySelectorAll(".vals input")].map(input => input.value),
       active: activeFrame, zoom: zoomFrame, scroll: grid.scrollTop });
@@ -994,7 +978,7 @@
     plan = saved.plan;
     // Keep edits visible but disallow Apply if a refresh changed the source track.
     if (JSON.stringify(plan.baseline) !== JSON.stringify(selectedTrack())) plan.stale = true;
-    for (const [name, checked] of Object.entries(saved.checks)) $("." + name).checked = checked;
+    for (const [name, checked] of Object.entries(saved.checks)) if ($("." + name)) $("." + name).checked = checked;
     root.querySelectorAll(".vals input").forEach((input, i) => { input.value = saved.inputs[i]; });
     if (plan.track.shapes[0].type === "cuboid") openEditor();
     for (const [name, value] of Object.entries(saved.values)) $("." + name).value = value;
@@ -1016,71 +1000,6 @@
     }
     if (plan && plan.track.clientID === track.clientID) return setStatus(`Track #${ui} đang được xem trước.`);
     await switchTrack(track.uiId);
-  }
-
-  // ---------- path trace: where the item was, from its last visible frame back to its first ----------
-
-  let pathResult = null;
-
-  function clearPath() {
-    pathResult = null;
-    $(".path-out").hidden = true;
-    $(".path-out").textContent = "";
-    $(".path-copy").disabled = true;
-  }
-
-  function pathMap(result) {
-    const W = 360, H = 240, M = 16, pts = result.points;
-    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
-    const x0 = Math.min(...xs), y0 = Math.min(...ys);
-    const scale = Math.min((W - 2 * M) / (Math.max(...xs) - x0 || 1), (H - 2 * M) / (Math.max(...ys) - y0 || 1));
-    const at = (p) => [(M + (p.x - x0) * scale).toFixed(1), (H - M - (p.y - y0) * scale).toFixed(1)].join(",");
-    const runs = [];
-    pts.forEach((p) => (p.step === null ? runs.push([p]) : runs.at(-1).push(p)));
-    const lines = runs.map((run) => `<polyline class="run" points="${run.map(at).join(" ")}"/>`);
-    runs.slice(1).forEach((run, i) => lines.push(`<polyline class="gap" points="${at(runs[i].at(-1))} ${at(run[0])}"/>`));
-    const [fx, fy] = at(pts[0]).split(","), [bx, by] = at(pts.at(-1)).split(",");
-    return `<svg class="path-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Đường đi nhìn từ trên xuống">${lines.join("")}
-      <circle cx="${fx}" cy="${fy}" r="5" fill="#44e5ff"/><text x="${+fx + 8}" y="${+fy - 6}">cuối · ${pts[0].frame}</text>
-      <circle cx="${bx}" cy="${by}" r="5" fill="#ffbd69"/><text x="${+bx + 8}" y="${+by + 14}">đầu · ${pts.at(-1).frame}</text></svg>`;
-  }
-
-  function renderPath(result) {
-    const out = $(".path-out"), s = result.summary, u = result.unit, d = u === "m" ? 3 : 1;
-    out.hidden = false;
-    $(".path-copy").disabled = !result.points.length;
-    if (!result.points.length) { out.textContent = "Item không hiện ở frame nào trong job này."; return; }
-    const n = (v) => `${v.toFixed(d)} ${u}`;
-    const rows = [
-      ["Từ frame cuối → đầu", `${s.finishFrame} → ${s.beginFrame}`],
-      ["Số frame hiện", `${s.frames}`],
-      ["Quãng đường", n(s.length)],
-      ...(u === "m" ? [["Quãng đường ngang (x–y)", n(s.lengthXY)]] : []),
-      ["Dịch chuyển đầu ↔ cuối", n(s.net)],
-      ["Bước lớn nhất", s.maxStep ? `${n(s.maxStep.step)} · frame ${s.maxStep.frame}` : "—"],
-      ["Đoạn liên tục", `${result.runs.length}`],
-      ...result.gaps.map((g) => [`Ẩn frame ${g.hiddenFrom}–${g.hiddenTo}`, `nhảy ${n(g.jump)}`]),
-    ];
-    const f = (v) => v.toFixed(d), yaw = (p) => (p.yaw === null ? "" : `${(p.yaw * 180 / Math.PI).toFixed(1)}°`);
-    const body = result.points.map((p) => `<tr${p.step === null ? ' class="skip"' : ""}><td>${p.frame}${p.key ? " ◆" : ""}</td><td>${f(p.x)}</td><td>${f(p.y)}</td>${u === "m" ? `<td>${f(p.z)}</td>` : ""}<td>${yaw(p)}</td><td>${p.step === null ? "—" : f(p.step)}</td></tr>`).join("");
-    out.innerHTML = `<table class="sumtab">${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table>${pathMap(result)}
-      <details class="path-list"><summary>Từng frame (${s.frames})</summary><div class="path-scroll"><table class="path-table">
-      <tr><th>Frame</th><th>x</th><th>y</th>${u === "m" ? "<th>z</th>" : ""}<th>Hướng</th><th>Bước</th></tr>${body}</table></div></details>`;
-  }
-
-  function tracePath() {
-    const track = selectedTrack();
-    if (!track) return setStatus("Chọn một item cuboid hoặc rectangle trước.", true);
-    pathResult = CvatTrackPath.trace(track, job.start_frame, job.stop_frame);
-    renderPath(pathResult);
-    const s = pathResult.summary;
-    setStatus(s.frames ? `Đường đi item #${track.uiId}: frame ${s.finishFrame} → ${s.beginFrame}, ${s.frames} frame, dài ${s.length.toFixed(pathResult.unit === "m" ? 2 : 0)} ${pathResult.unit}.` : "Item không hiện ở frame nào trong job này.");
-  }
-
-  async function copyPath() {
-    if (!pathResult?.points.length) return;
-    await navigator.clipboard.writeText(CvatTrackPath.toCsv(pathResult));
-    setStatus(`Đã sao chép CSV ${pathResult.points.length} frame (cuối → đầu).`);
   }
 
   // ---------- preview editor: three views per frame ----------
@@ -2082,10 +2001,10 @@
     if (!live && !(crop && cropCovers(crop, ref.slice(0, 3), viewReach(ref)))) ensureLoad(f);
     const err = loadState.get(f) instanceof Error ? loadState.get(f) : null;
     const proposed = canvases === zoomCanvases && frameFit && !frameFit.pending && frameFit.f === f ? frameFit.points : null;
-    canvases.forEach((cv, i) => drawView(cv, crop && crop.xyz, st, ref, live ? drag.ranges[i] : viewRange(ref, VIEWS[i]), VIEWS[i], err, proposed));
+    canvases.forEach((cv, i) => drawView(cv, crop && crop.xyz, st, ref, live ? drag.ranges[i] : viewRange(ref, VIEWS[i]), VIEWS[i], err, proposed, f));
   }
 
-  function drawView(cv, xyz, st, ref, range, v, err, proposed = null) {
+  function drawView(cv, xyz, st, ref, range, v, err, proposed = null, f = null) {
     const W = cv.width;
     if (!W) return;
     const ctx = cv.getContext("2d"), mid = W / 2, scale = mid / range, dot = dotOf(cv);
@@ -2138,6 +2057,9 @@
       }
       ctx.stroke();
     }
+    if (f !== null && typeof plan !== "undefined" && plan?.shapes?.length && $(".trail")?.checked) {
+      drawTrajectoryTrail(ctx, P, f, v, dot);
+    }
     const colors = ["#ff5252", "#61d66b", "#5f8fff"];
     for (let axis = 0; axis < 3; axis++) {
       const direction = orientationInView(st.points, ref, v, axis);
@@ -2171,6 +2093,58 @@
       ctx.textAlign = "center";
       ctx.fillText(err ? "Không tải được point cloud" : "Đang tải…", mid, 20 * dot);
       ctx.textAlign = "start";
+    }
+  }
+
+  function drawTrajectoryTrail(ctx, P, f, v, dot) {
+    if (!v.cap.startsWith("Top") || typeof frames === "undefined" || !frames.length) return;
+    const fMin = Math.max(frames[0], f - 5), fMax = Math.min(frames[frames.length - 1], f + 5);
+    const pts = [];
+    for (let k = fMin; k <= fMax; k++) {
+      const pState = stateAt(k);
+      if (!pState || pState.outside) continue;
+      const c2d = P(pState.points.slice(0, 3));
+      if (Number.isFinite(c2d[0]) && Number.isFinite(c2d[1])) pts.push({ k, c2d });
+    }
+    if (pts.length > 1) {
+      ctx.strokeStyle = "rgba(0, 220, 255, 0.4)";
+      ctx.lineWidth = 1.5 * dot;
+      ctx.setLineDash([3 * dot, 3 * dot]);
+      ctx.beginPath();
+      pts.forEach((p, idx) => {
+        if (idx === 0) ctx.moveTo(p.c2d[0], p.c2d[1]);
+        else ctx.lineTo(p.c2d[0], p.c2d[1]);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (ctx.fillRect) {
+        const s = 1.5 * dot;
+        pts.forEach((p) => {
+          if (p.k === f) return;
+          ctx.fillStyle = p.k < f ? "rgba(0, 220, 255, 0.6)" : "rgba(255, 170, 68, 0.6)";
+          ctx.fillRect(p.c2d[0] - s, p.c2d[1] - s, 2 * s, 2 * s);
+        });
+      }
+    }
+    for (const nf of [f - 1, f + 1]) {
+      if (nf >= frames[0] && nf <= frames[frames.length - 1] && nf !== f) {
+        const nst = stateAt(nf);
+        if (nst && !nst.outside) {
+          const G = boxFrame(nst.points), gh = G.half, gCorners = [];
+          for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) {
+            gCorners.push(P(toWorld(G, [x * gh[0], y * gh[1], z * gh[2]])));
+          }
+          ctx.strokeStyle = nf < f ? "rgba(0, 220, 255, 0.22)" : "rgba(255, 170, 68, 0.22)";
+          ctx.lineWidth = 1 * dot;
+          ctx.setLineDash([3 * dot, 4 * dot]);
+          ctx.beginPath();
+          for (const [i, j] of [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]]) {
+            ctx.moveTo(gCorners[i][0], gCorners[i][1]); ctx.lineTo(gCorners[j][0], gCorners[j][1]);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
     }
   }
 
@@ -2365,7 +2339,8 @@
       const xyz = await loadCloud(f);
       if (request !== lidarRequest || zoomFrame !== f || !plan) return;
       lidar.setCloud(xyz);
-      $(".lidar-message").textContent = `${(xyz.length / 3).toLocaleString()} điểm · chỉ box item #${plan.track.uiId}`;
+      const planLabel = plan.track.id != null ? `id ${plan.track.id} (#${plan.track.uiId})` : `#${plan.track.uiId}`;
+      $(".lidar-message").textContent = `${(xyz.length / 3).toLocaleString()} điểm · chỉ box item ${planLabel}`;
     } catch (error) {
       if (request === lidarRequest) $(".lidar-message").textContent = `Không mở được LiDAR 3D: ${error.message}`;
     }
@@ -2624,8 +2599,6 @@
   $(".review-done").addEventListener("change", toggleItemReviewed);
   $(".review-next").addEventListener("click", guard(nextUncheckedItem));
   addEventListener("storage", e => { if (e.key === reviews.key(jobId) || e.key === null) renderReviewState(); });
-  $(".path-trace").addEventListener("click", guard(tracePath));
-  $(".path-copy").addEventListener("click", guard(copyPath));
   $(".pick").addEventListener("click", guard(pickActive));
   $(".track").addEventListener("change", guard(() => switchTrack(Number($(".track").value))));
   $(".bottom").addEventListener("change", markStale);
@@ -2633,6 +2606,7 @@
   $(".thr").addEventListener("input", markStale);
   $(".split-outside").addEventListener("change", modelChanged);
   $(".split-gap").addEventListener("input", modelChanged);
+  if ($(".trail")) $(".trail").addEventListener("change", scheduleDraw);
   $(".preview").addEventListener("click", preview);
   $(".apply").addEventListener("click", apply);
 
@@ -2652,7 +2626,6 @@
       near.clear(); nearFloats = 0;
       previews.clear();
       counted.clear();
-      clearPath();
       panel.hidden = true;
       $(".job").textContent = id ? `Job ${id}` : "";
     }
