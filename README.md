@@ -29,15 +29,27 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
+### Mới trong v1.13.0
+
+- **Khớp ngay ở view thu nhỏ, dùng icon:** mỗi frame có icon khớp (khung có ô vuông); đề xuất (xanh) vẽ ngay trong ba view nhỏ, icon ✓ chấp nhận và ✕ hủy nằm sát bên. View mở rộng dùng cùng ba icon, đứng liền nhau. <kbd>Enter</kbd> chấp nhận, <kbd>Esc</kbd> hủy.
+- **Khớp mọi mặt** (luôn bật): đầu/đuôi và hai bên theo điểm của vật, đáy lên mặt đường (vành 0,4–1,2 m quanh box), nóc lên điểm cao nhất (phân vị 98%). Mặt chỉ lùi vào khi LiDAR thấy mặt đó; mặt khuất giữ theo kích thước cũ. Mỗi mặt bên đổi tối đa 50 cm, đáy 50 cm, chiều cao 60 cm; vượt giới hạn hoặc thiếu điểm thì giữ nguyên và ghi lý do. Khi **Khóa kích thước cả track** bật, kích thước mới áp cho cả track như khi kéo cạnh.
+- **Xoá keyframe giữ vị trí box:** chỉ bỏ keyframe thừa (nội suy từ keyframe còn lại vẫn cho đúng vị trí, lệch ≤ 5 cm / 1°); giữ keyframe đầu/cuối, chỗ đổi outside và keyframe đặt attribute. Trước đây nút này xoá mọi keyframe ở giữa nên box nhảy về đường thẳng giữa hai đầu.
+- **Kéo vùng để đưa box về (tùy chọn):** bấm icon khung nét đứt bên trái icon khớp để bật (nền đỏ), bấm lại để tắt (không màu, mặc định). Khi bật, trong view mở rộng Top/Side/Front, kéo chuột trái ở vùng trống để khoanh quanh vật; box nhảy về giữa các điểm trong vùng (bỏ lớp mặt đường), đặt mép lên mặt LiDAR thấy nếu có, giữ hướng, kích thước và độ cao. Một lần Undo. Sau đó bấm khớp để chỉnh sát.
+- **Thanh bên gọn theo thứ tự làm việc:** Track (⟳ tải lại) → Lấy object / Đã kiểm tra / → item kế → Kích thước + Giữ đáy + Khóa kích thước → Tự khớp (mờ và khóa tới khi Xem trước) → Bản nháp (ô số liệu bấm để lọc frame) → **Nâng cao** thu gọn (ngưỡng outside, tách object, point cloud cache). **Xem trước / Áp dụng** ghim ở đáy panel.
+- **Nút đóng rõ nghĩa:** đầu panel là **—** khi đang xem trước (ẩn panel, giữ bản nháp), ✕ khi chưa xem trước; thanh xem trước có nút chữ **Thoát xem trước** (nút duy nhất có thể bỏ bản nháp); view mở rộng dùng icon thu nhỏ. Bỏ nút Undo trong view mở rộng, dùng ⌘Z / Ctrl+Z. Xoá keyframe thành icon.
+- **View mở rộng linh hoạt:** nút phóng ở góc mỗi view (LiDAR 3D, Top, Side, Front) để xem riêng một view; Top/Side/Front cuộn chuột để phóng to hoặc thu nhỏ quanh con trỏ (thu nhỏ tới 3× view mặc định, tự tải thêm point cloud xung quanh), kéo vùng trống (khi tắt Kéo vùng) hoặc chuột phải/giữa để di chuyển, double-click về mặc định. Zoom giữ khi đổi frame.
+
+Chi tiết và kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md#bản-v1130-khớp-đáynóc-và-khớp-ở-view-thu-nhỏ-2026-10-22).
+
 ### Mới trong v1.12.0
 
 - **Giữ camera khi đổi frame:** giữ góc xoay, mức zoom tương đối và độ lệch pan; tâm nhìn đi theo box của frame mới. Thu nhỏ/mở lại cùng item vẫn giữ góc. **Về box** đặt lại; đổi item hoặc dựng lại preview bắt đầu góc mặc định.
 - **Đã kiểm tra:** đánh dấu thủ công ở dưới danh sách track; item có dấu ✓ và bộ đếm đã kiểm tra. **Item chưa kiểm tra tiếp** bỏ qua các item đã đánh dấu. Dấu của item có ID server được lưu trên trình duyệt theo server/job/ID, dùng lại sau F5. Item chưa có ID server chỉ giữ dấu trong tab. Dấu không Save annotation, không tự bỏ khi chỉnh box và không đồng bộ sang trình duyệt khác.
-- **Giao diện gọn:** hướng dẫn nằm trong nút **?**; các hàng tùy chọn căn đều. Hướng box mặc định luôn bật, không còn bảng Cuboid orientation. Bỏ ký hiệu trục nhìn thẳng ở góc dưới và các nút ↶ / ↷ / 180°; vẫn xoay được bằng tay nắm tròn. Thanh khớp khi phóng to mặc định chỉ hiện **Khớp frame này** và **Cho phép xoay**; kết quả/Chấp nhận/Hủy xuất hiện khi cần.
+- **Giao diện gọn:** hướng dẫn nằm trong nút **?**; các hàng tùy chọn căn đều. Hướng box mặc định luôn bật, không còn bảng Cuboid orientation. Bỏ ký hiệu trục nhìn thẳng ở góc dưới và các nút ↶ / ↷ / 180°; vẫn xoay được bằng tay nắm tròn. Thanh khớp khi phóng to chỉ có hai nút **Tự động khớp** và **Di chuyển box tới vùng chọn**. Hai nút Chấp nhận/Hủy giữ màu mặc định, hiện thành hàng ngay dưới khi khớp và ẩn sau khi nhận/hủy.
 
 Các thay đổi từ `experiment/review-queue` đã được đưa vào bản v1.12.0 trên `main`. Chi tiết và kiểm thử: [Camera và dấu kiểm tra item](docs/REVIEW-WORKFLOW.md).
 
-Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại màu cam và đề xuất màu xanh trên cả bốn view. Mặc định chỉ dịch tâm XY, giữ độ cao, kích thước và hướng; bật **Cho phép xoay** để thử yaw tối đa ±15°. Giới hạn dịch tâm 50 cm, yêu cầu ít nhất 30 điểm trong box và box gần thẳng đứng.
+Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại màu cam và đề xuất màu xanh trên cả bốn view. Luôn khớp mọi mặt và thử yaw tối đa ±15°, không cần bật checkbox. Giới hạn dịch tâm 50 cm, yêu cầu ít nhất 30 điểm trong box và box gần thẳng đứng.
 
 **Chấp nhận** chỉ sửa frame đang chọn trong bản nháp; tool ghim trạng thái frame liền kề để không kéo theo nội suy cả đoạn. **Hủy** hoặc Esc bỏ đề xuất, Ctrl/⌘Z hoàn tác lần chấp nhận. Chuyển frame, đổi item hoặc chỉnh box sẽ bỏ đề xuất cũ. Thu nhỏ rồi **Áp dụng**, sau đó **Save trong CVAT** khi muốn lưu.
 
@@ -49,7 +61,7 @@ Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại m�
 - View 3D dùng point cloud toàn frame từ cache chung, chỉ vẽ box của item đang chọn. Kéo chuột trái để xoay camera, kéo chuột phải/giữa để pan, cuộn để zoom; bấm **Về box** hoặc double-click để đặt lại camera.
 - Cuboid orientation: mũi tên X đỏ, Y xanh lá, Z xanh dương. Mặc định luôn hiển thị trên box; không còn nút bật/tắt ở sidebar.
 - Xoay box trong cả ba view bằng tay nắm tròn; giữ Shift khi kéo để bước 15°.
-- Chọn view rồi dùng phím mũi tên để dịch box 5 cm; Shift = 1 cm, Alt = 20 cm. PageUp / PageDown nâng/hạ theo trục Z thế giới. Giữ phím liên tục là một bước Undo.
+- Ở frame thu nhỏ hoặc mở rộng, click chọn view rồi dùng phím mũi tên để dịch box 5 cm; Shift = 1 cm, Alt = 20 cm. PageUp / PageDown nâng/hạ theo trục Z thế giới. Giữ phím liên tục là một bước Undo.
 
 ### Từ v1.10.0
 
@@ -119,7 +131,7 @@ Mỗi frame hiện 3 mặt nhìn theo trục của box: Top (x–y), Side (x–z
   - **con mắt**: ẩn / hiện frame đó;
   - **chìa khoá**: bật / tắt keyframe (nền đỏ = đang bật);
   - **phóng to** một frame.
-- Thanh trên cùng có bộ lọc **Keyframe / Frame ẩn / Frame khớp kém**, nút **Xoá keyframe** (giữ keyframe đầu và cuối), **⛶** toàn màn hình và **✕** đóng.
+- Thanh trên cùng có bộ lọc **Keyframe / Frame ẩn / Frame khớp kém**, nút **Xoá keyframe** (chỉ bỏ keyframe thừa, box giữ nguyên vị trí), **⛶** toàn màn hình và **✕** đóng.
 - Nếu bộ lọc không có kết quả, màn hình báo rõ và có nút **Bỏ bộ lọc**. Số frame trên thanh công cụ hiển thị số khớp / tổng số khi đang lọc.
 - Đầu mỗi frame hiển thị số điểm **nằm trong box**, ở cả dạng lưới và phóng to; số điểm cập nhật khi chỉnh box. Hiện “…” khi chưa tải được dữ liệu, “—” khi tải lỗi.
 - Frame đang thao tác có viền đỏ.
@@ -216,3 +228,5 @@ Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã đư
 ## License
 
 © 2026 danhtongAI11. Phát hành theo giấy phép [MIT](LICENSE).
+
+Phím `,` / `.` xoay box −1° / +1° trong Top/Side/Front đang chọn (view 3D dùng yaw). Giữ Shift để xoay 15°. Phím này và phím mũi tên dùng được ở frame thu nhỏ; không tác động khi đang nhập liệu.

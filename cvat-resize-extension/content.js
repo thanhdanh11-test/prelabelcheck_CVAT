@@ -330,6 +330,18 @@
 
   // ---------- UI ----------
 
+  // Icons of tool buttons (also used in the template below).
+  const BTN_ICON = {
+    fit: '<svg viewBox="0 0 24 24"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5"/><rect x="8" y="8" width="8" height="8"/></svg>',
+    accept: '<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>',
+    cancel: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    region: '<svg viewBox="0 0 24 24"><path d="M3 7V3h4M10 3h4M17 3h4v4M21 10v1M3 10v4M3 17v4h4M10 21h1"/><path d="M14 14l7 2.5-3 1.2-1.2 3.3z"/></svg>',
+    refresh: '<svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>',
+    next: '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+    clearKeys: '<svg viewBox="0 0 24 24"><circle cx="7" cy="17" r="4.5"/><path d="M10.2 13.8L21 3M16.5 7.5l3 3"/><path d="M14 14l7 7M21 14l-7 7"/></svg>',
+    shrink: '<svg viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>',
+  };
+
   const host = document.createElement("div");
   host.id = "cvat-track-resizer";
   const root = host.attachShadow({ mode: "open" });
@@ -352,12 +364,15 @@
            border: 1px solid var(--hairline); border-radius: 0; background: var(--canvas); color: var(--body);
            box-shadow: 0 4px 8px rgba(0,0,0,.1); color-scheme: dark; }
   .panel[hidden] { display: none; }
-  .side { width: 400px; flex: none; max-height: calc(100vh - 80px); overflow: hidden auto; padding: 0 16px 16px; }
+  .side { width: 400px; flex: none; max-height: calc(100vh - 80px); display: flex; flex-direction: column; }
+  .side-scroll { flex: 1; min-height: 0; overflow: hidden auto; padding: 0 16px 16px; }
+  .side-foot { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--hairline); }
+  .side-foot .btn { height: 44px; }
   .panel.wide { left: 0 !important; top: 0 !important; width: 100vw; height: 100vh; border: 0; }
   .panel.wide .side { max-height: none; border-right: 1px solid var(--hairline); }
   .panel.frame-expanded .side, .panel.frame-expanded .helpbox { display: none; }
   .panel.wide h3 { cursor: default; }
-  h3 { margin: 0 -16px 16px; padding: 12px 16px; border-bottom: 1px solid var(--hairline);
+  h3 { flex: none; margin: 0; padding: 12px 16px; border-bottom: 1px solid var(--hairline);
        display: flex; align-items: center; gap: 8px; cursor: move; user-select: none; }
   h3 .logo { width: 28px; height: 28px; }
   h3 .name { color: var(--ink); font-size: 16px; font-weight: 500; letter-spacing: .08px; }
@@ -379,13 +394,36 @@
   .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
   .row input[type=number] { width: 76px; }
   label.row { flex-wrap: nowrap; }
-  .tools { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 8px; }
-  .review-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
-  .review-row label { margin: 0; }
+  .track-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 16px; }
+  .track-row .ico-btn { height: 36px; width: 36px; }
+  .review-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+  .review-row label { margin: 0; white-space: nowrap; }
+  .review-box { display: flex; align-items: center; gap: 6px; }
+  .btn.quiet { height: 32px; padding: 0 12px; border-color: var(--control-border); font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+  .btn.ico-btn { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-color: var(--control-border); }
+  .ico-btn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .sec { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 8px; padding-top: 14px; border-top: 1px solid var(--hairline);
+         color: var(--muted); font-size: 11px; font-weight: 600; line-height: 1.4; letter-spacing: 1.1px; text-transform: uppercase; }
+  .opt-inline { display: flex; gap: 16px; flex-wrap: wrap; }
+  .opt-inline label { min-height: 36px; display: flex; align-items: center; margin: 0; }
+  .edit-sec.off { opacity: .4; }
+  .need-preview { color: var(--focus); letter-spacing: 0; text-transform: none; font-weight: 500; }
+  .edit-sec:not(.off) .need-preview { display: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { height: 28px; padding: 0 10px; border: 1px solid var(--hairline); background: none; color: var(--ink); font-size: 12px; cursor: pointer; }
+  .chip:disabled { cursor: default; color: var(--body); }
+  .chip.on { border-color: var(--primary); }
+  .chip b { font-weight: 600; }
+  .split-summary { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .split-summary[hidden] { display: none; }
+  details.advanced { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--hairline); }
+  details.advanced summary { cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; }
+  .cache-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+  .cache-row .cache-status { color: var(--muted); font-size: 12px; }
+  .cache-btns { display: flex; gap: 6px; flex: none; }
+  .cache-btns .btn.quiet { height: 28px; padding: 0 8px; font-size: 12px; }
   .review-count { color: var(--muted); font-size: 12px; }
-  .review-next { width: 100%; margin-top: 8px; }
-  .option-grid { display: grid; gap: 0; }
-  .option-grid > label, .option-row { min-height: 40px; display: flex; align-items: center; margin: 0; }
+  .option-row { min-height: 40px; display: flex; align-items: center; margin: 0; }
   .option-row { display: grid; grid-template-columns: minmax(0, 1fr) 68px 42px; gap: 8px; }
   .option-row label { margin: 0; }
   .option-row input[type=number] { width: 100%; }
@@ -399,14 +437,11 @@
   .ico svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
   .ico.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
   .ico.on:disabled { opacity: .7; }
-  .sumtab { width: 100%; border-collapse: collapse; }
-  .sumtab td { padding: 5px 0; border-bottom: 1px solid var(--hairline); color: var(--body); }
-  .sumtab td + td { text-align: right; color: var(--ink); font-weight: 600; }
   .fitgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
   .fitgrid label { margin: 0; color: var(--muted); font-size: 11px; cursor: default; }
   .fitgrid input { width: 100%; margin-top: 4px; }
   .fit-kind { margin-top: 0; }
-  .btn.fit { width: 100%; height: 44px; margin-top: 12px; }
+  .btn.fit { width: 100%; height: 40px; margin-top: 10px; }
   .btn.busy { background: linear-gradient(90deg, var(--primary) var(--p, 0%), var(--elevated) var(--p, 0%));
               border-color: var(--primary); color: var(--on-primary); font-variant-numeric: tabular-nums; }
   .btn.busy:disabled { opacity: 1; }
@@ -490,6 +525,20 @@
   .fit-before { color: #ffbd69; }
   .fit-after { color: #44e5ff; }
   .frame-fitbar [hidden] { display: none; }
+  .fit-trio, .chead .fit-trio { display: inline-flex; gap: 4px; align-items: center; }
+  /* Expanded view: two tools in the bar; accept/cancel drop in as a row right under them, over the
+     view, so nothing in the bar moves and the mouse travels one button height. */
+  .fit-cluster { position: relative; display: inline-flex; }
+  .fit-confirm { position: absolute; top: calc(100% + 4px); left: 0; z-index: 3; display: flex; gap: 4px; }
+  .fit-confirm[hidden] { display: none; }
+  .chead .fit-note { flex-basis: 100%; color: var(--body); font-size: 11px; line-height: 1.3; }
+  .chead .fit-note.proposal { color: #44e5ff; }
+  .view-max { position: absolute; top: 6px; right: 6px; z-index: 1; }
+  .lidar-slot .reset-camera { right: 42px; }
+  .zbody.solo { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .zbody.solo > :not(.solo-view) { display: none !important; }
+  .zbody.solo > .solo-view { grid-column: 1; border-top: 0; }
+  .view-max.on { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
   .zbody canvas { display: block; touch-action: none; }
   .zbody .cap { left: 12px; bottom: 8px; font-size: 11px; }
   .view .cap { top: 6px; bottom: auto; }
@@ -500,52 +549,50 @@
 <div class="panel" hidden>
  <div class="side">
   <h3><img class="logo" alt=""><span class="name">Track Resizer</span><span class="badge job"></span>
-    <button class="btn help-btn" title="Hướng dẫn">?</button><button class="close" title="Đóng">✕</button></h3>
-
-  <div class="lbl">Track</div>
-  <div class="row"><select class="track"></select></div>
-  <div class="tools">
-    <button class="btn pick">Lấy object đang chọn</button>
-    <button class="btn refresh">Tải lại</button>
-  </div>
-  <div class="review-row"><label><input type="checkbox" class="review-done">Đã kiểm tra</label><span class="review-count"></span></div>
-  <button class="btn review-next">Item chưa kiểm tra tiếp</button>
-  <div class="lbl">Kích thước</div>
+    <button class="btn help-btn" title="Hướng dẫn">?</button><button class="close" title="Đóng" aria-label="Đóng">✕</button></h3>
+  <div class="side-scroll">
+  <div class="track-row"><select class="track" aria-label="Track"></select><button class="btn ico-btn refresh" title="Tải lại dữ liệu job" aria-label="Tải lại">${BTN_ICON.refresh}</button></div>
+  <div class="review-row"><button class="btn quiet pick">Lấy object đang chọn</button>
+    <span class="review-box"><label><input type="checkbox" class="review-done">Đã kiểm tra</label><span class="review-count"></span>
+      <button class="btn ico-btn review-next" title="Item chưa kiểm tra tiếp" aria-label="Item chưa kiểm tra tiếp">${BTN_ICON.next}</button></span></div>
+  <div class="sec">Kích thước</div>
   <div class="vals"></div>
-  <div class="lbl">Tùy chọn</div>
-  <div class="option-grid">
-    <label><input type="checkbox" class="bottom" checked>Giữ đáy cố định</label>
+  <div class="opt-inline">
+    <label><input type="checkbox" class="bottom" checked>Giữ đáy</label>
     <label><input type="checkbox" class="lock" checked>Khóa kích thước cả track</label>
-    <div class="option-row"><label><input type="checkbox" class="auto" checked>Tự động outside ≤</label>
-      <input id="outside-threshold" type="number" class="thr" min="0" step="1" value="6" aria-label="Ngưỡng điểm outside"><span>điểm</span></div>
-    <div class="option-row"><label><input type="checkbox" class="split-outside" checked>Tách khi outside ≥</label>
-      <input id="outside-gap" type="number" class="split-gap" min="1" step="1" value="6" aria-label="Ngưỡng frame tách object"><span>frame</span></div>
   </div>
-  <div class="actions">
-    <button class="btn preview">Xem trước</button>
-    <button class="btn primary apply" disabled>Áp dụng</button>
-  </div>
-  <div class="status" role="status" aria-live="polite"></div>
-  <div class="split-summary" role="status" aria-live="polite" hidden></div>
-  <div class="cache-controls">
-    <div class="lbl">Point cloud</div>
-    <div class="tools"><button class="btn cache-toggle">Tải nền toàn job</button><button class="btn cache-clear">Xóa cache</button></div>
-    <div class="cache-status" role="status" aria-live="polite"></div>
-  </div>
-  <div class="edit-sec" hidden>
-    <div class="lbl">Chỉnh trong xem trước</div>
-    <table class="sumtab"></table>
-    <div class="lbl">Tự khớp</div>
-    <select class="fit-kind">
+  <div class="edit-sec off" inert>
+    <div class="sec"><span>Tự khớp</span><span class="need-preview">cần Xem trước</span></div>
+    <select class="fit-kind" aria-label="Loại vật">
       <option value="rigid">Xe, vật cứng</option>
       <option value="soft">Người, xe đạp</option>
     </select>
     <div class="fitgrid">
-      <label>Frame đầu<input type="number" class="fit-a" min="0" step="1"></label>
-      <label>Frame cuối<input type="number" class="fit-b" min="0" step="1"></label>
+      <label>Từ frame<input type="number" class="fit-a" min="0" step="1"></label>
+      <label>Đến frame<input type="number" class="fit-b" min="0" step="1"></label>
       <label>Frame mẫu<input type="number" class="fit-ref" min="0" step="1" placeholder="tự chọn"></label>
     </div>
     <button class="btn primary fit">Tự khớp</button>
+  </div>
+  <div class="draft" hidden>
+    <div class="sec">Bản nháp</div>
+    <div class="chips sumtab"></div>
+  </div>
+  <div class="status" role="status" aria-live="polite"></div>
+  <div class="split-summary" role="status" aria-live="polite" hidden></div>
+  <details class="advanced">
+    <summary>Nâng cao</summary>
+    <div class="option-row"><label><input type="checkbox" class="auto" checked>Tự động outside ≤</label>
+      <input id="outside-threshold" type="number" class="thr" min="0" step="1" value="6" aria-label="Ngưỡng điểm outside"><span>điểm</span></div>
+    <div class="option-row"><label><input type="checkbox" class="split-outside" checked>Tách khi outside ≥</label>
+      <input id="outside-gap" type="number" class="split-gap" min="1" step="1" value="6" aria-label="Ngưỡng frame tách object"><span>frame</span></div>
+    <div class="cache-controls cache-row"><span class="cache-status" role="status" aria-live="polite"></span>
+      <span class="cache-btns"><button class="btn quiet cache-toggle">Tải nền toàn job</button><button class="btn quiet cache-clear">Xóa cache</button></span></div>
+  </details>
+  </div>
+  <div class="side-foot">
+    <button class="btn preview">Xem trước</button>
+    <button class="btn primary apply" disabled>Áp dụng</button>
   </div>
  </div>
  <div class="helpbox" hidden>
@@ -555,7 +602,7 @@
   <h5>Chỉnh box</h5>
   <ul><li>Kéo <b>trong box</b> để di chuyển, kéo <b>cạnh</b> để đổi kích thước, kéo <b>chấm tròn phía trên box</b> để xoay theo view: Top quanh Z, Side quanh Y, Front quanh X.</li>
     <li>Giữ <b>Shift</b> khi kéo tay nắm xoay để bước 15°. Hướng box luôn hiện: X đỏ, Y xanh lá, Z xanh dương.</li>
-    <li>Sửa ở frame nào, frame đó thành keyframe; các frame giữa hai keyframe tự nội suy.</li>
+    <li>Sửa ở frame nào, frame đó thành keyframe; các frame giữa hai keyframe tự nội suy. <b>Xoá keyframe</b> chỉ bỏ keyframe thừa, box ở mọi frame giữ nguyên vị trí (lệch ≤ 5 cm / 1°).</li>
     <li>Nút <b>con mắt</b>: ẩn / hiện frame. Nút <b>chìa khoá</b>: bật / tắt keyframe. Nền đỏ = đang bật.</li>
     <li>Class và attribute đổi ngay trên đầu mỗi frame (attribute đổi theo frame tạo keyframe).</li></ul>
   <h5>Tự khớp</h5>
@@ -564,8 +611,10 @@
     <li><b>Xe, vật cứng</b>: xe đỗ, xe chạy, cột, rào. <b>Người, xe đạp</b>: chỉ khớp vị trí, hướng lấy theo keyframe.</li>
     <li>Frame khớp không chắc được đánh dấu: lọc bằng <b>Frame khớp kém</b> để xem lại.</li></ul>
   <h5>Khớp frame này</h5>
-  <ul><li>Mặc định dịch tâm XY, giữ độ cao, kích thước và hướng; bật <b>Cho phép xoay</b> để chỉnh yaw tối đa ±15°. Dịch tối đa 50 cm, yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
-    <li>Cam là box hiện tại, xanh là đề xuất. <b>Chấp nhận</b> chỉ đổi bản nháp của frame đó; <b>Hủy</b> bỏ đề xuất. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
+  <ul><li>Bấm icon khớp (khung có ô vuông) trên đầu mỗi frame thu nhỏ hoặc trên thanh view mở rộng; icon ✓ (chấp nhận) và ✕ (hủy) hiện sát bên (view mở rộng: ngay bên dưới) và ẩn sau khi chọn. <kbd>Enter</kbd> chấp nhận, <kbd>Esc</kbd> hủy.</li>
+    <li>Luôn khớp vị trí (dịch tâm XY tối đa 50 cm), hướng (yaw tối đa ±15°) và sáu mặt. Yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
+    <li>Sáu mặt: đầu/đuôi và hai bên theo điểm của vật (mặt chỉ lùi vào khi LiDAR thấy mặt đó, mỗi mặt đổi tối đa 50 cm), đáy lên mặt đường, nóc lên điểm cao nhất (cao đổi tối đa 60 cm). Khi <b>Khóa kích thước cả track</b> bật, kích thước mới áp cho cả track.</li>
+    <li>Cam là box hiện tại, xanh là đề xuất. Nhận chỉ đổi bản nháp; một lần Undo hoàn tác. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
   <h5>Camera và kiểm tra item</h5>
   <ul><li>3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom. Đổi frame giữ hướng nhìn và mức zoom tương đối, camera đi theo box. <b>Về box</b> hoặc double-click đặt lại góc nhìn.</li>
     <li><b>Đã kiểm tra</b> là dấu thủ công trên trình duyệt theo job và ID server; không tự đánh dấu sau khi khớp và không Save annotation. Item chưa có ID server chỉ giữ dấu trong phiên tab. Có thể bỏ dấu để kiểm tra lại.</li></ul>
@@ -573,7 +622,9 @@
   <ul><li>Giữ đáy khi đổi kích thước; khóa kích thước áp dụng thay đổi kích thước cho cả track. Tự động outside dựa vào số điểm; tách object theo số frame outside liên tiếp.</li>
     <li>Point cloud dùng chung giữa các item. Tự tải nền toàn job, ưu tiên frame đang xem; cache trình duyệt tối đa 1 GiB mỗi server. Xóa cache không xóa annotation hoặc dấu đã kiểm tra.</li></ul>
   <h5>Phím tắt</h5>
-  <ul><li>Chọn view rồi dùng ← ↑ ↓ → để dịch 5 cm; Shift: 1 cm, Alt: 20 cm; PageUp/Down: nâng/hạ.</li><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
+  <ul><li>View mở rộng: nút phóng ở góc mỗi view để xem riêng view đó, bấm lại để về bốn view. Top/Side/Front: cuộn chuột để phóng to/thu nhỏ quanh con trỏ (thu nhỏ tới 3× view mặc định), kéo vùng trống (hoặc chuột phải/giữa) để di chuyển, double-click để về mặc định.</li>
+    <li><b>Kéo vùng</b> (icon khung nét đứt bên trái icon khớp, nền đỏ khi bật): bật rồi kéo chuột trái ở vùng trống của Top/Side/Front để khoanh vùng vật: box nhảy về giữa các điểm trong vùng (Top: dọc + ngang; Side/Front: theo chiều ngang của view), giữ hướng và kích thước. Sau đó bấm khớp để chỉnh sát.</li>
+    <li>Chọn view rồi dùng ← ↑ ↓ → để dịch 5 cm; Shift: 1 cm, Alt: 20 cm; PageUp/Down: nâng/hạ.</li><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
  </div>
  <div class="editor" hidden tabindex="-1">
   <div class="fbar">
@@ -582,26 +633,25 @@
     <label><input type="checkbox" class="only-key">Keyframe</label>
     <label><input type="checkbox" class="only-hid">Frame ẩn</label>
     <label><input type="checkbox" class="only-bad">Frame khớp kém</label>
-    <button class="btn sm clear" title="Xoá các keyframe ở giữa, giữ keyframe đầu và cuối">Xoá keyframe</button>
-    <button class="btn sm full" title="Toàn màn hình (ẩn cả thanh trình duyệt)">⛶</button>
-    <button class="btn sm eclose" title="Đóng xem trước">✕</button>
+    <button class="btn sm ico clear" title="Xoá keyframe thừa; box ở mọi frame giữ nguyên vị trí" aria-label="Xoá keyframe thừa">${BTN_ICON.clearKeys}</button>
+    <button class="btn sm full" title="Toàn màn hình (ẩn cả thanh trình duyệt)" aria-label="Toàn màn hình">⛶</button>
+    <button class="btn sm quiet eclose" title="Đóng xem trước; hỏi lại nếu còn chỉnh sửa chưa áp dụng">Thoát xem trước</button>
   </div>
   <div class="grid"></div>
   <div class="filter-empty" hidden role="status">Không có frame nào khớp bộ lọc đang chọn.<br><button class="btn reset-filters">Bỏ bộ lọc</button></div>
   <div class="zoom" hidden>
     <div class="chead zhead"></div>
     <div class="frame-fitbar">
-      <button class="btn sm fit-current">Khớp frame này</button>
-      <label><input type="checkbox" class="fit-current-yaw">Cho phép xoay</label>
+      <span class="fit-cluster"><span class="fit-trio"><button class="btn sm ico region-mode" aria-pressed="false" title="Kéo vùng để đưa box về vật: bật rồi kéo chuột trái quanh vật ở Top/Side/Front" aria-label="Kéo vùng để đưa box về vật">${BTN_ICON.region}</button><button class="btn sm ico fit-current" title="Tự động khớp box frame này (vị trí, hướng và sáu mặt)" aria-label="Tự động khớp frame này">${BTN_ICON.fit}</button></span>
+        <span class="fit-trio fit-confirm" hidden><button class="btn sm ico fit-accept" title="Chấp nhận (Enter)" aria-label="Chấp nhận">${BTN_ICON.accept}</button><button class="btn sm ico fit-cancel" title="Hủy (Esc)" aria-label="Hủy">${BTN_ICON.cancel}</button></span></span>
       <span class="frame-fit-msg" role="status" aria-live="polite"></span>
       <span class="fit-legend" hidden><span class="fit-before">Cam: hiện tại</span> · <span class="fit-after">Xanh: đề xuất</span></span>
-      <button class="btn sm primary fit-accept" hidden>Chấp nhận</button><button class="btn sm fit-cancel" hidden>Hủy</button>
     </div>
     <div class="zbody">
-      <div class="lidar-slot"><canvas class="lidar-canvas" aria-label="LiDAR 3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom"></canvas><div class="cap">LiDAR 3D · item đang chọn</div><button class="btn sm reset-camera" title="Đưa camera về box đang chọn">Về box</button><div class="lidar-message" role="status"></div></div>
-      <div class="view"><canvas data-v="0" width="0" height="0"></canvas><div class="cap">Top · x–y</div></div>
-      <div class="view"><canvas data-v="1" width="0" height="0"></canvas><div class="cap">Side · x–z</div></div>
-      <div class="view"><canvas data-v="2" width="0" height="0"></canvas><div class="cap">Front · y–z</div></div>
+      <div class="lidar-slot"><canvas class="lidar-canvas" aria-label="LiDAR 3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom"></canvas><div class="cap">LiDAR 3D · item đang chọn</div><button class="btn sm reset-camera" title="Đưa camera về box đang chọn">Về box</button><button class="btn sm ico view-max" data-slot="3" title="Phóng to riêng view này"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><div class="lidar-message" role="status"></div></div>
+      <div class="view"><canvas data-v="0" width="0" height="0"></canvas><div class="cap">Top · x–y</div><button class="btn sm ico view-max" data-slot="0" title="Phóng to riêng view này"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>
+      <div class="view"><canvas data-v="1" width="0" height="0"></canvas><div class="cap">Side · x–z</div><button class="btn sm ico view-max" data-slot="1" title="Phóng to riêng view này"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>
+      <div class="view"><canvas data-v="2" width="0" height="0"></canvas><div class="cap">Front · y–z</div><button class="btn sm ico view-max" data-slot="2" title="Phóng to riêng view này"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>
     </div>
     <div class="zoom-status" role="status" aria-live="polite"></div>
   </div>
@@ -656,7 +706,8 @@
     $(".review-done").disabled = !track;
     $(".review-done").checked = !!track && reviews.has(jobId, track);
     const done = tracks.filter(t => reviews.has(jobId, t)).length;
-    $(".review-count").textContent = `${done}/${tracks.length} đã kiểm tra`;
+    $(".review-count").textContent = `${done}/${tracks.length}`;
+    $(".review-count").title = `${done}/${tracks.length} item đã kiểm tra`;
     $(".review-next").disabled = !tracks.some(t => t.uiId !== track?.uiId && !reviews.has(jobId, t) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
     for (const option of $(".track").options) {
       option.dataset.baseLabel ??= option.textContent;
@@ -1015,7 +1066,14 @@
   const queue = [];
   let frames = [], undoStack = [], drag = null, zoomFrame = null, activeFrame = null, editGen = 0, loading = 0, drawPending = false;
   let lidar = null, lidarRequest = 0, keyboardView = 0, nudgeKey = null, lidarCamera = null;
-  let frameFit = null, frameFitEpoch = 0;
+  let frameFit = null, frameFitEpoch = 0, frameFitNote = null;
+  // Expanded orthographic views: k scales the default range (0.1 zoomed in … ORTHO_MAX zoomed out),
+  // u/w is the window center as a share of the default range. soloSlot: 0–2 ortho, 3 LiDAR.
+  const ORTHO_MAX = 3;
+  let orthoZoom = VIEWS.map(() => ({ k: 1, u: 0, w: 0 })), soloSlot = null, panDrag = null;
+  // regionMode (toggle beside the fit icon): a left drag on empty space of an expanded view draws the
+  // region the box goes to; when off, that drag pans like a right/middle drag.
+  let regionDrag = null, regionMode = false;
 
   const mul = (R, v) => R.map((r) => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
   const mulT = (R, v) => [0, 1, 2].map((j) => R[0][j] * v[0] + R[1][j] * v[1] + R[2][j] * v[2]);
@@ -1065,6 +1123,16 @@
   // Metres shown from a view's center to its edge.
   const viewRange = (p, v) => Math.max(p[6 + v.a], p[6 + v.b]) / 2 * 1.35 + 0.5;
   const viewReach = (p) => Math.max(...VIEWS.map((v) => viewRange(p, v))) * Math.SQRT2;
+  // What a view shows: half-width in metres and the center offset in the box's view axes.
+  function viewWindow(p, i, zoomed) {
+    const base = viewRange(p, VIEWS[i]), z = zoomed ? orthoZoom[i] : { k: 1, u: 0, w: 0 };
+    return { range: base * z.k, cu: z.u * base, cw: z.w * base };
+  }
+  // Crop a frame needs: zoomed-out or panned expanded views reach further than the default.
+  function frameReach(f, p) {
+    if (f !== zoomFrame) return viewReach(p);
+    return Math.max(viewReach(p), ...VIEWS.map((v, i) => { const w = viewWindow(p, i, true); return (w.range + Math.hypot(w.cu, w.cw)) * Math.SQRT2; }));
+  }
   // Canvas pixels per on-screen unit, so points, lines and grab zones look alike in every view size.
   const dotOf = (cv) => cv.width / (cv.clientWidth || cv.width) * 0.6;
 
@@ -1227,19 +1295,48 @@
 
   // Keeps the first keyframe (the track starts there) and the last one (so the track still ends
   // where it did); everything between is interpolated from those two.
+  // Keyframes whose state the others already give: CVAT's interpolation between the keyframes kept
+  // stays within FIT.posTol (centre and size) and FIT.yawTol (angles) of what every frame shows now.
+  // The first and last keyframe, outside changes and keyframes that set attributes always stay.
+  function essentialKeys(shapes) {
+    const keep = new Set(), state = (s) => positionAt(shapes, s.frame).points;
+    shapes.forEach((s, i) => {
+      if (i === 0 || i === shapes.length - 1 || s.outside !== shapes[i - 1].outside || s.attributes?.length) keep.add(i);
+    });
+    const err = (a, b, k) => {
+      const pa = state(shapes[a]), pb = state(shapes[b]), type = shapes[k].type;
+      const p = positionAt([{ frame: shapes[a].frame, type, points: pa }, { frame: shapes[b].frame, type, points: pb }], shapes[k].frame).points;
+      const q = shapes[k].points, angles = type === "cuboid" ? [3, 4, 5] : [];
+      return Math.max(...q.map((x, j) => angles.includes(j) ? Math.abs(wrapAngle(p[j] - x)) / FIT.yawTol : Math.abs(p[j] - x) / FIT.posTol));
+    };
+    // Between two kept keyframes the interpolated track is piecewise linear with its corners at the
+    // keyframes in between, so the largest error is always at one of them.
+    const split = (a, b) => {
+      let worst = 1, at = -1;
+      for (let k = a + 1; k < b; k++) { const e = err(a, b, k); if (e > worst) { worst = e; at = k; } }
+      if (at < 0) return;
+      keep.add(at);
+      split(a, at);
+      split(at, b);
+    };
+    const fixed = [...keep].sort((x, y) => x - y);
+    for (let i = 0; i + 1 < fixed.length; i++) split(fixed[i], fixed[i + 1]);
+    return shapes.filter((_, i) => keep.has(i));
+  }
+
   function clearKeys() {
     if (fitting) return;
     endDrag();
-    const first = plan.shapes[0], last = plan.shapes[plan.shapes.length - 1];
-    const n = plan.shapes.length - (first === last ? 1 : 2);
-    if (n <= 0) return setStatus("Không còn keyframe nào ở giữa để xoá.");
-    if (!confirm(`Xoá ${n} keyframe ở giữa (giữ keyframe đầu ${first.frame} và cuối ${last.frame})?\nCó thể hoàn tác.`)) return;
+    const kept = essentialKeys(plan.shapes), n = plan.shapes.length - kept.length;
+    if (n <= 0) return setStatus("Không có keyframe thừa: mỗi keyframe đều cần để giữ vị trí box.");
+    if (!confirm(`Xoá ${n} keyframe thừa, giữ ${kept.length} keyframe?\nBox ở mọi frame giữ nguyên vị trí (lệch tối đa 5 cm / 1°). Có thể hoàn tác.`)) return;
     commit(snapshot());
-    plan.shapes = first === last ? [first] : [first, last];
-    plan.manual = new Set([...plan.manual].filter((f) => f === first.frame || f === last.frame));
-    plan.flagged = new Set();
+    plan.shapes = kept;
+    const frames = new Set(kept.map((s) => s.frame));
+    plan.manual = new Set([...plan.manual].filter((f) => frames.has(f)));
     modelChanged();
   }
+
 
   function modelChanged() {
     cancelFrameFit();
@@ -1470,14 +1567,82 @@
     });
   }
 
+  // Road height under a box: points in a ring 0.4–1.2 m around the footprint (clear of the object's
+  // own sides when the box is off by up to the 50 cm fit limit), near the current floor. Median, then
+  // the median of points within 10 cm of it; the road is flat, so most of the ring must lie in that
+  // layer, otherwise walls or a neighbor dominate and there is no answer.
+  function groundNear(cloud, P, size) {
+    const c = Math.cos(P.yaw), s = Math.sin(P.yaw), hx = size[0] / 2, hy = size[1] / 2, floor = P.z - size[2] / 2, zs = [];
+    for (let k = 0; k < cloud.length; k += 3) {
+      const z = cloud[k + 2];
+      if (z < floor - 0.8 || z > floor + 0.6) continue;
+      const dx = cloud[k] - P.x, dy = cloud[k + 1] - P.y, lx = Math.abs(c * dx + s * dy), ly = Math.abs(-s * dx + c * dy);
+      if (lx > hx + 1.2 || ly > hy + 1.2 || (lx < hx + 0.4 && ly < hy + 0.4)) continue;
+      zs.push(z);
+    }
+    if (zs.length < 20) return null;
+    const median = (v) => v.sort((a, b) => a - b)[Math.floor(v.length / 2)], m = median(zs);
+    const near = zs.filter((z) => Math.abs(z - m) <= 0.1);
+    return near.length >= Math.max(10, 0.4 * zs.length) ? median(near) : null;
+  }
+
+  // Roof: a high percentile of the points over the footprint and above the road (2% left for noise).
+  function roofOver(cloud, P, size, ground) {
+    const c = Math.cos(P.yaw), s = Math.sin(P.yaw), hx = size[0] / 2, hy = size[1] / 2, top = P.z + size[2] / 2, zs = [];
+    for (let k = 0; k < cloud.length; k += 3) {
+      const z = cloud[k + 2];
+      if (z < ground + 0.3 || z > top + 0.8) continue;
+      const dx = cloud[k] - P.x, dy = cloud[k + 1] - P.y;
+      if (Math.abs(c * dx + s * dy) > hx || Math.abs(-s * dx + c * dy) > hy) continue;
+      zs.push(z);
+    }
+    if (zs.length < 20) return null;
+    zs.sort((a, b) => a - b);
+    return zs[Math.ceil(zs.length * 0.98) - 1];
+  }
+
+  // New [lo, hi] of one box axis from the object's points projected on it (sorted ascending).
+  // A face moves out to points beyond it only while they stay connected (no 20 cm gap, so a neighbor
+  // across a gap is not taken in), and moves in only onto a dense layer, i.e. a face the LiDAR saw;
+  // the far, unseen face stays where it was. Each face ends within 50 cm of where it started, `start`
+  // being the original box's center on this axis relative to the current one.
+  function fitSpan(v, half, start = 0) {
+    const n = v.length;
+    if (n < 20) return [-half, half];
+    const out = (from, step) => { // last connected value walking outward from index `from`
+      let i = from;
+      while (i + step >= 0 && i + step < n && Math.abs(v[i + step] - v[i]) <= 0.2) i += step;
+      return v[i];
+    };
+    let inLo = v.findIndex((x) => x >= -half), inHi = n - 1;
+    while (inHi >= 0 && v[inHi] > half) inHi--;
+    if (inLo < 0 || inHi < 0) return [-half, half];
+    const lo = Math.max(v[Math.floor(n * 0.02)], out(inLo, -1)), hi = Math.min(v[Math.ceil(n * 0.98) - 1], out(inHi, 1));
+    const dense = (x, inward) => v.filter((y) => inward * (y - x) >= 0 && inward * (y - x) <= 0.08).length >= Math.max(8, 0.08 * n);
+    let a = lo < -half || dense(lo, 1) ? lo : -half, b = hi > half || dense(hi, -1) ? hi : half;
+    if (Math.abs(a - (start - half)) > 0.5) a = -half;
+    if (Math.abs(b - (start + half)) > 0.5) b = half;
+    return b - a >= 0.2 ? [a, b] : [-half, half];
+  }
+
   // Conservative same-frame proposal: reuse the existing local face alignment,
   // with a fixed support set so iterations cannot walk onto a neighboring object.
-  function fitCurrentPoints(cloud, points, allowYaw = false) {
+  // fitFaces then fits all six faces: front/back and both sides from the object's points, the floor
+  // onto the road and the top onto the roof (faces ±50 cm, height ±60 cm).
+  function fitCurrentPoints(cloud, points, allowYaw = false, fitFaces = false) {
     if (points.length < 9 || !points.slice(0, 9).every(Number.isFinite) || points.slice(6, 9).some(n => n <= 0)) throw new Error("Box không hợp lệ.");
     if (Math.abs(points[3]) > 0.01 || Math.abs(points[4]) > 0.01) throw new Error("Bản thử chỉ khớp box gần thẳng đứng (rx/ry ≤ 0,01 rad).");
-    const P0 = poseOf(points), size = points.slice(6, 9), support = [];
+    const P0 = poseOf(points), size = points.slice(6, 9), support = [], notes = [];
     const beforeCount = countInside(cloud, points);
     if (beforeCount < 30) throw new Error(`Chỉ có ${beforeCount} điểm trong box; cần ít nhất 30 điểm để đề xuất khớp.`);
+    // The road first: a sunken box would otherwise take road points as object support.
+    let ground = null;
+    if (fitFaces) {
+      ground = groundNear(cloud, P0, size);
+      if (ground === null) notes.push("không thấy mặt đường");
+      else if (Math.abs(ground - (P0.z - size[2] / 2)) > 0.5) { notes.push("mặt đường lệch > 50 cm, giữ đáy"); ground = null; }
+      else P0.z = ground + size[2] / 2;
+    }
     forObjectPoints(cloud, P0, size, 0.35, k => support.push(cloud[k], cloud[k + 1], cloud[k + 2]));
     if (support.length / 3 < 30) throw new Error("Không đủ điểm phía trên đáy box để khớp.");
     const stride = Math.max(1, Math.ceil(support.length / 3 / 2000));
@@ -1512,69 +1677,113 @@
     const proposed = points.slice();
     proposed[0] = best.x; proposed[1] = best.y;
     if (allowYaw) proposed[5] = best.yaw;
-    const distance = Math.hypot(best.x - P0.x, best.y - P0.y);
+    if (fitFaces) {
+      const floor = ground ?? points[2] - size[2] / 2, c = Math.cos(best.yaw), s = Math.sin(best.yaw);
+      // Front/back from points level with the box sides, left/right from points level with its ends.
+      const xs = [], ys = [], hx = size[0] / 2, hy = size[1] / 2, zTop = floor + size[2] + 0.3;
+      for (let k = 0; k < cloud.length; k += 3) {
+        const z = cloud[k + 2];
+        if (z < floor + FIT.ground || z > zTop) continue;
+        const dx = cloud[k] - best.x, dy = cloud[k + 1] - best.y, lx = c * dx + s * dy, ly = -s * dx + c * dy;
+        if (Math.abs(ly) <= hy + 0.1 && Math.abs(lx) <= hx + 0.5) xs.push(lx);
+        if (Math.abs(lx) <= hx + 0.1 && Math.abs(ly) <= hy + 0.5) ys.push(ly);
+      }
+      const ox = points[0] - best.x, oy = points[1] - best.y; // the original center in the fitted box axes
+      const [x0, x1] = fitSpan(xs.sort((a, b) => a - b), hx, c * ox + s * oy), [y0, y1] = fitSpan(ys.sort((a, b) => a - b), hy, -s * ox + c * oy);
+      const mx = (x0 + x1) / 2, my = (y0 + y1) / 2;
+      proposed[0] = best.x + c * mx - s * my; proposed[1] = best.y + s * mx + c * my;
+      proposed[6] = x1 - x0; proposed[7] = y1 - y0;
+      const footprint = { ...best, x: proposed[0], y: proposed[1] }, fsize = [proposed[6], proposed[7], size[2]];
+      const roof = roofOver(cloud, { ...footprint, z: floor + size[2] / 2 }, fsize, floor);
+      let top = floor + size[2];
+      if (roof === null) notes.push("không đủ điểm nóc, giữ chiều cao");
+      else if (Math.abs(roof - top) > 0.6 || roof - floor < 0.3) notes.push("nóc lệch > 60 cm, giữ chiều cao");
+      else top = roof;
+      proposed[2] = (floor + top) / 2;
+      proposed[8] = top - floor;
+    }
+    const distance = Math.hypot(proposed[0] - points[0], proposed[1] - points[1]);
     const angle = wrapAngle(proposed[5] - points[5]) * 180 / Math.PI;
-    return { points: proposed, beforeCount, afterCount: countInside(cloud, proposed), distance, angle,
-      changed: distance > 1e-4 || Math.abs(angle) > 0.01 };
+    const floorShift = (proposed[2] - proposed[8] / 2) - (points[2] - points[8] / 2), sizeChange = [0, 1, 2].map((i) => proposed[6 + i] - points[6 + i]);
+    return { points: proposed, beforeCount, afterCount: countInside(cloud, proposed), distance, angle, floorShift, sizeChange, notes,
+      changed: distance > 1e-4 || Math.abs(angle) > 0.01 || Math.abs(floorShift) > 0.005 || sizeChange.some((d) => Math.abs(d) > 0.005) };
   }
 
-  function renderFrameFit(message = "") {
+  function renderFrameFit(message = "", f = frameFit?.f ?? zoomFrame) {
     const pending = frameFit?.pending, proposal = frameFit && !pending;
+    if (message) frameFitNote = { f, text: message };
+    else if (frameFit) frameFitNote = null;
     $(".fit-current").disabled = !!pending || !!fitting || zoomFrame === null || !!(plan && stateAt(zoomFrame)?.outside);
-    $(".fit-current-yaw").disabled = !!pending;
-    $(".fit-accept").hidden = !proposal;
-    $(".fit-cancel").hidden = !frameFit;
-    $(".fit-legend").hidden = !proposal;
+    $(".fit-confirm").hidden = !frameFit || frameFit.f !== zoomFrame;
+    $(".fit-accept").disabled = !proposal;
+    $(".fit-legend").hidden = !proposal || frameFit.f !== zoomFrame;
     $(".frame-fit-msg").textContent = message || (pending ? "Đang tính đề xuất…" : proposal ?
-      `Frame ${frameFit.f} · dịch ${(frameFit.distance * 100).toFixed(1)} cm · xoay ${frameFit.angle.toFixed(1)}° · ${frameFit.beforeCount} → ${frameFit.afterCount} điểm.` :
+      `Frame ${frameFit.f} · ${frameFitSummary(frameFit)} · ${frameFit.beforeCount} → ${frameFit.afterCount} điểm.` :
       "");
+    if (plan) scheduleDraw();
   }
 
   function cancelFrameFit() {
     frameFitEpoch++;
     frameFit = null;
+    frameFitNote = null;
     renderFrameFit();
     scheduleDraw();
   }
 
-  async function proposeFrameFit() {
-    if (!plan || zoomFrame === null || fitting || saving) return;
+  // One-line summary of a proposal, shared by the expanded bar and the small-view header.
+  function frameFitSummary(r) {
+    const parts = [`dịch ${(r.distance * 100).toFixed(1)} cm`, `xoay ${r.angle.toFixed(1)}°`];
+    if (Math.abs(r.floorShift) > 0.005) parts.push(`đáy ${r.floorShift > 0 ? "+" : ""}${(r.floorShift * 100).toFixed(0)} cm`);
+    const sized = (r.sizeChange || []).map((d, i) => Math.abs(d) > 0.005 ? `${["dài", "rộng", "cao"][i]} ${d > 0 ? "+" : ""}${(d * 100).toFixed(0)} cm` : "").filter(Boolean);
+    if (sized.length) parts.push(sized.join(" · ") + ($(".lock").checked ? " (cả track)" : ""));
+    return parts.concat(r.notes || []).join(" · ");
+  }
+
+  async function proposeFrameFit(f = zoomFrame) {
+    if (!plan || f === null || fitting || saving) return;
     endDrag();
     cancelFrameFit();
-    const f = zoomFrame, owner = plan, before = stateAt(f);
-    if (before.outside) return renderFrameFit("Frame đang outside. Chọn frame đang hiện để khớp.");
-    const source = JSON.stringify(plan.shapes), epoch = frameFitEpoch, allowYaw = $(".fit-current-yaw").checked;
+    frameFitNote = null;
+    const owner = plan, before = stateAt(f);
+    if (before.outside) return renderFrameFit("Frame đang outside. Chọn frame đang hiện để khớp.", f);
+    const source = JSON.stringify(plan.shapes), epoch = frameFitEpoch;
+    const allowYaw = true, fitFaces = true; // always: yaw within ±15° and all six faces
     frameFit = { f, owner, source, pending: true };
     renderFrameFit();
     try {
       const F = boxFrame(before.points);
       const xyz = await nearCloud(plan.track.clientID ?? plan.track.id, f, F.center, F.reach + 1);
-      if (epoch !== frameFitEpoch || owner !== plan || zoomFrame !== f) return;
+      if (epoch !== frameFitEpoch || owner !== plan) return;
       if (source !== JSON.stringify(plan.shapes)) { cancelFrameFit(); return; }
-      const result = fitCurrentPoints(xyz, before.points, allowYaw);
-      if (!result.changed) { cancelFrameFit(); return renderFrameFit("Chưa tìm thấy điều chỉnh tốt hơn trong phạm vi 50 cm. Box giữ nguyên."); }
+      const result = fitCurrentPoints(xyz, before.points, allowYaw, fitFaces);
+      if (!result.changed) {
+        cancelFrameFit();
+        return renderFrameFit(`Frame ${f}: chưa tìm thấy điều chỉnh tốt hơn. Box giữ nguyên.${result.notes?.length ? " " + result.notes.join(" · ") + "." : ""}`, f);
+      }
       frameFit = { ...result, f, owner, source };
       renderFrameFit(); scheduleDraw();
     } catch (error) {
       if (epoch !== frameFitEpoch) return;
-      cancelFrameFit(); renderFrameFit(error.message);
+      cancelFrameFit(); renderFrameFit(error.message, f);
     }
   }
 
   function acceptFrameFit() {
     const proposal = frameFit;
     if (!proposal || proposal.pending || fitting || saving) return;
-    if (proposal.owner !== plan || proposal.f !== zoomFrame || proposal.source !== JSON.stringify(plan.shapes) || plan.stale) {
-      cancelFrameFit(); return renderFrameFit("Box hoặc dữ liệu đã đổi. Chạy khớp lại trước khi chấp nhận.");
+    if (proposal.owner !== plan || proposal.source !== JSON.stringify(plan.shapes) || plan.stale) {
+      cancelFrameFit(); return renderFrameFit("Box hoặc dữ liệu đã đổi. Chạy khớp lại trước khi chấp nhận.", proposal.f);
     }
-    const before = snapshot(), f = proposal.f;
-    // Pin adjacent states BEFORE editing, so this local operation affects only f.
+    const before = snapshot(), f = proposal.f, points = proposal.points.slice();
+    // Pin adjacent states BEFORE editing, so this local operation affects only f
+    // (a size change still follows "Khóa kích thước cả track", like a drag on an edge).
     if (f > plan.shapes[0].frame) ensureKey(f - 1);
     if (f < job.stop_frame) ensureKey(f + 1);
-    setGeometry(f, proposal.points.slice(), null);
+    setGeometry(f, points, (proposal.sizeChange || []).some((d) => Math.abs(d) > 0.005) ? points.slice(6, 9) : null);
     commit(before);
     modelChanged();
-    renderFrameFit(`Đã nhận frame ${f} vào bản nháp.`);
+    renderFrameFit(`Đã nhận frame ${f} vào bản nháp.`, f);
     editor.focus({ preventScroll: true });
   }
 
@@ -1905,7 +2114,7 @@
       if (!visible.has(f) && f !== zoomFrame) { loadState.delete(f); continue; } // scrolled away
       const gen = editGen, p = stateAt(f).points;
       loading++;
-      nearCloud(plan.track.clientID ?? plan.track.id, f, p.slice(0, 3), viewReach(p), 1)
+      nearCloud(plan.track.clientID ?? plan.track.id, f, p.slice(0, 3), frameReach(f, p), 1)
         .then(() => { if (gen === editGen) loadState.delete(f); }, (e) => { if (gen === editGen) loadState.set(f, e); })
         .finally(() => {
           loading--;
@@ -1968,20 +2177,33 @@
     const st = stateAt(f);
     c.cell.classList.toggle("is-manual", plan.manual.has(f));
     c.cell.classList.toggle("hidden-frame", st.outside);
-    setHead(c.head, headHtml(f, st, `<button class="btn sm ico" data-act="zoom" data-f="${f}" title="Phóng to frame này">${ICON.zoom}</button>`));
+    setHead(c.head, headHtml(f, st, `${fitControlsHtml(f, st)}<button class="btn sm ico" data-act="zoom" data-f="${f}" title="Phóng to frame này">${ICON.zoom}</button>`) + fitNoteHtml(f));
     c.cell.classList.toggle("active", f === activeFrame);
     drawFrame(c.canvases, f, st);
+  }
+
+  // Khớp / Nhận / Hủy side by side in a small view's header, so a proposal is judged without
+  // moving the mouse across the screen. Yaw and all six faces are always enabled.
+  function fitControlsHtml(f, st) {
+    const here = frameFit?.f === f, proposal = here && !frameFit.pending;
+    const cancel = `<button class="btn sm ico" data-act="fit-cancel" data-f="${f}" title="Hủy (Esc)" aria-label="Hủy">${BTN_ICON.cancel}</button>`;
+    if (here && frameFit.pending) return `<span class="fit-trio"><button class="btn sm ico" disabled title="Đang khớp…" aria-label="Đang khớp">${BTN_ICON.fit}</button>${cancel}</span>`;
+    return `<span class="fit-trio"><button class="btn sm ico" data-act="fit" data-f="${f}" ${st.outside || fitting ? "disabled" : ""} title="Khớp box frame này với point cloud" aria-label="Khớp frame này">${BTN_ICON.fit}</button>${
+      proposal ? `<button class="btn sm ico" data-act="fit-accept" data-f="${f}" title="Chấp nhận (Enter)" aria-label="Chấp nhận">${BTN_ICON.accept}</button>${cancel}` : ""}</span>`;
+  }
+  function fitNoteHtml(f) {
+    if (frameFit?.f === f && !frameFit.pending) return `<span class="fit-note proposal">Xanh: đề xuất · ${esc(frameFitSummary(frameFit))} · ${frameFit.beforeCount} → ${frameFit.afterCount} điểm</span>`;
+    return frameFitNote?.f === f ? `<span class="fit-note">${esc(frameFitNote.text)}</span>` : "";
   }
 
   function drawZoom() {
     const st = stateAt(zoomFrame), list = eligible();
     const prev = list.filter((x) => x < zoomFrame).pop(), next = list.find((x) => x > zoomFrame);
     setHead($(".zhead"), headHtml(zoomFrame, st,
-      `<button class="btn sm" data-act="undo" ${undoStack.length ? "" : "disabled"}>Undo</button>
-       <span class="nav"><button class="btn sm" data-act="go" data-f="${prev}" ${prev === undefined ? "disabled" : ""} title="Frame trước (D)">‹</button>
+      `<span class="nav"><button class="btn sm" data-act="go" data-f="${prev}" ${prev === undefined ? "disabled" : ""} title="Frame trước (D)">‹</button>
        <span class="pos">${frames.indexOf(zoomFrame) + 1} / ${frames.length}</span>
        <button class="btn sm" data-act="go" data-f="${next}" ${next === undefined ? "disabled" : ""} title="Frame sau (F)">›</button></span>
-       <button class="btn sm" data-act="unzoom" title="Thu nhỏ (Esc)">✕</button>`));
+       <button class="btn sm ico" data-act="unzoom" title="Thu nhỏ (Esc)" aria-label="Thu nhỏ">${BTN_ICON.shrink}</button>`));
     drawFrame(zoomCanvases, zoomFrame, st);
     if (lidar) lidar.setBox(boxFrame(st.points), st.outside, [true, true, true],
       frameFit && !frameFit.pending && frameFit.f === zoomFrame ? boxFrame(frameFit.points) : null);
@@ -1992,22 +2214,36 @@
   function drawFrame(canvases, f, st) {
     const live = drag && drag.f === f, ref = live ? drag.ref : st.points;
     const crop = nearCached(plan.track.clientID ?? plan.track.id, f);
-    if (!live && !(crop && cropCovers(crop, ref.slice(0, 3), viewReach(ref)))) ensureLoad(f);
+    if (!live && !(crop && cropCovers(crop, ref.slice(0, 3), frameReach(f, ref)))) ensureLoad(f);
     const err = loadState.get(f) instanceof Error ? loadState.get(f) : null;
-    const proposed = canvases === zoomCanvases && frameFit && !frameFit.pending && frameFit.f === f ? frameFit.points : null;
-    canvases.forEach((cv, i) => drawView(cv, crop && crop.xyz, st, ref, live ? drag.ranges[i] : viewRange(ref, VIEWS[i]), VIEWS[i], err, proposed));
+    const proposed = frameFit && !frameFit.pending && frameFit.f === f ? frameFit.points : null;
+    const zoomed = canvases === zoomCanvases;
+    canvases.forEach((cv, i) => {
+      const win = live ? drag.wins[i] : viewWindow(ref, i, zoomed);
+      drawView(cv, crop && crop.xyz, st, ref, win, VIEWS[i], err, proposed);
+      if (zoomed && regionDrag && regionDrag.vi === i && cv.width) drawRegion(cv, win, regionDrag);
+    });
   }
 
-  function drawView(cv, xyz, st, ref, range, v, err, proposed = null) {
+  function drawRegion(cv, win, R) {
+    const ctx = cv.getContext("2d"), mid = cv.width / 2, scale = mid / win.range, dot = dotOf(cv);
+    const X = (u) => mid + (u - win.cu) * scale, Y = (w) => mid - (w - win.cw) * scale;
+    const x = Math.min(X(R.u0), X(R.u1)), y = Math.min(Y(R.w0), Y(R.w1)), wd = Math.abs(X(R.u1) - X(R.u0)), ht = Math.abs(Y(R.w1) - Y(R.w0));
+    ctx.fillStyle = "rgba(246,229,0,.08)"; ctx.fillRect(x, y, wd, ht);
+    ctx.strokeStyle = "#f6e500"; ctx.lineWidth = 1.5 * dot; ctx.setLineDash([6 * dot, 4 * dot]);
+    ctx.strokeRect(x, y, wd, ht); ctx.setLineDash([]);
+  }
+
+  function drawView(cv, xyz, st, ref, win, v, err, proposed = null) {
     const W = cv.width;
     if (!W) return;
-    const ctx = cv.getContext("2d"), mid = W / 2, scale = mid / range, dot = dotOf(cv);
+    const { range, cu, cw } = win, ctx = cv.getContext("2d"), mid = W / 2, scale = mid / range, dot = dotOf(cv);
     const R = boxFrame(ref), S = boxFrame(st.points), same = ref === st.points, hs = S.half;
     // Build the pixels from scratch (no getImageData readback, which Chrome flags as slow).
     const img = ctx.createImageData(W, W), px = img.data;
     for (let o = 0; o < px.length; o += 4) { px[o] = px[o + 1] = px[o + 2] = 0x18; px[o + 3] = 255; }
     const plot = (q, shade, r) => {
-      const X = Math.round(mid + q[v.a] * scale), Y = Math.round(mid - q[v.b] * scale);
+      const X = Math.round(mid + (q[v.a] - cu) * scale), Y = Math.round(mid - (q[v.b] - cw) * scale);
       for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
         const x = X + dx, y = Y + dy;
         if (x < 0 || y < 0 || x >= W || y >= W) continue;
@@ -2017,9 +2253,9 @@
     };
     const inside = [], rOut = Math.max(0, Math.round(dot - 0.6)), rIn = Math.max(1, Math.round(dot));
     if (xyz) {
-      forPointsNear(xyz, R, range * Math.SQRT2 + R.reach, (x, y, z) => {
+      forPointsNear(xyz, R, (range + Math.hypot(cu, cw)) * Math.SQRT2 + R.reach, (x, y, z) => {
         const q = [x, y, z];
-        if (Math.abs(q[v.a]) > range || Math.abs(q[v.b]) > range) return;
+        if (Math.abs(q[v.a] - cu) > range || Math.abs(q[v.b] - cw) > range) return;
         const l = same ? q : toLocal(S, toWorld(R, q));
         if (Math.abs(l[0]) <= hs[0] && Math.abs(l[1]) <= hs[1] && Math.abs(l[2]) <= hs[2]) inside.push(q);
         else plot(q, Math.abs(l[v.c]) <= hs[v.c] ? 150 : 70, rOut); // brighter when level with the box
@@ -2028,7 +2264,7 @@
     for (const q of inside) plot(q, 255, rIn);
     ctx.putImageData(img, 0, 0);
 
-    const P = (w) => { const q = toLocal(R, w); return [mid + q[v.a] * scale, mid - q[v.b] * scale]; };
+    const P = (w) => { const q = toLocal(R, w); return [mid + (q[v.a] - cu) * scale, mid - (q[v.b] - cw) * scale]; };
     const corners = [];
     for (const i of [-1, 1]) for (const j of [-1, 1]) for (const k of [-1, 1]) corners.push(P(toWorld(S, [i * hs[0], j * hs[1], k * hs[2]])));
     ctx.strokeStyle = proposed ? "#ffbd69" : st.outside ? "#da291c" : "#d2d2d2";
@@ -2092,8 +2328,12 @@
     const hidden = frames.filter((f) => stateAt(f).outside).length;
     const shown = eligible().length;
     $(".fcount").textContent = shown === frames.length ? `${frames.length} frame` : `${shown} / ${frames.length} frame`;
-    $(".sumtab").innerHTML = [["Keyframe", plan.shapes.length], ["Sửa tay", manual.length], ["Frame ẩn", hidden],
-      ["Frame khớp kém", plan.flagged.size]].map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("");
+    // Chips double as the preview filters: the same three as the checkboxes above the frames.
+    const html = [["keyframe", plan.shapes.length, ".only-key"], ["sửa tay", manual.length, null], ["frame ẩn", hidden, ".only-hid"],
+      ["khớp kém", plan.flagged.size, ".only-bad"]].map(([k, v, filter]) => filter ?
+        `<button class="chip${$(filter).checked ? " on" : ""}" data-filter="${filter}" aria-pressed="${$(filter).checked}" title="Lọc frame: ${k}"><b>${v}</b> ${k}</button>` :
+        `<button class="chip" disabled><b>${v}</b> ${k}</button>`).join("");
+    if ($(".sumtab").dataset.html !== html) { $(".sumtab").innerHTML = html; $(".sumtab").dataset.html = html; }
   }
 
   // ---- filters, zoom and navigation ----
@@ -2140,7 +2380,7 @@
 
   function openZoom(f) {
     endDrag();
-    cancelFrameFit();
+    if (frameFit?.f !== f) cancelFrameFit();
     nudgeKey = null;
     setActive(f);
     const changed = zoomFrame !== f;
@@ -2156,7 +2396,6 @@
   }
   function closeZoom() {
     if (zoomFrame === null) return;
-    cancelFrameFit();
     endDrag();
     const f = zoomFrame;
     zoomFrame = null;
@@ -2202,7 +2441,7 @@
       observer.observe(cell);
     }
     editor.hidden = false;
-    $(".edit-sec").hidden = false;
+    setEditSection(true);
     $(".fit-a").value = plan.shapes[0].frame;
     $(".fit-b").value = plan.shapes[plan.shapes.length - 1].frame;
     $(".fit-ref").value = "";
@@ -2217,6 +2456,10 @@
     cancelFrameFit();
     clearLidar();
     lidarCamera = null;
+    orthoZoom = VIEWS.map(() => ({ k: 1, u: 0, w: 0 }));
+    panDrag = regionDrag = null;
+    setRegionMode(false);
+    setSolo(null);
     if (root.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (fitting) fitting.cancelled = true;
     observer.disconnect();
@@ -2230,7 +2473,7 @@
     activeFrame = null;
     zoom.hidden = true;
     editor.hidden = true;
-    $(".edit-sec").hidden = true;
+    setEditSection(false);
     panel.classList.remove("wide", "frame-expanded");
     editGen++;
     fitPanel();
@@ -2292,9 +2535,10 @@
 
   // Arrow displacement is in the selected view plane; PageUp/Down uses world Z.
   function nudgeFrame(e) {
-    if (!plan || fitting || drag || zoomFrame === null) return;
+    const f = zoomFrame ?? activeFrame;
+    if (!plan || fitting || drag || f === null) return;
     const amount = e.shiftKey ? .01 : e.altKey ? .2 : .05;
-    const p = stateAt(zoomFrame).points, local = [0, 0, 0];
+    const p = stateAt(f).points, local = [0, 0, 0];
     let delta;
     if (e.key === "PageUp" || e.key === "PageDown") delta = [0, 0, e.key === "PageUp" ? amount : -amount];
     else {
@@ -2307,7 +2551,7 @@
     nudgeKey = e.key;
     const next = p.slice();
     delta.forEach((value, i) => { next[i] += value; });
-    setGeometry(zoomFrame, next, null);
+    setGeometry(f, next, null);
     modelChanged();
   }
 
@@ -2320,9 +2564,9 @@
   });
   $(".reset-camera").addEventListener("click", () => { lidar?.reset(); editor.focus({ preventScroll: true }); });
 
-  function pointerLocal(cv, e, range) {
-    const r = cv.getBoundingClientRect(), mid = cv.width / 2, scale = mid / range;
-    return [((e.clientX - r.left) * cv.width / r.width - mid) / scale, (mid - (e.clientY - r.top) * cv.height / r.height) / scale];
+  function pointerLocal(cv, e, win) {
+    const r = cv.getBoundingClientRect(), mid = cv.width / 2, scale = mid / win.range;
+    return [((e.clientX - r.left) * cv.width / r.width - mid) / scale + win.cu, (mid - (e.clientY - r.top) * cv.height / r.height) / scale + win.cw];
   }
   function hitTest(cv, p, v, u, w, range) {
     const scale = cv.width / 2 / range, dot = dotOf(cv), tol = 7 * dot / scale;
@@ -2334,34 +2578,159 @@
     return null;
   }
   const canvasFrame = (cv) => (cv.closest(".zoom") ? zoomFrame : Number(cv.closest(".cell").dataset.f));
+  const canvasWindow = (cv, p) => viewWindow(p, Number(cv.dataset.v), !!cv.closest(".zoom"));
+
+  // Moves an expanded view's window center to (cu, cw) metres. The pan room is how far the window
+  // differs from the default view, so the box never drifts out of reach.
+  function setOrthoWindow(i, p, k, cu, cw) {
+    const base = viewRange(p, VIEWS[i]), room = base * Math.abs(1 - k), clamp = (x) => Math.max(-room, Math.min(room, x));
+    orthoZoom[i] = { k, u: clamp(cu) / base, w: clamp(cw) / base };
+    scheduleDraw();
+  }
+
+  // Wheel zooms an expanded Top/Side/Front view about the pointer; dragging empty space pans it.
+  editor.addEventListener("wheel", (e) => {
+    const cv = e.target.closest(".zoom canvas[data-v]");
+    if (!cv || !plan || zoomFrame === null || drag || regionDrag) return;
+    e.preventDefault();
+    const i = Number(cv.dataset.v), p = stateAt(zoomFrame).points, base = viewRange(p, VIEWS[i]), win = viewWindow(p, i, true);
+    const [u, w] = pointerLocal(cv, e, win), su = (u - win.cu) / win.range, sw = (w - win.cw) / win.range;
+    const k = Math.max(0.1, Math.min(ORTHO_MAX, orthoZoom[i].k * Math.exp(e.deltaY * 0.0015))), range = base * k;
+    setOrthoWindow(i, p, k, u - su * range, w - sw * range);
+  }, { passive: false });
+  editor.addEventListener("contextmenu", (e) => { if (e.target.closest(".zoom canvas[data-v]")) e.preventDefault(); });
+
+  // Where the box should go for a region drawn in view v (box axes, metres): the middle of the object
+  // points there, horizontally only (the floor is left to the fit), then — for an upright box — the
+  // fit's face alignment (contain) on those points, so a box longer than the visible part rests on the
+  // face the LiDAR saw instead of straddling it. Ground is the lowest layer of the region's points and
+  // is dropped; with too few points the region's own middle is used. Returns the shift in box axes and
+  // the number of points it is based on.
+  function regionShift(xyz, p, v, u0, u1, w0, w1) {
+    const F = boxFrame(p), ua = Math.min(u0, u1), ub = Math.max(u0, u1), wa = Math.min(w0, w1), wb = Math.max(w0, w1);
+    const depth = F.half[v.c] + 1, pts = [];
+    forPointsNear(xyz, F, Math.hypot(Math.max(-ua, ub), Math.max(-wa, wb), depth), (x, y, z) => {
+      const q = [x, y, z];
+      if (q[v.a] < ua || q[v.a] > ub || q[v.b] < wa || q[v.b] > wb || Math.abs(q[v.c]) > depth) return;
+      pts.push(q);
+    });
+    let obj = [];
+    if (pts.length) {
+      const zs = pts.map((q) => q[2]).sort((a, b) => a - b), ground = zs[Math.floor(zs.length * 0.05)];
+      obj = pts.filter((q) => q[2] >= ground + 0.2);
+    }
+    const mid = (axis, lo, hi) => {
+      if (obj.length < 10) return (lo + hi) / 2;
+      const vals = obj.map((q) => q[axis]).sort((a, b) => a - b);
+      return (vals[Math.floor(vals.length * 0.02)] + vals[Math.ceil(vals.length * 0.98) - 1]) / 2;
+    };
+    const shift = [0, 0, 0];
+    shift[v.a] = mid(v.a, ua, ub);
+    if (v.b !== 2) shift[v.b] = mid(v.b, wa, wb);
+    if (obj.length < 10) return { shift, n: 0 };
+    if (Math.abs(p[3]) <= 0.01 && Math.abs(p[4]) <= 0.01) {
+      const Q = obj.flatMap((q) => toWorld(F, q)), c = toWorld(F, shift);
+      let P = { x: c[0], y: c[1], z: p[2], yaw: p[5] };
+      for (let i = 0; i < 4; i++) P = contain(Q, P, p.slice(6, 9));
+      const local = toLocal(F, [P.x, P.y, p[2]]);
+      shift[0] = local[0]; shift[1] = local[1];
+    }
+    return { shift, n: obj.length };
+  }
+
+  function moveToRegion(R) {
+    if (!plan || fitting || zoomFrame !== R.f) return;
+    if (Math.abs(R.u1 - R.u0) < 0.1 && Math.abs(R.w1 - R.w0) < 0.1) return; // a click, not a region
+    const crop = nearCached(plan.track.clientID ?? plan.track.id, R.f), p = stateAt(R.f).points;
+    if (!crop) return renderFrameFit("Point cloud chưa tải xong.", R.f);
+    const { shift, n } = regionShift(crop.xyz, p, VIEWS[R.vi], R.u0, R.u1, R.w0, R.w1);
+    const next = p.slice();
+    mul(boxFrame(p).R, shift).forEach((d, i) => { next[i] += d; });
+    const snap = snapshot();
+    setGeometry(R.f, next, null);
+    commit(snap);
+    modelChanged();
+    renderFrameFit(`Đã đưa box về vùng chọn (${n ? `giữa ${n} điểm` : "giữa vùng, ít điểm"}, dịch ${(Math.hypot(...shift) * 100).toFixed(0)} cm). Bấm khớp để chỉnh sát.`, R.f);
+  }
+
+  editor.addEventListener("dblclick", (e) => {
+    const cv = e.target.closest(".zoom canvas[data-v]");
+    if (cv && plan && zoomFrame !== null) setOrthoWindow(Number(cv.dataset.v), stateAt(zoomFrame).points, 1, 0, 0);
+  });
+
+  // <svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> shows one expanded view alone; pressing it again brings the four views back.
+  function setSolo(slot) {
+    soloSlot = slot;
+    const zbody = $(".zbody"), slots = [...zoom.querySelectorAll(".zbody .view"), $(".lidar-slot")];
+    zbody.classList.toggle("solo", slot !== null);
+    slots.forEach((el, i) => el.classList.toggle("solo-view", i === slot));
+    zoom.querySelectorAll(".view-max").forEach((b) => {
+      const on = Number(b.dataset.slot) === slot;
+      b.classList.toggle("on", on);
+      b.title = on ? "Hiện lại cả bốn view" : "Phóng to riêng view này";
+    });
+    if (slot !== null) selectKeyboardView(slot);
+    fitZoom();
+    scheduleDraw();
+  }
+  $(".zbody").addEventListener("click", (e) => {
+    const b = e.target.closest(".view-max");
+    if (!b) return;
+    const slot = Number(b.dataset.slot);
+    setSolo(soloSlot === slot ? null : slot);
+    editor.focus({ preventScroll: true });
+  });
 
   editor.addEventListener("pointerdown", (e) => {
     const cv = e.target.closest("canvas[data-v]");
-    if (!cv || !plan || drag || fitting || e.button !== 0) return;
+    if (!cv || !plan || drag || panDrag || regionDrag || fitting) return;
+    const inZoom = !!cv.closest(".zoom"), vi = Number(cv.dataset.v);
+    if (e.button !== 0 && !(inZoom && (e.button === 1 || e.button === 2))) return;
     editor.focus({ preventScroll: true });
     setActive(canvasFrame(cv));
-    const f = canvasFrame(cv), v = VIEWS[cv.dataset.v], st = stateAt(f), range = viewRange(st.points, v);
-    const [u, w] = pointerLocal(cv, e, range), hit = hitTest(cv, st.points, v, u, w, range);
-    if (!hit) return;
+    const f = canvasFrame(cv), v = VIEWS[vi], st = stateAt(f), win = canvasWindow(cv, st.points);
+    const [u, w] = pointerLocal(cv, e, win), hit = e.button === 0 && hitTest(cv, st.points, v, u, w, win.range);
+    if (!hit) {
+      if (!inZoom) return;
+      e.preventDefault();
+      try { cv.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+      // Right/middle drag pans; a left drag draws the region to send the box to when that mode is on.
+      if (e.button !== 0 || !regionMode) panDrag = { cv, vi, pointerId: e.pointerId, win, u0: u, w0: w };
+      else { regionDrag = { cv, f, vi, pointerId: e.pointerId, win, u0: u, w0: w, u1: u, w1: w }; scheduleDraw(); }
+      return;
+    }
     cancelFrameFit();
     e.preventDefault();
     try { cv.setPointerCapture(e.pointerId); } catch { /* pointer already gone */ }
+    const zoomed = !!cv.closest(".zoom");
     drag = { cv, f, vi: Number(cv.dataset.v), pointerId: e.pointerId, ref: st.points, u0: u, w0: w, ...hit,
-             ranges: VIEWS.map((x) => viewRange(st.points, x)), snap: snapshot(), changed: false };
+             wins: VIEWS.map((x, i) => viewWindow(st.points, i, zoomed)), snap: snapshot(), changed: false };
   });
 
   editor.addEventListener("pointermove", (e) => {
     const cv = e.target.closest("canvas[data-v]");
+    if (regionDrag) {
+      if (e.pointerId !== regionDrag.pointerId) return;
+      [regionDrag.u1, regionDrag.w1] = pointerLocal(regionDrag.cv, e, regionDrag.win);
+      scheduleDraw();
+      return;
+    }
+    if (panDrag) {
+      if (e.pointerId !== panDrag.pointerId || zoomFrame === null) return;
+      const P = panDrag, [u, w] = pointerLocal(P.cv, e, P.win);
+      setOrthoWindow(P.vi, stateAt(zoomFrame).points, orthoZoom[P.vi].k, P.win.cu - (u - P.u0), P.win.cw - (w - P.w0));
+      return;
+    }
     if (!drag) {
       if (!cv || !plan) return;
-      const f = canvasFrame(cv), v = VIEWS[cv.dataset.v], st = stateAt(f), range = viewRange(st.points, v);
-      const hit = hitTest(cv, st.points, v, ...pointerLocal(cv, e, range), range);
-      cv.style.cursor = hit ? hit.cursor : "default";
+      const f = canvasFrame(cv), v = VIEWS[cv.dataset.v], st = stateAt(f), win = canvasWindow(cv, st.points);
+      const hit = hitTest(cv, st.points, v, ...pointerLocal(cv, e, win), win.range);
+      cv.style.cursor = hit ? hit.cursor : !cv.closest(".zoom") ? "default" : regionMode ? "crosshair" : orthoZoom[cv.dataset.v].k !== 1 ? "grab" : "default";
       cv.title = hit?.mode === "rotate" ? `Xoay quanh ${v.axis}; giữ Shift để bước 15°` : v.cap;
       return;
     }
     if (e.pointerId !== drag.pointerId) return;
-    const d = drag, v = VIEWS[d.vi], [u, w] = pointerLocal(d.cv, e, d.ranges[d.vi]);
+    const d = drag, v = VIEWS[d.vi], [u, w] = pointerLocal(d.cv, e, d.wins[d.vi]);
     const p0 = d.ref, F = boxFrame(p0), delta = [0, 0, 0], p = p0.slice();
     delta[v.a] = u - d.u0;
     delta[v.b] = w - d.w0;
@@ -2396,14 +2765,22 @@
     modelChanged();
   }
   for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
-    editor.addEventListener(type, (e) => { if (drag && e.pointerId === drag.pointerId) endDrag(); });
+    editor.addEventListener(type, (e) => {
+      if (regionDrag && e.pointerId === regionDrag.pointerId) {
+        const R = regionDrag;
+        regionDrag = null;
+        if (type === "pointerup") moveToRegion(R);
+        scheduleDraw();
+      }
+      if (panDrag && e.pointerId === panDrag.pointerId) panDrag = null;
+      if (drag && e.pointerId === drag.pointerId) endDrag();
+    });
   }
 
   editor.addEventListener("click", (e) => {
     const b = e.target.closest("button[data-act]");
     if (!b || !plan) return;
     if (fitting && b.dataset.act !== "zoom" && b.dataset.act !== "go" && b.dataset.act !== "unzoom") return setStatus("Đang tự khớp: chờ xong hoặc bấm Dừng.");
-    if (b.dataset.act === "undo") { undo(); editor.focus({ preventScroll: true }); return; }
     if (b.dataset.act === "rotate") {
       const cv = b.closest(".view").querySelector("canvas");
       selectKeyboardView(Number(cv.dataset.v));
@@ -2415,6 +2792,9 @@
     if (act === "out") toggleOutside(f);
     if (act === "key") toggleKey(f);
     if (act === "zoom") openZoom(f);
+    if (act === "fit") void proposeFrameFit(f);
+    if (act === "fit-accept") acceptFrameFit();
+    if (act === "fit-cancel") cancelFrameFit();
     if (act === "go") openZoom(f);
     if (act === "unzoom") closeZoom();
   });
@@ -2435,6 +2815,12 @@
     else if (el.dataset.spec) setAttribute(Number(el.dataset.f), Number(el.dataset.spec), el.value);
   });
   $(".clear").addEventListener("click", clearKeys);
+  $(".sumtab").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-filter]");
+    if (!chip || !plan) return;
+    $(chip.dataset.filter).checked = !$(chip.dataset.filter).checked;
+    modelChanged();
+  });
   $(".full").addEventListener("click", toggleFullscreen);
   $(".reset-filters").addEventListener("click", () => {
     $(".only-key").checked = $(".only-hid").checked = $(".only-bad").checked = false;
@@ -2445,8 +2831,14 @@
   $(".only-hid").addEventListener("change", modelChanged);
   $(".only-bad").addEventListener("change", modelChanged);
   $(".fit").addEventListener("click", autoFit);
-  $(".fit-current").addEventListener("click", proposeFrameFit);
-  $(".fit-current-yaw").addEventListener("change", cancelFrameFit);
+  $(".fit-current").addEventListener("click", () => proposeFrameFit());
+  function setRegionMode(on) {
+    regionMode = on;
+    const b = $(".region-mode");
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", String(on));
+  }
+  $(".region-mode").addEventListener("click", () => { setRegionMode(!regionMode); editor.focus({ preventScroll: true }); });
   $(".fit-accept").addEventListener("click", acceptFrameFit);
   $(".fit-cancel").addEventListener("click", cancelFrameFit);
   $(".eclose").addEventListener("click", () => { if (confirmDrop()) closePlan(); });
@@ -2459,8 +2851,13 @@
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z") undo();
     else if (e.key === "Escape" && !$(".helpbox").hidden) $(".helpbox").hidden = true;
     else if (e.key === "Escape" && frameFit) cancelFrameFit();
+    else if (e.key === "Enter" && frameFit && !frameFit.pending && !e.target.closest("button")) acceptFrameFit();
     else if (e.key === "Escape" && zoomFrame !== null) closeZoom();
-    else if (!e.metaKey && !e.ctrlKey && zoomFrame !== null && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(e.key)) nudgeFrame(e);
+    else if (!e.metaKey && !e.ctrlKey && (zoomFrame ?? activeFrame) !== null && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(e.key)) nudgeFrame(e);
+    else if (!e.metaKey && !e.ctrlKey && !e.altKey && [",", ".", "<", ">"].includes(e.key) && (zoomFrame ?? activeFrame) !== null) {
+      if (!fitting && !drag) rotateFrame(zoomFrame ?? activeFrame, VIEWS[keyboardView === 3 ? 0 : keyboardView],
+        ([",", "<"].includes(e.key) ? -1 : 1) * (e.shiftKey ? 15 : 1));
+    }
     else if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "d" || e.key === "D")) step(-1);
     else if (!e.metaKey && !e.ctrlKey && !e.altKey && (e.key === "f" || e.key === "F")) step(1);
     else handled = false;
@@ -2482,6 +2879,17 @@
     }
   }));
   $(".close").addEventListener("click", () => (panel.hidden = true));
+  // Auto-fit needs a preview; outside one it stays visible but inert. While a preview is open the
+  // header's close only tucks the panel away (the draft stays), so it shows — instead of ✕.
+  function setEditSection(on) {
+    const sec = $(".edit-sec"), close = $(".close");
+    sec.classList.toggle("off", !on);
+    sec.inert = !on;
+    $(".draft").hidden = !on;
+    close.textContent = on ? "—" : "✕";
+    close.title = on ? "Ẩn panel, giữ bản nháp" : "Đóng";
+    close.setAttribute("aria-label", close.title);
+  }
   $(".help-btn").addEventListener("click", () => ($(".helpbox").hidden = !$(".helpbox").hidden));
   root.addEventListener("pointerdown", (e) => { if (!e.target.closest(".helpbox, .help-btn")) $(".helpbox").hidden = true; });
 

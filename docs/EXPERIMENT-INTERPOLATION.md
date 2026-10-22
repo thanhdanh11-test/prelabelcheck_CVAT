@@ -76,3 +76,53 @@ Ego trên CVAT local task 76 / job 97 / item #1, server track 49:
 ## Trạng thái hiện tại
 
 Theo yêu cầu người dùng, đã gỡ thử nghiệm hai mốc đã duyệt và khôi phục Tự khớp từ một frame mẫu: Frame đầu / Frame cuối / Frame mẫu, chạy về hai phía, giữ frame sửa tay và rút gọn keyframe như trước. Đã bỏ nút đặt/khóa mốc, so sánh và chấp nhận đoạn cùng trạng thái liên quan. Khớp frame này vẫn được giữ lại. Bộ kiểm thử trở lại 73 test.
+
+## Bản v1.13.0: khớp mọi mặt và khớp ở view thu nhỏ (2026-10-22)
+
+Phản hồi người dùng: khớp frame chỉ chỉnh box quanh và xoay, chưa khớp mặt đường, nóc, đầu/đuôi xe; nút khớp và Chấp nhận/Hủy cách xa nhau, nên dùng icon; cần phóng riêng từng view, phóng to và thu nhỏ bằng chuột.
+
+### Thay đổi
+
+- `fitCurrentPoints(cloud, points, allowYaw, fitFaces)`: khi `fitFaces` (UI: **Khớp mọi mặt**, mặc định bật), trước khi khớp XY đo mặt đường bằng `groundNear` (điểm trong vành 0,4–1,2 m quanh footprint, cao độ trong [đáy − 0,8; đáy + 0,6]; median rồi median lớp ±10 cm; lớp phẳng phải chiếm ≥ 40% vành, nếu không trả về không có). Đáy mới dùng để chọn tập điểm hỗ trợ, nên box bị lún không lấy điểm mặt đường làm điểm vật. Sau khớp XY (kích thước cố định, căn mặt thấy được), `fitSpan` khớp đầu/đuôi theo điểm ngang thân box và hai bên theo điểm ngang hai đầu: mặt chỉ đi ra tới điểm còn liền mạch (khe > 20 cm thì dừng, không lấy xe sát bên) và chỉ lùi vào khi có lớp điểm dày ≥ 8% ở mép (mặt LiDAR thấy); mặt khuất giữ nguyên, nên chỉ thấy một đầu thì chiều dài không đổi. Mỗi mặt nằm trong 50 cm so với vị trí ban đầu. Cuối cùng `roofOver` lấy phân vị 98% của điểm trong footprint, cao hơn mặt đường 0,3 m và không quá nóc cũ + 0,8 m.
+- Giới hạn: đáy lệch > 50 cm hoặc chiều cao đổi > 60 cm thì giữ giá trị cũ và ghi chú trong đề xuất. Kết quả trả thêm `floorShift`, `sizeChange` [dài, rộng, cao], `notes`.
+- Chấp nhận khi kích thước đổi đi qua `setGeometry(f, points, size)` như kéo cạnh: Khóa kích thước bật thì cả track nhận kích thước mới (giữ đáy theo tùy chọn); vẫn một bước Undo.
+- Đề xuất gắn với frame, không gắn với view mở rộng: `proposeFrameFit(f)` chạy từ header frame thu nhỏ; mở/thu view cùng frame giữ đề xuất; đổi frame, chỉnh box, đổi tùy chọn khớp thì bỏ.
+- Nút khớp/chấp nhận/hủy dùng icon (`FIT_ICON`) có `title` và `aria-label`, ở cả header frame thu nhỏ và thanh view mở rộng.
+- **Xoá keyframe** (`clearKeys`) dùng `essentialKeys(shapes)`: giữ keyframe đầu, cuối, chỗ outside đổi và keyframe có attribute; giữa hai keyframe giữ lại, thêm keyframe sai khác lớn nhất cho tới khi nội suy lệch ≤ `FIT.posTol` (5 cm, cả tâm và kích thước) và ≤ `FIT.yawTol` (1°) ở mọi keyframe cũ. Vì đường nội suy là tuyến tính từng đoạn với góc tại các keyframe, sai số lớn nhất luôn nằm tại một keyframe cũ, nên mọi frame giữ vị trí. Bản cũ xoá mọi keyframe giữa nên box nhảy về đường thẳng nối hai đầu.
+- **Kéo vùng** (`regionShift`, `moveToRegion`), chế độ bật/tắt bằng icon `.region-mode` bên trái icon khớp (`regionMode`, mặc định tắt; bật thì nền đỏ, `aria-pressed`). Khi bật: kéo chuột trái ở vùng trống trong Top/Side/Front mở rộng vẽ khung vàng; thả ra thì box dịch theo trục ngang của view (Top: dài + rộng; Side: dài; Front: rộng) về giữa phân vị 2–98% của điểm trong vùng, độ sâu ≤ nửa kích thước + 1 m, bỏ lớp thấp nhất (phân vị 5% + 20 cm). Box thẳng đứng thì chạy thêm `contain()` để mép box nằm trên mặt dày điểm. Dưới 10 điểm thì dùng giữa khung. Giữ hướng, kích thước, độ cao; một Undo. Khi tắt, kéo chuột trái ở vùng trống là pan như trước; chuột phải/giữa luôn pan. Đóng xem trước thì tắt chế độ.
+- View mở rộng: `orthoZoom[i] = {k, u, w}` với k ∈ [0,1; 3]; pan được trong phạm vi |1 − k| × view mặc định. `frameReach(f, p)` mở rộng vùng crop point cloud của frame đang phóng khi thu nhỏ/pan, nên vùng nhìn luôn có điểm. `setSolo(slot)` ẩn các view khác. Đặt lại khi đóng xem trước.
+
+### Kiểm thử
+
+`node --test tests/*.test.cjs`: **91/91 pass**; cú pháp mọi script và `git diff --check` đạt. Test mới: sáu mặt khớp đúng trên dữ liệu tổng hợp; chỉ thấy một đầu/một bên thì giữ kích thước; mở rộng tới điểm liền mạch nhưng không vượt khe sang vật bên cạnh; mặt đường ngoài phạm vi, không có mặt đường, nóc ngoài giới hạn đều giữ nguyên kèm ghi chú; đề xuất từ view thu nhỏ (không mở frame) chấp nhận được, chiều cao theo khóa kích thước và một Undo khôi phục; phóng to/thu nhỏ giữ điểm dưới con trỏ, pan bị kẹp và vùng crop cần tải bao được cửa sổ thu nhỏ; Xoá keyframe giữ mọi frame trong 5 cm / 1°, giữ outside/attribute/khúc cua; kéo vùng ở Top đưa box về giữa vật, Side chỉ dịch theo chiều dài, vùng trống dùng giữa khung, xe chỉ thấy một nửa thì box tựa mặt thấy được.
+
+Ego trên CVAT local task 76 / job 97 / track server 49, script nạp theo manifest vào MAIN/isolated world:
+
+| Trường hợp | Kết quả |
+|---|---|
+| Khớp ở header frame 0 (thu nhỏ) | Đề xuất xanh trên ba view nhỏ: dịch 0,1 cm, đáy +4 cm, cao −8 cm (cả track), 1.252 → 1.219 điểm; Nhận/Hủy cạnh nút |
+| Nhận rồi ⌘Z | Sửa tay 0 → 1 → 0; kích thước track trở lại 4,178 × 1,753 × 1,596 |
+| Khớp frame này ở frame 30 (mở rộng) | Chấp nhận/Hủy ngay sau nút; đáy −3 cm, cao +4 cm, 612 → 653 điểm; Esc bỏ, bản nháp không đổi |
+| Cuộn chuột 4 nấc trên Side | Zoom quanh con trỏ, giữ khi bật/tắt phóng riêng |
+| Nút phóng riêng Side | Một view chiếm cả vùng, bấm lại về bốn view |
+| Thu nhỏ Side 14 nấc (3×) | Thấy mặt đường và xe bên cạnh; point cloud xung quanh được tải thêm |
+| Xoá keyframe trên item 66 frame | 56 → 53 keyframe; số điểm trong box của cả 66 frame không đổi |
+| Đẩy box frame 30 lệch 1 m (Alt+→ ×5) rồi kéo vùng quanh xe ở Top | 612 → 593 → 618 điểm, box dịch về 69 cm; khung vàng hiện khi kéo; bấm khớp sau đó không dịch XY thêm |
+| Nút Kéo vùng | Mặc định tắt: nền trong suốt, kéo không đổi box (593 điểm). Bật: nền đỏ `rgb(218, 41, 28)`, kéo vùng → 618 điểm. Nút nằm ngay trái icon khớp |
+| Khớp mọi mặt ở frame 0 / 20 / 30 (icon trên header thu nhỏ) | Đề xuất đáy +4/−1/−3 cm, cao −8/−8/+4 cm; dài/rộng không đổi vì mặt thấy được đã sát điểm; ba nút icon có nhãn Khớp/Chấp nhận/Hủy |
+
+Không bấm Áp dụng hay Save. Ước lượng đáy/nóc vẫn là đề xuất cần duyệt: hai frame của cùng item cho chiều cao lệch nhau ±8 cm, nên với Khóa kích thước bật hãy nhận chiều cao ở frame vật gần LiDAR và nhiều điểm nhất. Chưa đo trên nhiều item, xe tải/bus hay mặt đường dốc.
+
+## v1.13.1 — thanh khớp và bàn phím (2026-10-23)
+
+- View mở rộng chỉ có hai nút công cụ: chọn vùng và tự động khớp. Xoay (±15°) và mọi mặt luôn bật. Chấp nhận/Hủy màu mặc định hiện ngay dưới, cách 4 px; khi đang tính thì Chấp nhận vô hiệu hóa, Hủy vẫn dùng được; nhận/hủy xong ẩn cả hàng.
+- Click canvas Top/Side/Front của frame thu nhỏ để chọn frame và mặt phẳng; mũi tên dịch 5 cm, Shift 1 cm, Alt 20 cm; PageUp/Down theo Z. `,` / `.` xoay −/+1°, Shift 15°, view 3D dùng yaw. Không kích hoạt khi nhập liệu hoặc Ctrl/⌘/Alt cho phím xoay. Dùng lại setGeometry và Undo hiện có.
+- Kiểm chứng: 94/94 Node tests, 0 fail/skip; cú pháp các script và diff whitespace đạt. Chưa kiểm tra tương tác bản này bằng trình duyệt hoặc trên server công ty.
+
+### Đánh giá thay đổi ID trên origin/main
+
+Đã fetch và đọc `ec93fe5`, `203456bf33fe351d22a7aa412ad59d5a0ed9f5c6` của `lechibang-1512` (commit ngày 2026-10-22). Không có PR tại thời điểm kiểm tra.
+
+- `203456b` ưu tiên nhãn ID server trong extension, bỏ `--ui-id` khỏi CLI; thêm vệt quỹ đạo. Không đổi `page-bridge.js`, nơi Apply gọi `job.annotations.commit` thay track và đọc clientID mới. Do đó chưa có bằng chứng commit này ngăn số UI/clientID đổi trên CVAT; nhãn server chỉ giúp nhận diện ổn định. ID server của track đầu đã được code hiện tại giữ lại; track mới do tách outside là trường hợp riêng.
+- Lỗi đo được trong dropdown remote: xóa `const frames = t.shapes.map(...)`, vô tình dùng mảng `frames` của preview bên ngoài. Chạy chính đoạn dựng option bằng Node VM với track frame 10–20 và preview trống cho `frame Infinity–-Infinity`. Không phải lỗi thiếu biến; đây là nhầm phạm vi biến.
+- Kết luận: có thể áp dụng riêng ý tưởng hiển thị ID server, giữ nguyên contract CLI; không nên merge/cherry-pick toàn commit làm bản sửa lỗi ID. Chưa áp dụng thay đổi remote, chưa thao tác annotation/server công ty. Cần tái hiện Apply/Undo/Save trên đúng bản CVAT trước khi đổi bridge để giữ clientID.

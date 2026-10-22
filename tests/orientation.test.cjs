@@ -98,7 +98,7 @@ test('orientation is always drawn without end-on footer labels; rotation handle 
     source.slice(source.indexOf('  function drawView('),source.indexOf('  function updateSummary(')),ctx);
   for(let i=0;i<3;i++) {
     texts.length=0;arcs.length=0;
-    vm.runInContext(`drawView(cv,cloud,{points,outside:false},points,4,VIEWS[${i}],null)`,ctx);
+    vm.runInContext(`drawView(cv,cloud,{points,outside:false},points,{range:4,cu:0,cw:0},VIEWS[${i}],null)`,ctx);
     assert.equal(texts.length,2); assert.equal(arcs.length,1);
     assert.ok(texts.every(text=>text.startsWith("+")));
     assert.ok(!texts.some(text=>text.includes(VIEWS[i].axis)));
@@ -106,7 +106,7 @@ test('orientation is always drawn without end-on footer labels; rotation handle 
   }
   Object.values(controls).forEach(control=>control.checked=false);
   texts.length=0;arcs.length=0;
-  vm.runInContext('drawView(cv,cloud,{points,outside:false},points,4,VIEWS[0],null)',ctx);
+  vm.runInContext('drawView(cv,cloud,{points,outside:false},points,{range:4,cu:0,cw:0},VIEWS[0],null)',ctx);
   assert.equal(texts.length,2); assert.equal(arcs.length,1);
 });
 
@@ -116,7 +116,7 @@ test('drag rotation follows each view and Shift snaps to 15-degree increments',(
     const ctx=vm.createContext({points,editor:{addEventListener:(type,fn)=>{handler=fn;}}});
     vm.runInContext(geometry+views+rotation+`
       const cv={width:1000,height:1000,getBoundingClientRect:()=>({left:0,top:0,width:1000,height:1000})};
-      let drag={cv,f:5,vi:${i},pointerId:1,ref:points,u0:0,w0:2,ranges:[4,4,4],mode:'rotate'},result;
+      let drag={cv,f:5,vi:${i},pointerId:1,ref:points,u0:0,w0:2,wins:Array(3).fill({range:4,cu:0,cw:0}),mode:'rotate'},result,panDrag=null,regionDrag=null;
       const setGeometry=(f,p)=>result=p,scheduleDraw=()=>{};
     `+source.slice(source.indexOf('  function pointerLocal('),source.indexOf('  function hitTest('))+
       source.slice(source.indexOf('  editor.addEventListener("pointermove"'),source.indexOf('  // Every way a drag')),ctx);

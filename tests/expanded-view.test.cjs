@@ -11,7 +11,7 @@ function keyboard(view=0) {
   vm.runInContext(geometry+views+math+`
     const initial=[1,2,3,.2,.4,.6,4,2,1.5,0,0,0,0,0,0,0];
     const plan={shapes:[{frame:0,type:'cuboid',points:initial.slice(),outside:false},{frame:10,type:'cuboid',points:initial.slice(),outside:false}],manual:new Set(),flagged:new Set(),track:{}};
-    let fitting=null,drag=null,zoomFrame=5,keyboardView=${view},nudgeKey=null;
+    let fitting=null,drag=null,zoomFrame=5,activeFrame=5,keyboardView=${view},nudgeKey=null;
     const undoStack=[],inputs=[{value:'4'},{value:'2'},{value:'1.5'}];
     const root={querySelectorAll:()=>inputs},$=()=>({checked:true}),anchor=()=> 'center';
     const stateAt=f=>positionAt(plan.shapes,f),keyAt=f=>plan.shapes.find(s=>s.frame===f);
@@ -70,4 +70,85 @@ test('late 3D cloud cannot overwrite a newer frame or reopen a closed preview',a
   assert.equal(run('clouds.length'),1);assert.equal(run('clouds[0][0]'),1);
   run('zoomFrame=3');const third=run('loadLidar(3)');run('lidarRequest++;zoomFrame=null;pending[3]([7,8,9])');await third;
   assert.equal(run('clouds.length'),1);
+});
+test('expanded Top/Side/Front zoom in/out keeps the pointed spot, clamps pan and widens the needed crop',()=>{
+  const context=vm.createContext({});
+  vm.runInContext(geometry+views+`
+    let orthoZoom=VIEWS.map(()=>({k:1,u:0,w:0})),draws=0,zoomFrame=5;const scheduleDraw=()=>draws++;
+    const viewReach=(p)=>Math.max(...VIEWS.map((v)=>viewRange(p,v)))*Math.SQRT2;
+    const viewRange=(p,v)=>Math.max(p[6+v.a],p[6+v.b])/2*1.35+.5;
+  `+source.slice(source.indexOf('  function viewWindow('),source.indexOf('  // The keyframe at a frame'))+
+    source.slice(source.indexOf('  function pointerLocal('),source.indexOf('  function hitTest('))+
+    source.slice(source.indexOf('  function setOrthoWindow('),source.indexOf('  // Wheel zooms')),context);
+  const run=code=>vm.runInContext(code,context);
+  run(`var p=[0,0,0,0,0,0,4,2,1.5],cv={width:800,height:800,getBoundingClientRect:()=>({left:0,top:0,width:800,height:800})}`);
+  const base=run('viewRange(p,VIEWS[0])');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(viewWindow(p,0,true))')),{range:base,cu:0,cw:0});
+  // zoom in to half about a pixel: the same world spot stays under it
+  const before=JSON.parse(run('JSON.stringify(pointerLocal(cv,{clientX:600,clientY:300},viewWindow(p,0,true)))'));
+  run(`{const w=viewWindow(p,0,true),[u,v]=pointerLocal(cv,{clientX:600,clientY:300},w),k=.5,r=viewRange(p,VIEWS[0])*k;
+        setOrthoWindow(0,p,k,u-(u-w.cu)/w.range*r,v-(v-w.cw)/w.range*r);}`);
+  const after=JSON.parse(run('JSON.stringify(pointerLocal(cv,{clientX:600,clientY:300},viewWindow(p,0,true)))'));
+  close(after[0],before[0]);close(after[1],before[1]);
+  assert.equal(run('viewWindow(p,0,true).range'),base/2);
+  assert.deepEqual(JSON.parse(run('JSON.stringify(viewWindow(p,0,false))')),{range:base,cu:0,cw:0});
+  // panning far away is clamped so the window never leaves the loaded default view
+  run('setOrthoWindow(0,p,.5,100,-100)');
+  const w=JSON.parse(run('JSON.stringify(viewWindow(p,0,true))'));
+  close(w.cu,base/2);close(w.cw,-base/2);
+  run('setOrthoWindow(0,p,1,5,5)');
+  assert.deepEqual(JSON.parse(run('JSON.stringify(viewWindow(p,0,true))')),{range:base,cu:0,cw:0});
+  // zoom out to 3x: the spot under the pointer stays, pan room is 2x the default range
+  const o0=JSON.parse(run('JSON.stringify(pointerLocal(cv,{clientX:200,clientY:650},viewWindow(p,0,true)))'));
+  run(`{const w=viewWindow(p,0,true),[u,v]=pointerLocal(cv,{clientX:200,clientY:650},w),k=3,r=viewRange(p,VIEWS[0])*k;
+        setOrthoWindow(0,p,k,u-(u-w.cu)/w.range*r,v-(v-w.cw)/w.range*r);}`);
+  const o1=JSON.parse(run('JSON.stringify(pointerLocal(cv,{clientX:200,clientY:650},viewWindow(p,0,true)))'));
+  close(o1[0],o0[0]);close(o1[1],o0[1]);
+  assert.equal(run('viewWindow(p,0,true).range'),base*3);
+  run('setOrthoWindow(0,p,3,100,0)');close(run('viewWindow(p,0,true).cu'),2*base);
+  // the expanded frame asks for a crop that covers the zoomed-out window; other frames keep the default
+  const reach=run('frameReach(5,p)'), zw=JSON.parse(run('JSON.stringify(viewWindow(p,0,true))'));
+  assert.ok(reach>=(zw.range+Math.hypot(zw.cu,zw.cw))*Math.SQRT2-1e-9);
+  assert.equal(run('frameReach(4,p)'),run('viewReach(p)'));
+});
+
+test('collapsed frame arrows edit the selected frame and share the existing Undo behavior',()=>{
+  const run=keyboard(1);
+  run("zoomFrame=null; nudgeFrame({key:'ArrowUp'})");
+  assert.equal(run('undoStack.length'),1);
+  assert.equal(run('plan.manual.has(5)'),true);
+  run('undo()'); assert.equal(run('keyAt(5)'),undefined);
+  run("activeFrame=null; nudgeFrame({key:'ArrowRight'})");
+  assert.equal(run('undoStack.length'),0);
+});
+test('comma and period route rotation to selected frame/view, ignore typing and modified keys',()=>{
+  let handler;
+  const calls=[];
+  const ctx=vm.createContext({root:{addEventListener:(type,fn)=>handler=fn},calls});
+  vm.runInContext(`let plan={},editor={hidden:false},zoomFrame=null,activeFrame=7,keyboardView=1,nudgeKey=null,fitting=null,drag=null,frameFit=null;
+    const VIEWS=['top','side','front']; const rotateFrame=(...args)=>calls.push(args);
+  `+source.slice(source.indexOf('  root.addEventListener("keydown", (e) => {',source.indexOf('// Keys reach')),source.indexOf('  root.addEventListener("keyup",')),ctx);
+  const event=(key,extra={})=>({key,target:{closest:()=>false},preventDefault(){},...extra});
+  handler(event(',')); handler(event('.')); handler(event('>',{shiftKey:true}));
+  assert.deepEqual(calls.map(c=>Array.from(c)),[[7,'side',-1],[7,'side',1],[7,'side',15]]);
+  handler(event('.',{ctrlKey:true}));handler(event('.',{target:{closest:()=>true}}));
+  vm.runInContext('fitting={}',ctx);handler(event('.'));
+  assert.equal(calls.length,3);
+  vm.runInContext('fitting=null;zoomFrame=8;keyboardView=3',ctx);handler(event('.'));
+  assert.deepEqual(Array.from(calls[3]),[8,'top',1]);
+});
+
+test('expanded fit confirmation appears during a proposal and hides after it is cleared',()=>{
+  const controls={};
+  const ctx=vm.createContext({controls});
+  vm.runInContext(`const $=s=>controls[s]||(controls[s]={});let frameFit=null,frameFitNote=null,zoomFrame=5,fitting=null,plan={};
+    const stateAt=()=>({outside:false}),scheduleDraw=()=>{},frameFitSummary=()=> 'result';
+  `+source.slice(source.indexOf('  function renderFrameFit('),source.indexOf('  function cancelFrameFit(')),ctx);
+  const run=code=>vm.runInContext(code,ctx);
+  run('renderFrameFit()');assert.equal(controls['.fit-confirm'].hidden,true);
+  run('frameFit={f:5,pending:true};renderFrameFit()');
+  assert.equal(controls['.fit-confirm'].hidden,false);assert.equal(controls['.fit-accept'].disabled,true);
+  run('frameFit={f:5,pending:false};renderFrameFit()');
+  assert.equal(controls['.fit-confirm'].hidden,false);assert.equal(controls['.fit-accept'].disabled,false);
+  run('frameFit=null;renderFrameFit()');assert.equal(controls['.fit-confirm'].hidden,true);
 });

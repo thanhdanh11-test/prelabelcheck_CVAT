@@ -18,7 +18,7 @@ Khi nhận nhiệm vụ, Agent tra cứu bảng này để đọc **chính xác*
 | **Kiến trúc dữ liệu & Data Flow** | [`-data-architecture.md`](-data-architecture.md) | Cấu trúc dữ liệu, cơ chế lưu trữ và State Flow. |
 | **Lộ trình nâng cấp & Ý tưởng** | [`roadmap.md`](roadmap.md) | Active tasks, Kho Ý Tưởng (Idea Vault) và các mốc đã hoàn thành. |
 | **Lịch sử cập nhật** | [`changelog.md`](changelog.md) | Lịch sử Semantic Releases (vX.Y.Z). |
-| **Extension review workflow v1.12.0** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Camera, checklist, UI; khớp một frame trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
+| **Extension v1.13.1** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Camera, checklist, UI; khớp một frame (đáy/nóc, nút ở view thu nhỏ, zoom view) trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
 | **Tài liệu kỹ thuật module** | [`docs/`](../docs/) | Thư mục chứa tài liệu chuyên trách 1-1 cho từng module. |
 
 ---
