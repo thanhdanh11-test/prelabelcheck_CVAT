@@ -47,3 +47,6 @@ Thanh hai nút, fit luôn yaw/sáu mặt; phím mũi tên ở frame thu nhỏ, d
 
 ## 2026-10-22T17:42:57Z — gộp v1.13.2
 Người dùng xác nhận gộp và commit. Mốc local 121b01b; gộp origin/main 203456b (kèm ec93fe5). Giữ cả UI/fit/phím tắt và vệt Top/cache/checklist/ID server của lechibang. Sửa dropdown lấy frames từng track, nối frame vào drawView dùng zoom window. 113/113 tests, 0 skip; npm audit ENOLOCK; QA trình duyệt/server còn mở. Các ghi chú “chưa merge” ở phiên trước đã được thay thế bởi mục này. Không push.
+
+## 2026-10-22T17:56:53Z — v1.13.3
+Yêu cầu pan toàn map: gỡ clamp ±base*|1−k| và trần k=3. Giữ crop thích nghi, zoom theo con trỏ, reset double-click. 114/114 tests; hồi quy pan đỏ trước sửa. Ego local job 97: pan ở k=1, zoom42,521×, crop300.820 điểm; shapes không đổi, reset đạt. Không Apply/Save, chưa commit/push thay đổi này.

@@ -625,7 +625,7 @@
   <ul><li>Giữ đáy khi đổi kích thước; khóa kích thước áp dụng thay đổi kích thước cho cả track. Tự động outside dựa vào số điểm; tách object theo số frame outside liên tiếp.</li>
     <li>Point cloud dùng chung giữa các item. Tự tải nền toàn job, ưu tiên frame đang xem; cache trình duyệt tối đa 1 GiB mỗi server. Xóa cache không xóa annotation hoặc dấu đã kiểm tra.</li></ul>
   <h5>Phím tắt</h5>
-  <ul><li>View mở rộng: nút phóng ở góc mỗi view để xem riêng view đó, bấm lại để về bốn view. Top/Side/Front: cuộn chuột để phóng to/thu nhỏ quanh con trỏ (thu nhỏ tới 3× view mặc định), kéo vùng trống (hoặc chuột phải/giữa) để di chuyển, double-click để về mặc định.</li>
+  <ul><li>View mở rộng: nút phóng ở góc mỗi view để xem riêng view đó, bấm lại để về bốn view. Top/Side/Front: cuộn chuột để phóng to/thu nhỏ quanh con trỏ (không giới hạn thu nhỏ ở 3×, pan tự do trên point cloud), kéo vùng trống (hoặc chuột phải/giữa) để di chuyển, double-click để về mặc định.</li>
     <li><b>Kéo vùng</b> (icon khung nét đứt bên trái icon khớp, nền đỏ khi bật): bật rồi kéo chuột trái ở vùng trống của Top/Side/Front để khoanh vùng vật: box nhảy về giữa các điểm trong vùng (Top: dọc + ngang; Side/Front: theo chiều ngang của view), giữ hướng và kích thước. Sau đó bấm khớp để chỉnh sát.</li>
     <li>Chọn view rồi dùng ← ↑ ↓ → để dịch 5 cm; Shift: 1 cm, Alt: 20 cm; PageUp/Down: nâng/hạ.</li><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
  </div>
@@ -1074,9 +1074,8 @@
   let frames = [], undoStack = [], drag = null, zoomFrame = null, activeFrame = null, editGen = 0, loading = 0, drawPending = false;
   let lidar = null, lidarRequest = 0, keyboardView = 0, nudgeKey = null, lidarCamera = null;
   let frameFit = null, frameFitEpoch = 0, frameFitNote = null;
-  // Expanded orthographic views: k scales the default range (0.1 zoomed in … ORTHO_MAX zoomed out),
+  // Expanded orthographic views: k scales the default range (minimum 0.1, no zoom-out cap),
   // u/w is the window center as a share of the default range. soloSlot: 0–2 ortho, 3 LiDAR.
-  const ORTHO_MAX = 3;
   let orthoZoom = VIEWS.map(() => ({ k: 1, u: 0, w: 0 })), soloSlot = null, panDrag = null;
   // regionMode (toggle beside the fit icon): a left drag on empty space of an expanded view draws the
   // region the box goes to; when off, that drag pans like a right/middle drag.
@@ -2643,11 +2642,11 @@
   const canvasFrame = (cv) => (cv.closest(".zoom") ? zoomFrame : Number(cv.closest(".cell").dataset.f));
   const canvasWindow = (cv, p) => viewWindow(p, Number(cv.dataset.v), !!cv.closest(".zoom"));
 
-  // Moves an expanded view's window center to (cu, cw) metres. The pan room is how far the window
-  // differs from the default view, so the box never drifts out of reach.
+  // Pan freely across the frame cloud, independently of zoom. Double-click returns to the box.
   function setOrthoWindow(i, p, k, cu, cw) {
-    const base = viewRange(p, VIEWS[i]), room = base * Math.abs(1 - k), clamp = (x) => Math.max(-room, Math.min(room, x));
-    orthoZoom[i] = { k, u: clamp(cu) / base, w: clamp(cw) / base };
+    const base = viewRange(p, VIEWS[i]);
+    if (![k, cu, cw, base].every(Number.isFinite) || k < 0.1 || base <= 0) return;
+    orthoZoom[i] = { k, u: cu / base, w: cw / base };
     scheduleDraw();
   }
 
@@ -2658,7 +2657,8 @@
     e.preventDefault();
     const i = Number(cv.dataset.v), p = stateAt(zoomFrame).points, base = viewRange(p, VIEWS[i]), win = viewWindow(p, i, true);
     const [u, w] = pointerLocal(cv, e, win), su = (u - win.cu) / win.range, sw = (w - win.cw) / win.range;
-    const k = Math.max(0.1, Math.min(ORTHO_MAX, orthoZoom[i].k * Math.exp(e.deltaY * 0.0015))), range = base * k;
+    const pixels = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? cv.clientHeight : 1);
+    const k = Math.max(0.1, orthoZoom[i].k * Math.exp(Math.max(-1, Math.min(1, pixels * 0.0015)))), range = base * k;
     setOrthoWindow(i, p, k, u - su * range, w - sw * range);
   }, { passive: false });
   editor.addEventListener("contextmenu", (e) => { if (e.target.closest(".zoom canvas[data-v]")) e.preventDefault(); });
@@ -2788,7 +2788,7 @@
       if (!cv || !plan) return;
       const f = canvasFrame(cv), v = VIEWS[cv.dataset.v], st = stateAt(f), win = canvasWindow(cv, st.points);
       const hit = hitTest(cv, st.points, v, ...pointerLocal(cv, e, win), win.range);
-      cv.style.cursor = hit ? hit.cursor : !cv.closest(".zoom") ? "default" : regionMode ? "crosshair" : orthoZoom[cv.dataset.v].k !== 1 ? "grab" : "default";
+      cv.style.cursor = hit ? hit.cursor : !cv.closest(".zoom") ? "default" : regionMode ? "crosshair" : "grab";
       cv.title = hit?.mode === "rotate" ? `Xoay quanh ${v.axis}; giữ Shift để bước 15°` : v.cap;
       return;
     }

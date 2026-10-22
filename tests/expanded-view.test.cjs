@@ -71,7 +71,7 @@ test('late 3D cloud cannot overwrite a newer frame or reopen a closed preview',a
   run('zoomFrame=3');const third=run('loadLidar(3)');run('lidarRequest++;zoomFrame=null;pending[3]([7,8,9])');await third;
   assert.equal(run('clouds.length'),1);
 });
-test('expanded Top/Side/Front zoom in/out keeps the pointed spot, clamps pan and widens the needed crop',()=>{
+test('expanded Top/Side/Front zoom in/out keeps the pointed spot, pans freely and widens the needed crop',()=>{
   const context=vm.createContext({});
   vm.runInContext(geometry+views+`
     let orthoZoom=VIEWS.map(()=>({k:1,u:0,w:0})),draws=0,zoomFrame=5;const scheduleDraw=()=>draws++;
@@ -92,20 +92,20 @@ test('expanded Top/Side/Front zoom in/out keeps the pointed spot, clamps pan and
   close(after[0],before[0]);close(after[1],before[1]);
   assert.equal(run('viewWindow(p,0,true).range'),base/2);
   assert.deepEqual(JSON.parse(run('JSON.stringify(viewWindow(p,0,false))')),{range:base,cu:0,cw:0});
-  // panning far away is clamped so the window never leaves the loaded default view
+  // Pan is independent of zoom, including the default scale.
   run('setOrthoWindow(0,p,.5,100,-100)');
   const w=JSON.parse(run('JSON.stringify(viewWindow(p,0,true))'));
-  close(w.cu,base/2);close(w.cw,-base/2);
+  close(w.cu,100);close(w.cw,-100);
   run('setOrthoWindow(0,p,1,5,5)');
-  assert.deepEqual(JSON.parse(run('JSON.stringify(viewWindow(p,0,true))')),{range:base,cu:0,cw:0});
-  // zoom out to 3x: the spot under the pointer stays, pan room is 2x the default range
+  assert.deepEqual(JSON.parse(run('JSON.stringify(viewWindow(p,0,true))')),{range:base,cu:5,cw:5});
+  // zoom out to 30x: the spot under the pointer stays even well beyond the old 3x cap
   const o0=JSON.parse(run('JSON.stringify(pointerLocal(cv,{clientX:200,clientY:650},viewWindow(p,0,true)))'));
-  run(`{const w=viewWindow(p,0,true),[u,v]=pointerLocal(cv,{clientX:200,clientY:650},w),k=3,r=viewRange(p,VIEWS[0])*k;
+  run(`{const w=viewWindow(p,0,true),[u,v]=pointerLocal(cv,{clientX:200,clientY:650},w),k=30,r=viewRange(p,VIEWS[0])*k;
         setOrthoWindow(0,p,k,u-(u-w.cu)/w.range*r,v-(v-w.cw)/w.range*r);}`);
   const o1=JSON.parse(run('JSON.stringify(pointerLocal(cv,{clientX:200,clientY:650},viewWindow(p,0,true)))'));
   close(o1[0],o0[0]);close(o1[1],o0[1]);
-  assert.equal(run('viewWindow(p,0,true).range'),base*3);
-  run('setOrthoWindow(0,p,3,100,0)');close(run('viewWindow(p,0,true).cu'),2*base);
+  assert.equal(run('viewWindow(p,0,true).range'),base*30);
+  run('setOrthoWindow(0,p,3,100,0)');close(run('viewWindow(p,0,true).cu'),100);
   // the expanded frame asks for a crop that covers the zoomed-out window; other frames keep the default
   const reach=run('frameReach(5,p)'), zw=JSON.parse(run('JSON.stringify(viewWindow(p,0,true))'));
   assert.ok(reach>=(zw.range+Math.hypot(zw.cu,zw.cw))*Math.SQRT2-1e-9);
@@ -151,4 +151,31 @@ test('expanded fit confirmation appears during a proposal and hides after it is 
   run('frameFit={f:5,pending:false};renderFrameFit()');
   assert.equal(controls['.fit-confirm'].hidden,false);assert.equal(controls['.fit-accept'].disabled,false);
   run('frameFit=null;renderFrameFit()');assert.equal(controls['.fit-confirm'].hidden,true);
+});
+
+test('wheel zoom goes past 3x in every expanded view and keeps the pointer anchored',()=>{
+  for(let i=0;i<3;i++) {
+    const handlers={};
+    const ctx=vm.createContext({editor:{addEventListener:(type,fn)=>handlers[type]=fn}});
+    vm.runInContext(geometry+views+`
+      const p=[0,0,0,0,0,0,4,2,1.5],plan={},stateAt=()=>({points:p}),scheduleDraw=()=>{};
+      let zoomFrame=5,drag=null,regionDrag=null,orthoZoom=VIEWS.map(()=>({k:1,u:0,w:0}));
+      const cv={dataset:{v:${i}},width:800,height:800,clientHeight:800,getBoundingClientRect:()=>({left:0,top:0,width:800,height:800})};
+    `+source.slice(source.indexOf('  const viewRange ='),source.indexOf('  // The keyframe at a frame'))+
+      source.slice(source.indexOf('  function pointerLocal('),source.indexOf('  function hitTest('))+
+      source.slice(source.indexOf('  function setOrthoWindow('),source.indexOf('  // Where the box should go')),ctx);
+    const run=code=>vm.runInContext(code,ctx),cv=run('cv');
+    run(`setOrthoWindow(${i},p,1,100,-80)`);
+    const before=run(`pointerLocal(cv,{clientX:600,clientY:200},viewWindow(p,${i},true))`);
+    for(let step=0;step<8;step++)handlers.wheel({target:{closest:()=>cv},clientX:600,clientY:200,deltaY:500,deltaMode:0,preventDefault(){}});
+    assert.ok(run(`orthoZoom[${i}].k`)>100, run(`JSON.stringify(orthoZoom[${i}])`));
+    const after=run(`pointerLocal(cv,{clientX:600,clientY:200},viewWindow(p,${i},true))`);
+    before.forEach((n,j)=>close(n,after[j]));
+    const saved=run(`JSON.stringify(orthoZoom[${i}])`);
+    run(`setOrthoWindow(${i},p,Infinity,0,0);setOrthoWindow(${i},p,1,NaN,0)`);
+    assert.equal(run(`JSON.stringify(orthoZoom[${i}])`),saved);
+    run(`setOrthoWindow(${i},p,1,0,0)`);
+    assert.deepEqual(JSON.parse(run(`JSON.stringify(orthoZoom[${i}])`)),{k:1,u:0,w:0});
+    assert.deepEqual(Array.from(run('p')),[0,0,0,0,0,0,4,2,1.5]);
+  }
 });

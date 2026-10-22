@@ -29,6 +29,10 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
+### v1.13.3: di chuyển toàn cảnh
+
+Top/Side/Front mở rộng không còn khóa pan quanh box và không còn trần zoom-out 3×. Cuộn để zoom theo con trỏ; kéo chuột phải/giữa để pan; double-click trở về box. Phạm vi dữ liệu là point cloud của frame hiện tại, không ghép map qua nhiều frame.
+
 ### Bản hợp nhất v1.13.2
 
 Gộp giao diện/khớp sáu mặt/phím tắt với vệt quỹ đạo Top, cache theo frame đang xem và nhãn ID server của lechibang. Sửa khoảng frame trong dropdown. 113/113 test Node đạt; chưa QA bản hợp nhất trên server công ty. Nhãn ID server không ngăn clientID của CVAT đổi khi Áp dụng. CLI dùng `--track` (ID server), không còn `--ui-id`.
@@ -41,7 +45,7 @@ Gộp giao diện/khớp sáu mặt/phím tắt với vệt quỹ đạo Top, ca
 - **Kéo vùng để đưa box về (tùy chọn):** bấm icon khung nét đứt bên trái icon khớp để bật (nền đỏ), bấm lại để tắt (không màu, mặc định). Khi bật, trong view mở rộng Top/Side/Front, kéo chuột trái ở vùng trống để khoanh quanh vật; box nhảy về giữa các điểm trong vùng (bỏ lớp mặt đường), đặt mép lên mặt LiDAR thấy nếu có, giữ hướng, kích thước và độ cao. Một lần Undo. Sau đó bấm khớp để chỉnh sát.
 - **Thanh bên gọn theo thứ tự làm việc:** Track (⟳ tải lại) → Lấy object / Đã kiểm tra / → item kế → Kích thước + Giữ đáy + Khóa kích thước → Tự khớp (mờ và khóa tới khi Xem trước) → Bản nháp (ô số liệu bấm để lọc frame) → **Nâng cao** thu gọn (ngưỡng outside, tách object, point cloud cache). **Xem trước / Áp dụng** ghim ở đáy panel.
 - **Nút đóng rõ nghĩa:** đầu panel là **—** khi đang xem trước (ẩn panel, giữ bản nháp), ✕ khi chưa xem trước; thanh xem trước có nút chữ **Thoát xem trước** (nút duy nhất có thể bỏ bản nháp); view mở rộng dùng icon thu nhỏ. Bỏ nút Undo trong view mở rộng, dùng ⌘Z / Ctrl+Z. Xoá keyframe thành icon.
-- **View mở rộng linh hoạt:** nút phóng ở góc mỗi view (LiDAR 3D, Top, Side, Front) để xem riêng một view; Top/Side/Front cuộn chuột để phóng to hoặc thu nhỏ quanh con trỏ (thu nhỏ tới 3× view mặc định, tự tải thêm point cloud xung quanh), kéo vùng trống (khi tắt Kéo vùng) hoặc chuột phải/giữa để di chuyển, double-click về mặc định. Zoom giữ khi đổi frame.
+- **View mở rộng linh hoạt:** nút phóng ở góc mỗi view (LiDAR 3D, Top, Side, Front) để xem riêng một view; Top/Side/Front cuộn chuột để phóng to hoặc thu nhỏ quanh con trỏ (không còn trần 3×; tự tải thêm point cloud theo vùng nhìn), kéo vùng trống (khi tắt Kéo vùng) hoặc chuột phải/giữa để di chuyển tự do, kể cả ở zoom mặc định, double-click về mặc định. Zoom giữ khi đổi frame.
 
 Chi tiết và kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md#bản-v1130-khớp-đáynóc-và-khớp-ở-view-thu-nhỏ-2026-10-22).
 

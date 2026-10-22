@@ -1,15 +1,16 @@
 {
-  "current_version": "1.13.2",
+  "current_version": "1.13.3",
   "brain_template_version": "1.7.1",
-  "system_status": "unit_verified_browser_pending",
+  "system_status": "verified_local",
   "last_verification": {
-    "timestamp": "2026-10-22T17:42:57Z",
-    "tests": 113,
-    "passed": 113,
+    "timestamp": "2026-10-22T17:56:53Z",
+    "tests": 114,
+    "passed": 114,
     "failed": 0,
     "skipped": 0,
     "command": "node --test tests/*.test.cjs",
-    "npm_audit": "ENOLOCK: no npm package/lockfile"
+    "npm_audit": "ENOLOCK: no npm package/lockfile",
+    "browser": "Ego local job 97: DOM-dispatched pan at 1x, zoom 42.521x, crop 300820 points, reset and unchanged draft; no Apply/Save"
   },
   "active_plans_completed": 0,
   "engine_sha": "0c1ac09f2181206e841c2dd5bfc23c78a13cabfd",

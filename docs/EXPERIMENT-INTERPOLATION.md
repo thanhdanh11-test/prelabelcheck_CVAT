@@ -132,3 +132,13 @@ Không bấm Áp dụng hay Save. Ước lượng đáy/nóc vẫn là đề xu�
 Người dùng đã duyệt gộp với lechibang. Đánh giá “chưa áp dụng remote” bên trên là lịch sử, được thay bằng trạng thái: đã gộp `ec93fe5`/`203456b`, sửa dropdown bằng biến frames riêng của từng track và kết hợp chữ ký `drawView` nhận cả `win` lẫn `f`. Giữ thanh hai nút, khớp sáu mặt, phím tắt, zoom/pan và vệt Top/cache/checklist upstream. CLI giữ bản upstream dùng server ID qua `--track`.
 
 113/113 tests, 0 fail/skip; thêm hai hồi quy cho dropdown và truyền frame/window/proposal vào renderer. Cú pháp JavaScript và Python đạt; npm audit không chạy được vì không có lockfile. Chưa kiểm trên trình duyệt/server công ty, chưa đổi bridge hay khẳng định chữa nhảy clientID.
+
+## v1.13.3 — pan tự do và zoom toàn cảnh (2026-10-23)
+
+Giới hạn trước đây ở `setOrthoWindow` là ±`viewRange * |1-k|`, nên tại k=1 không pan được; wheel bị chặn ở k=3. Đã bỏ clamp vị trí và trần zoom-out. `setOrthoWindow(i,p,k,cu,cw)` lưu tâm theo đơn vị view mặc định, chỉ nhận số hữu hạn và k≥0,1. Wheel chuẩn hóa pixel/line/page và giới hạn tốc độ mỗi event, không giới hạn tổng zoom-out; giữ tọa độ dưới con trỏ. Cursor pan hiển thị cả khi k=1.
+
+`frameReach`/`nearCloud` tiếp tục mở crop theo cửa sổ để có điểm ở vùng nhìn xa; không đổi box hay Undo. Chuột phải/giữa luôn pan; chuột trái vùng trống pan khi chế độ Kéo vùng tắt, khoanh vùng khi bật. Double-click về k=1, u=w=0. Map là point cloud của frame đang xem, không tích lũy nhiều frame. LiDAR 3D không đổi.
+
+Kiểm thử: hồi quy pan cũ đã đỏ trước sửa; 114/114 Node tests đạt, 0 skip. Test pan 100 m ở zoom mặc định/phóng gần, zoom 30× và wheel >100× cho cả ba view, giữ điểm dưới con trỏ, crop bao vùng nhìn, từ chối NaN/Infinity, reset và không đổi hình học.
+
+Ego/CVAT local task 76 / job 97 / frame 0: script nạp MAIN/isolated theo manifest, dispatch pointer/wheel qua DOM; pan k=1 cho u=−1,465 và w=0,733; wheel đến k=42,521; crop tăng từ 9.731 lên 300.820 điểm. Đã xem ảnh canvas xác nhận toàn cảnh đường phố. Double-click về {k:1,u:0,w:0}; so JSON toàn bộ shapes trước/sau bằng nhau. Không Apply/Save. Chưa đo hiệu năng trên frame lớn hơn hoặc xác minh trên server công ty.

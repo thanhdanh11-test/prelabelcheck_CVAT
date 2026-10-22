@@ -20,6 +20,7 @@ File này chứa danh sách các tính năng, mục tiêu sắp tới và tình 
 - [ ] Đường đi: vẽ quỹ đạo lên view 3D/Top, bấm dòng bảng để nhảy tới frame, xuất cho nhiều item cùng lúc, cờ bước nhảy bất thường.
 
 ## Đã hoàn thành (Done)
+- [x] **v1.13.3 (2026-10-22T17:56:53Z):** bỏ giới hạn pan quanh box/trần zoom-out 3×; 114/114 tests; Ego local đạt 42,5×, 300.820 điểm, reset và không đổi bản nháp.
 - [x] **v1.13.2 (2026-10-22T17:42:57Z):** gộp lechibang 203456b và bản local; sửa dropdown, giữ zoom/fit/keyboard + vệt Top/cache; 113/113 tests. QA trình duyệt/server còn mở, chưa xác nhận chữa nhảy ID.
 - [x] **v1.13.1 (2026-10-22T17:34:05Z):** thanh khớp gọn; mũi tên ở frame thu nhỏ; xoay bằng dấu phẩy/chấm; 94/94 tests. Đánh giá 203456b, chưa nhập thay đổi remote; còn QA trình duyệt/server.
 - [x] **v1.13.0 (2026-10-22T16:20:00Z):** khớp mọi mặt (đầu/đuôi, hai bên, đáy, nóc); icon khớp/chấp nhận/hủy ở view thu nhỏ và sát nhau ở view mở rộng; phóng riêng từng view, phóng to/thu nhỏ/pan bằng chuột; Xoá keyframe giữ vị trí box; kéo vùng để đưa box về vật (chế độ bật/tắt bằng icon, đỏ khi bật); thanh bên sắp theo luồng, nút đóng rõ nghĩa, bỏ Undo ở view mở rộng. 91/91 test.

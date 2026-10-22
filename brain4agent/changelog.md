@@ -2,6 +2,11 @@
 
 Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên bản của dự án.
 
+## [v1.13.3] - 2026-10-23: Free expanded-view navigation
+- Remove box-relative pan clamp and 3x zoom-out cap in Top/Side/Front; keep pointer-anchored wheel zoom, adaptive cloud crop and double-click reset.
+- Normalize wheel delta modes; reject non-finite viewport values; preserve annotation geometry.
+- Validation: 114/114 tests, no skips; local CVAT job 97 reaches 42.521x / 300,820 displayed-crop points, reset succeeds and draft JSON remains unchanged. No Apply/Save; company-server QA pending.
+
 ## [v1.13.2] - 2026-10-23: Integrate collaborator changes
 - Merge upstream ec93fe5 and 203456b with local six-face fitting, region selection, expanded zoom and collapsed-frame shortcuts.
 - Preserve Top trajectory/ghost boxes, directional cache preload, checklist optimization, server-ID labels and upstream CLI selection by --track.
