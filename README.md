@@ -29,6 +29,14 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
+### Mới trong v1.13.1
+
+- **Tải nền theo vị trí xem:** cache point cloud bắt đầu từ frame bạn đang xem và ưu tiên phía bạn đang đi tới, thay vì quét từ frame 0; nhảy sang chỗ khác thì tải nền đi theo. Danh sách track có hàng trăm item không còn parse lại checklist cho từng dòng. Chi tiết và số đo: [BACKGROUND-CACHE.md](docs/BACKGROUND-CACHE.md).
+
+### Mới trong v1.13.0
+
+- **Đường đi (cuối → đầu):** chọn item rồi bấm **Truy vết ngược** ở sidebar. Tool đi từ frame cuối còn hiện về frame đầu, hiện bảng tổng hợp (quãng đường, dịch chuyển đầu↔cuối, bước lớn nhất, đoạn bị ẩn), bản đồ nhìn từ trên xuống và bảng từng frame (x, y, z, hướng, bước). **Sao chép CSV** lấy cả bảng. Chỉ đọc, không sửa annotation. Chi tiết: [TRACK-PATH.md](docs/TRACK-PATH.md).
+
 ### Mới trong v1.12.0
 
 - **Giữ camera khi đổi frame:** giữ góc xoay, mức zoom tương đối và độ lệch pan; tâm nhìn đi theo box của frame mới. Thu nhỏ/mở lại cùng item vẫn giữ góc. **Về box** đặt lại; đổi item hoặc dựng lại preview bắt đầu góc mặc định.

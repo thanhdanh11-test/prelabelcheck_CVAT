@@ -14,7 +14,7 @@
 - Tech Stack: Chrome MV3 extension, JavaScript thuần, Canvas/WebGL; Node built-in test runner (không npm dependencies).
 - Data/State: CVAT MAIN bridge Apply/Undo; Save native; point cloud RAM/IndexedDB; checklist localStorage theo origin/job/server track ID.
 - Planning & RFCs: Thư mục `planning/` lưu trữ các bản kế hoạch theo định dạng `[STT]_[YYYY-MM-DD]_[Ten-Ngan]` (25-35 ký tự, cố định path).
-- Release: v1.12.0 trên main; giữ camera, checklist item, khớp một frame và UI gọn. 80/80 tests; xem docs/REVIEW-WORKFLOW.md.
+- Release: v1.12.0 trên main (camera, checklist, khớp một frame; docs/REVIEW-WORKFLOW.md). v1.13.0+1.13.1 (chưa commit): Truy vết ngược (docs/TRACK-PATH.md); tải nền theo vị trí xem + checklist O(n) (docs/BACKGROUND-CACHE.md). 100/100 tests; còn gate Chrome thật.
 </project_foundation>
 
 <brain_file_roles>

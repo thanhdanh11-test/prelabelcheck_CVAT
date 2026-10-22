@@ -103,3 +103,35 @@ test('foreground downloads can proceed while a background frame is still pending
   assert.equal(result[0],4); assert.deepEqual(starts,[0,4]);
   cache.stop(); release(xyz(0)); await run;
 });
+test('background preload starts at the frame being viewed and looks ahead in the direction of travel', async () => {
+  const store = storage(), calls = [];
+  const cache = create({ store, fetchFrame: async (id, frame) => { calls.push(frame); return xyz(frame); } }); cache.configure(job());
+  await cache.get(3); calls.length = 0;
+  await cache.prefetch();
+  assert.deepEqual(calls, [4, 2, 1, 0]); assert.equal(cache.state.done, 5);
+  const back = create({ store: storage(), fetchFrame: async (id, frame) => { calls.push(frame); return xyz(frame); } }); back.configure(job());
+  await back.get(4); await back.get(3); calls.length = 0;
+  await back.prefetch();
+  assert.deepEqual(calls, [2, 1, 0]);
+});
+test('without any foreground read preload stays sequential from the first frame', async () => {
+  const calls = [];
+  const cache = create({ store: storage(), fetchFrame: async (id, frame) => { calls.push(frame); return xyz(frame); } }); cache.configure(job());
+  await cache.prefetch();
+  assert.deepEqual(calls, [0, 1, 2, 3, 4]);
+});
+test('preload follows the viewer when they jump while it is running', async () => {
+  let open; const gate = new Promise(resolve => { open = resolve; }), calls = [];
+  const cache = create({ store: storage(), fetchFrame: async (id, frame) => { calls.push(frame); if (frame === 0) await gate; return xyz(frame); } });
+  cache.configure(job());
+  const run = cache.prefetch(); await tick();
+  await cache.get(4); open(); await run;
+  assert.deepEqual(calls, [0, 4, 3, 2, 1]); assert.equal(cache.state.done, 5);
+});
+test('configure and clear forget the old viewing position', async () => {
+  const calls = [];
+  const cache = create({ store: storage(), fetchFrame: async (id, frame) => { calls.push(frame); return xyz(frame); } }); cache.configure(job(1));
+  await cache.get(3); cache.configure(job(2)); calls.length = 0;
+  await cache.prefetch();
+  assert.deepEqual(calls, [0, 1, 2, 3, 4]);
+});

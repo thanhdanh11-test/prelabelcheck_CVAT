@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "CVAT Track Resizer",
-  "version": "1.12.0",
+  "version": "1.13.1",
   "description": "Resize every frame of a CVAT track (3D cuboid or 2D rectangle) to one size.",
   "icons": {
     "16": "icons/icon16.png",
@@ -35,6 +35,7 @@
         "cloud-cache.js",
         "review-state.js",
         "track-split.js",
+        "track-path.js",
         "lidar-view.js",
         "content.js"
       ],

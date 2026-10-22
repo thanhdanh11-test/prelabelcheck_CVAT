@@ -2,17 +2,20 @@
 (() => {
   "use strict";
   function create(storage) {
-    const memory = new Map(), drafts = new Map(), failed = new Set();
+    const memory = new Map(), drafts = new Map(), failed = new Set(), parsed = new Map();
     const key = job => `cvat-track-reviews:v1:${job}`;
     const stable = track => Number.isSafeInteger(track?.id) && track.id > 0;
     function read(job) {
       if (failed.has(job)) return new Set(memory.get(job) || []);
       try {
-        const raw = storage.getItem(key(job));
+        // Reparse only when the stored text changed (another tab, or our own write).
+        const raw = storage.getItem(key(job)), hit = parsed.get(job);
+        if (hit && hit.raw === raw) return hit.ids;
         const value = raw ? JSON.parse(raw) : null;
-        const ids = value?.version === 1 && Array.isArray(value.ids) ? value.ids.filter(id => Number.isSafeInteger(id) && id > 0) : [];
-        memory.set(job, ids);
-        return new Set(ids);
+        const ids = new Set(value?.version === 1 && Array.isArray(value.ids) ? value.ids.filter(id => Number.isSafeInteger(id) && id > 0) : []);
+        parsed.set(job, { raw, ids });
+        memory.set(job, [...ids]);
+        return ids;
       } catch {
         return new Set(memory.get(job) || []);
       }
@@ -27,14 +30,17 @@
         checked ? ids.add(id) : ids.delete(id); drafts.set(job, ids);
         return { persistent: false };
       }
-      const ids = read(job);
+      const ids = new Set(read(job)); // a copy: the cached set must match what is stored
       checked ? ids.add(track.id) : ids.delete(track.id);
       memory.set(job, [...ids]);
       try {
-        storage.setItem(key(job), JSON.stringify({ version: 1, ids: [...ids] }));
+        const raw = JSON.stringify({ version: 1, ids: [...ids] });
+        storage.setItem(key(job), raw);
+        parsed.set(job, { raw, ids });
         failed.delete(job);
         return { persistent: true };
       } catch {
+        parsed.delete(job);
         failed.add(job);
         return { persistent: false };
       }

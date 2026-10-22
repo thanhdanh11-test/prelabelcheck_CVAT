@@ -402,6 +402,20 @@
   .sumtab { width: 100%; border-collapse: collapse; }
   .sumtab td { padding: 5px 0; border-bottom: 1px solid var(--hairline); color: var(--body); }
   .sumtab td + td { text-align: right; color: var(--ink); font-weight: 600; }
+  .path-out { margin-top: 8px; }
+  .path-out[hidden] { display: none; }
+  .path-map { display: block; width: 100%; height: auto; margin-top: 8px; border: 1px solid var(--hairline); background: var(--canvas); }
+  .path-map .run { fill: none; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
+  .path-map .gap { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+  .path-map text { font-size: 10px; fill: var(--body); }
+  .path-list { margin-top: 8px; }
+  .path-list summary { cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; }
+  .path-scroll { max-height: 220px; overflow: auto; margin-top: 4px; }
+  .path-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 12px; }
+  .path-table th { position: sticky; top: 0; background: var(--canvas); color: var(--muted); font-weight: 600; text-align: right; }
+  .path-table td { padding: 2px 0; border-bottom: 1px solid var(--hairline); text-align: right; color: var(--body); }
+  .path-table tr.skip td { color: var(--muted); }
+  .path-table td:first-child, .path-table th:first-child { text-align: left; color: var(--ink); }
   .fitgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
   .fitgrid label { margin: 0; color: var(--muted); font-size: 11px; cursor: default; }
   .fitgrid input { width: 100%; margin-top: 4px; }
@@ -510,6 +524,9 @@
   </div>
   <div class="review-row"><label><input type="checkbox" class="review-done">Đã kiểm tra</label><span class="review-count"></span></div>
   <button class="btn review-next">Item chưa kiểm tra tiếp</button>
+  <div class="lbl">Đường đi (cuối → đầu)</div>
+  <div class="tools"><button class="btn path-trace">Truy vết ngược</button><button class="btn path-copy" disabled>Sao chép CSV</button></div>
+  <div class="path-out" role="status" aria-live="polite" hidden></div>
   <div class="lbl">Kích thước</div>
   <div class="vals"></div>
   <div class="lbl">Tùy chọn</div>
@@ -566,6 +583,9 @@
   <h5>Khớp frame này</h5>
   <ul><li>Mặc định dịch tâm XY, giữ độ cao, kích thước và hướng; bật <b>Cho phép xoay</b> để chỉnh yaw tối đa ±15°. Dịch tối đa 50 cm, yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
     <li>Cam là box hiện tại, xanh là đề xuất. <b>Chấp nhận</b> chỉ đổi bản nháp của frame đó; <b>Hủy</b> bỏ đề xuất. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
+  <h5>Đường đi</h5>
+  <ul><li><b>Truy vết ngược</b> đi từ frame cuối còn hiện về frame đầu của item, liệt kê tâm box (x, y, z), hướng và quãng đường mỗi frame. Chỉ đọc, không sửa annotation.</li>
+    <li>Quãng đường cộng các bước giữa frame liền nhau; frame ẩn (outside) không tính, chỗ nhảy được báo riêng. Dùng keyframe và nội suy tuyến tính như CVAT; <b>Sao chép CSV</b> lấy cả bảng.</li></ul>
   <h5>Camera và kiểm tra item</h5>
   <ul><li>3D: kéo trái để xoay, kéo phải để pan, cuộn để zoom. Đổi frame giữ hướng nhìn và mức zoom tương đối, camera đi theo box. <b>Về box</b> hoặc double-click đặt lại góc nhìn.</li>
     <li><b>Đã kiểm tra</b> là dấu thủ công trên trình duyệt theo job và ID server; không tự đánh dấu sau khi khớp và không Save annotation. Item chưa có ID server chỉ giữ dấu trong phiên tab. Có thể bỏ dấu để kiểm tra lại.</li></ul>
@@ -653,15 +673,16 @@
 
   function renderReviewState() {
     const track = selectedTrack(), tracks = annotations?.tracks || [];
+    // One lookup table and one pass over the checklist, not a scan of all tracks per option.
+    const checked = new Map(tracks.map(t => [t.uiId, reviews.has(jobId, t)]));
     $(".review-done").disabled = !track;
-    $(".review-done").checked = !!track && reviews.has(jobId, track);
-    const done = tracks.filter(t => reviews.has(jobId, t)).length;
+    $(".review-done").checked = !!track && !!checked.get(track.uiId);
+    const done = tracks.filter(t => checked.get(t.uiId)).length;
     $(".review-count").textContent = `${done}/${tracks.length} đã kiểm tra`;
-    $(".review-next").disabled = !tracks.some(t => t.uiId !== track?.uiId && !reviews.has(jobId, t) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
+    $(".review-next").disabled = !tracks.some(t => t.uiId !== track?.uiId && !checked.get(t.uiId) && ["cuboid", "rectangle"].includes(t.shapes[0]?.type));
     for (const option of $(".track").options) {
       option.dataset.baseLabel ??= option.textContent;
-      const item = tracks.find(t => t.uiId === Number(option.value));
-      option.textContent = `${item && reviews.has(jobId, item) ? "✓ " : ""}${option.dataset.baseLabel}`;
+      option.textContent = `${checked.get(Number(option.value)) ? "✓ " : ""}${option.dataset.baseLabel}`;
     }
   }
 
@@ -729,6 +750,7 @@
 
   // The new size, prefilled with the track's size at the frame on screen (unchanged = size kept).
   function renderInputs() {
+    clearPath();
     const track = selectedTrack();
     const dims = track && track.shapes[0]?.type === "rectangle" ? ["W", "H"] : ["L", "W", "H"];
     let start = dims.map(() => 1);
@@ -994,6 +1016,71 @@
     }
     if (plan && plan.track.clientID === track.clientID) return setStatus(`Track #${ui} đang được xem trước.`);
     await switchTrack(track.uiId);
+  }
+
+  // ---------- path trace: where the item was, from its last visible frame back to its first ----------
+
+  let pathResult = null;
+
+  function clearPath() {
+    pathResult = null;
+    $(".path-out").hidden = true;
+    $(".path-out").textContent = "";
+    $(".path-copy").disabled = true;
+  }
+
+  function pathMap(result) {
+    const W = 360, H = 240, M = 16, pts = result.points;
+    const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+    const x0 = Math.min(...xs), y0 = Math.min(...ys);
+    const scale = Math.min((W - 2 * M) / (Math.max(...xs) - x0 || 1), (H - 2 * M) / (Math.max(...ys) - y0 || 1));
+    const at = (p) => [(M + (p.x - x0) * scale).toFixed(1), (H - M - (p.y - y0) * scale).toFixed(1)].join(",");
+    const runs = [];
+    pts.forEach((p) => (p.step === null ? runs.push([p]) : runs.at(-1).push(p)));
+    const lines = runs.map((run) => `<polyline class="run" points="${run.map(at).join(" ")}"/>`);
+    runs.slice(1).forEach((run, i) => lines.push(`<polyline class="gap" points="${at(runs[i].at(-1))} ${at(run[0])}"/>`));
+    const [fx, fy] = at(pts[0]).split(","), [bx, by] = at(pts.at(-1)).split(",");
+    return `<svg class="path-map" viewBox="0 0 ${W} ${H}" role="img" aria-label="Đường đi nhìn từ trên xuống">${lines.join("")}
+      <circle cx="${fx}" cy="${fy}" r="5" fill="#44e5ff"/><text x="${+fx + 8}" y="${+fy - 6}">cuối · ${pts[0].frame}</text>
+      <circle cx="${bx}" cy="${by}" r="5" fill="#ffbd69"/><text x="${+bx + 8}" y="${+by + 14}">đầu · ${pts.at(-1).frame}</text></svg>`;
+  }
+
+  function renderPath(result) {
+    const out = $(".path-out"), s = result.summary, u = result.unit, d = u === "m" ? 3 : 1;
+    out.hidden = false;
+    $(".path-copy").disabled = !result.points.length;
+    if (!result.points.length) { out.textContent = "Item không hiện ở frame nào trong job này."; return; }
+    const n = (v) => `${v.toFixed(d)} ${u}`;
+    const rows = [
+      ["Từ frame cuối → đầu", `${s.finishFrame} → ${s.beginFrame}`],
+      ["Số frame hiện", `${s.frames}`],
+      ["Quãng đường", n(s.length)],
+      ...(u === "m" ? [["Quãng đường ngang (x–y)", n(s.lengthXY)]] : []),
+      ["Dịch chuyển đầu ↔ cuối", n(s.net)],
+      ["Bước lớn nhất", s.maxStep ? `${n(s.maxStep.step)} · frame ${s.maxStep.frame}` : "—"],
+      ["Đoạn liên tục", `${result.runs.length}`],
+      ...result.gaps.map((g) => [`Ẩn frame ${g.hiddenFrom}–${g.hiddenTo}`, `nhảy ${n(g.jump)}`]),
+    ];
+    const f = (v) => v.toFixed(d), yaw = (p) => (p.yaw === null ? "" : `${(p.yaw * 180 / Math.PI).toFixed(1)}°`);
+    const body = result.points.map((p) => `<tr${p.step === null ? ' class="skip"' : ""}><td>${p.frame}${p.key ? " ◆" : ""}</td><td>${f(p.x)}</td><td>${f(p.y)}</td>${u === "m" ? `<td>${f(p.z)}</td>` : ""}<td>${yaw(p)}</td><td>${p.step === null ? "—" : f(p.step)}</td></tr>`).join("");
+    out.innerHTML = `<table class="sumtab">${rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join("")}</table>${pathMap(result)}
+      <details class="path-list"><summary>Từng frame (${s.frames})</summary><div class="path-scroll"><table class="path-table">
+      <tr><th>Frame</th><th>x</th><th>y</th>${u === "m" ? "<th>z</th>" : ""}<th>Hướng</th><th>Bước</th></tr>${body}</table></div></details>`;
+  }
+
+  function tracePath() {
+    const track = selectedTrack();
+    if (!track) return setStatus("Chọn một item cuboid hoặc rectangle trước.", true);
+    pathResult = CvatTrackPath.trace(track, job.start_frame, job.stop_frame);
+    renderPath(pathResult);
+    const s = pathResult.summary;
+    setStatus(s.frames ? `Đường đi item #${track.uiId}: frame ${s.finishFrame} → ${s.beginFrame}, ${s.frames} frame, dài ${s.length.toFixed(pathResult.unit === "m" ? 2 : 0)} ${pathResult.unit}.` : "Item không hiện ở frame nào trong job này.");
+  }
+
+  async function copyPath() {
+    if (!pathResult?.points.length) return;
+    await navigator.clipboard.writeText(CvatTrackPath.toCsv(pathResult));
+    setStatus(`Đã sao chép CSV ${pathResult.points.length} frame (cuối → đầu).`);
   }
 
   // ---------- preview editor: three views per frame ----------
@@ -2537,6 +2624,8 @@
   $(".review-done").addEventListener("change", toggleItemReviewed);
   $(".review-next").addEventListener("click", guard(nextUncheckedItem));
   addEventListener("storage", e => { if (e.key === reviews.key(jobId) || e.key === null) renderReviewState(); });
+  $(".path-trace").addEventListener("click", guard(tracePath));
+  $(".path-copy").addEventListener("click", guard(copyPath));
   $(".pick").addEventListener("click", guard(pickActive));
   $(".track").addEventListener("change", guard(() => switchTrack(Number($(".track").value))));
   $(".bottom").addEventListener("change", markStale);
@@ -2563,6 +2652,7 @@
       near.clear(); nearFloats = 0;
       previews.clear();
       counted.clear();
+      clearPath();
       panel.hidden = true;
       $(".job").textContent = id ? `Job ${id}` : "";
     }
