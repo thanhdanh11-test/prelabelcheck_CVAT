@@ -58,3 +58,6 @@ Yêu cầu pan toàn map: gỡ clamp ±base*|1−k| và trần k=3. Giữ crop t
 Ego local: nút sidebar tới16, nút mở rộng16→0→16, shapes JSON không đổi. Không Apply/Save.
 
 2026-10-23T03:19:26Z — Thêm chữ vàng Tạo từ item #… và Đến item gốc trên fbar đúng ảnh người dùng. Map nguồn trong RAM giữ liên kết qua Apply đổi clientID; clear theo job/reload. 124/124 tests; chưa commit/push hoặc live toolbar sau Apply.
+
+## 2026-10-23T03:36:36Z — v1.13.5 hướng dẫn hiện tại
+Mốc v1.13.4 đã commit/push main: 09ee43f4daab30e011665bb27207f9e9c7d87003; thay thế trạng thái chưa push ở các ghi chú trước. Cập nhật README, help trong tool và REVIEW-WORKFLOW: điều hướng nguồn item, thời hạn lưu quan hệ, phím xoay/dịch ở frame thu nhỏ, pan/zoom, tilt ≤0,01 rad, kích thước theo khóa cả track và checklist localStorage. Không đổi thuật toán. 124/124 tests, 0 skip; syntax đạt. Bản docs/help v1.13.5 chưa commit/push. QA Apply/toolbar thật trên server công ty vẫn chưa thực hiện.

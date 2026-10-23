@@ -624,9 +624,14 @@
     <li>Frame khớp không chắc được đánh dấu: lọc bằng <b>Frame khớp kém</b> để xem lại.</li></ul>
   <h5>Khớp frame này</h5>
   <ul><li>Bấm icon khớp (khung có ô vuông) trên đầu mỗi frame thu nhỏ hoặc trên thanh view mở rộng; icon ✓ (chấp nhận) và ✕ (hủy) hiện sát bên (view mở rộng: ngay bên dưới) và ẩn sau khi chọn. <kbd>Enter</kbd> chấp nhận, <kbd>Esc</kbd> hủy.</li>
-    <li>Luôn khớp vị trí (dịch tâm XY tối đa 50 cm), hướng (yaw tối đa ±15°) và sáu mặt. Yêu cầu ít nhất 30 điểm và box gần thẳng đứng.</li>
+    <li>Luôn khớp vị trí (dịch tâm XY tối đa 50 cm), hướng (yaw tối đa ±15°) và sáu mặt. Yêu cầu ít nhất 30 điểm và |rx|, |ry| ≤ 0,01 rad (khoảng 0,57°). Box nghiêng hơn vẫn chỉnh tay được; xoay Side/Front 1° đã vượt giới hạn khớp.</li>
     <li>Sáu mặt: đầu/đuôi và hai bên theo điểm của vật (mặt chỉ lùi vào khi LiDAR thấy mặt đó, mỗi mặt đổi tối đa 50 cm), đáy lên mặt đường, nóc lên điểm cao nhất (cao đổi tối đa 60 cm). Khi <b>Khóa kích thước cả track</b> bật, kích thước mới áp cho cả track.</li>
     <li>Cam là box hiện tại, xanh là đề xuất. Nhận chỉ đổi bản nháp; một lần Undo hoàn tác. Số điểm tăng không đảm bảo box đúng hơn.</li></ul>
+  <h5>Item mới sau outside</h5>
+  <ul><li>Mặc định tách khi outside ≥ 6 frame liên tiếp; đây là số frame, khác ngưỡng số điểm để tự ẩn. Preview đánh dấu vàng <b>BẮT ĐẦU ITEM MỚI</b> và ghi nguồn từng đoạn.</li>
+    <li><b>Đoạn gốc / Đoạn mới 2 / …</b> ở sidebar và frame mở rộng đưa tới đầu đoạn; sau Áp dụng chọn item tương ứng, giữ nháp khi chuyển.</li>
+    <li>Chữ vàng <b>Tạo từ item #…</b> trên thanh số frame ghi nguồn. <b>Đến item gốc</b> mở đoạn đầu sau tách, không khôi phục track chưa tách. Quan hệ chỉ giữ trong phiên tab/job; reload sẽ mất.</li>
+    <li>Bảng ID là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save. Item mới có ID server sau Save; nếu item đích không còn tồn tại, tải lại danh sách.</li></ul>
   <h5>Vệt quỹ đạo</h5>
   <ul><li>Bật <b>Vệt quỹ đạo (Top)</b> để hiện đường nối tâm box các frame lân cận và khung mờ (ghost wireframe) của frame trước / sau trên khung nhìn Top, giúp căn chỉnh vị trí và hướng di chuyển mượt mà.</li></ul>
   <h5>Camera và kiểm tra item</h5>
@@ -636,9 +641,9 @@
   <ul><li>Giữ đáy khi đổi kích thước; khóa kích thước áp dụng thay đổi kích thước cho cả track. Tự động outside dựa vào số điểm; tách object theo số frame outside liên tiếp.</li>
     <li>Point cloud dùng chung giữa các item. Tự tải nền toàn job, ưu tiên frame đang xem; cache trình duyệt tối đa 1 GiB mỗi server. Xóa cache không xóa annotation hoặc dấu đã kiểm tra.</li></ul>
   <h5>Phím tắt</h5>
-  <ul><li>View mở rộng: nút phóng ở góc mỗi view để xem riêng view đó, bấm lại để về bốn view. Top/Side/Front: cuộn chuột để phóng to/thu nhỏ quanh con trỏ (không giới hạn thu nhỏ ở 3×, pan tự do trên point cloud), kéo vùng trống (hoặc chuột phải/giữa) để di chuyển, double-click để về mặc định.</li>
+  <ul><li>View mở rộng: nút phóng ở góc mỗi view để xem riêng view đó, bấm lại để về bốn view. Top/Side/Front: cuộn chuột để phóng to/thu nhỏ quanh con trỏ (không giới hạn thu nhỏ ở 3×, pan tự do trên point cloud), kéo trái vùng trống khi tắt Kéo vùng (hoặc chuột phải/giữa) để di chuyển, double-click để về mặc định. Dữ liệu là point cloud frame hiện tại, không ghép map nhiều frame.</li>
     <li><b>Kéo vùng</b> (icon khung nét đứt bên trái icon khớp, nền đỏ khi bật): bật rồi kéo chuột trái ở vùng trống của Top/Side/Front để khoanh vùng vật: box nhảy về giữa các điểm trong vùng (Top: dọc + ngang; Side/Front: theo chiều ngang của view), giữ hướng và kích thước. Sau đó bấm khớp để chỉnh sát.</li>
-    <li>Chọn view rồi dùng ← ↑ ↓ → để dịch 5 cm; Shift: 1 cm, Alt: 20 cm; PageUp/Down: nâng/hạ.</li><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
+    <li>Ở frame thu nhỏ hoặc mở rộng, chọn view rồi dùng ← ↑ ↓ → để dịch 5 cm; Shift: 1 cm, Alt: 20 cm; PageUp/Down: nâng/hạ.</li><li><kbd>,</kbd> / <kbd>.</kbd>: xoay −1° / +1° theo view (3D dùng yaw); Shift: 15°. Không chỉnh box khi đang nhập liệu.</li><li><kbd>D</kbd> / <kbd>F</kbd>: frame trước / sau. <kbd>Esc</kbd>: đóng hướng dẫn, nếu không thì hủy đề xuất khớp, nếu không thì thu nhỏ. <kbd>⌘Z</kbd> / <kbd>Ctrl+Z</kbd>: hoàn tác.</li></ul>
  </div>
  <div class="editor" hidden tabindex="-1">
   <div class="fbar">

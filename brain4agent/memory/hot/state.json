@@ -1,9 +1,9 @@
 {
-  "current_version": "1.13.4",
+  "current_version": "1.13.5",
   "brain_template_version": "1.7.1",
   "system_status": "unit_verified_live_apply_pending",
   "last_verification": {
-    "timestamp": "2026-10-23T03:19:26Z",
+    "timestamp": "2026-10-23T03:36:36Z",
     "tests": 124,
     "passed": 124,
     "failed": 0,
@@ -36,5 +36,6 @@
     "name": "",
     "license": ""
   },
-  "merged_upstream": "203456bf33fe351d22a7aa412ad59d5a0ed9f5c6"
+  "merged_upstream": "203456bf33fe351d22a7aa412ad59d5a0ed9f5c6",
+  "last_published_commit": "09ee43f4daab30e011665bb27207f9e9c7d87003"
 }

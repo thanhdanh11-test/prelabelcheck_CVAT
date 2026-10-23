@@ -11,7 +11,7 @@ Gồm hai phần:
 
 CVAT nội suy tuyến tính giữa các keyframe. Cả hai công cụ đều làm việc bằng cách sửa hoặc thêm keyframe, nên kết quả hiển thị đúng như nhau trên mọi frame.
 
-> **Extension v1.11:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
+> **Extension v1.13.5:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
 >
 > **Script Python:** vẫn ghi trực tiếp lên server. Save trong CVAT trước khi chạy script, rồi tải lại trang CVAT để xem kết quả.
 
@@ -29,7 +29,7 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
-### v1.13.4: nhận biết item sau tách
+### Nhận biết item sau tách (từ v1.13.4)
 
 Preview ghi item gốc, khoảng frame từng đoạn và khoảng outside; frame bắt đầu đoạn mới có nhãn **BẮT ĐẦU ITEM MỚI**. Item con có chữ vàng **Tạo từ item #…** cạnh số frame và nút **Đến item gốc**. Quan hệ được giữ trong phiên tab, không truy ngược được item đã tạo trước khi tool ghi nhận. Nút **Đoạn gốc / Đoạn mới 2 / …** ở sidebar và frame mở rộng chuyển đến đầu đoạn; sau Áp dụng chọn item tương ứng, giữ bản nháp khi chuyển qua lại. Sau Áp dụng, bảng đối chiếu ghi item gốc → số item mới/ID server và khoảng frame. Item chưa Save ghi “chưa có ID server”. Bảng là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save và không lưu qua reload.
 
@@ -51,7 +51,7 @@ Gộp giao diện/khớp sáu mặt/phím tắt với vệt quỹ đạo Top, ca
 - **Nút đóng rõ nghĩa:** đầu panel là **—** khi đang xem trước (ẩn panel, giữ bản nháp), ✕ khi chưa xem trước; thanh xem trước có nút chữ **Thoát xem trước** (nút duy nhất có thể bỏ bản nháp); view mở rộng dùng icon thu nhỏ. Bỏ nút Undo trong view mở rộng, dùng ⌘Z / Ctrl+Z. Xoá keyframe thành icon.
 - **View mở rộng linh hoạt:** nút phóng ở góc mỗi view (LiDAR 3D, Top, Side, Front) để xem riêng một view; Top/Side/Front cuộn chuột để phóng to hoặc thu nhỏ quanh con trỏ (không còn trần 3×; tự tải thêm point cloud theo vùng nhìn), kéo vùng trống (khi tắt Kéo vùng) hoặc chuột phải/giữa để di chuyển tự do, kể cả ở zoom mặc định, double-click về mặc định. Zoom giữ khi đổi frame.
 
-Chi tiết và kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md#bản-v1130-khớp-đáynóc-và-khớp-ở-view-thu-nhỏ-2026-10-22).
+Chi tiết và kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md).
 
 ### Mới trong v1.13.1
 
@@ -69,15 +69,15 @@ Chi tiết và kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTER
 
 Các thay đổi từ `experiment/review-queue` đã được đưa vào bản v1.12.0 trên `main`. Chi tiết và kiểm thử: [Camera và dấu kiểm tra item](docs/REVIEW-WORKFLOW.md).
 
-Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại màu cam và đề xuất màu xanh trên cả bốn view. Luôn khớp mọi mặt và thử yaw tối đa ±15°, không cần bật checkbox. Giới hạn dịch tâm 50 cm, yêu cầu ít nhất 30 điểm trong box và box gần thẳng đứng.
+Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại màu cam và đề xuất màu xanh trên cả bốn view. Luôn khớp mọi mặt và thử yaw tối đa ±15°, không cần bật checkbox. Giới hạn dịch tâm 50 cm, yêu cầu ít nhất 30 điểm trong box và box gần thẳng đứng: |rx| và |ry| ≤ 0,01 rad (khoảng 0,57°). Thông báo giới hạn này nghĩa là box nghiêng quá mức thuật toán hỗ trợ; vẫn có thể chỉnh tay. Xoay Side/Front 1° đã vượt ngưỡng, còn xoay Top là yaw.
 
-**Chấp nhận** chỉ sửa frame đang chọn trong bản nháp; tool ghim trạng thái frame liền kề để không kéo theo nội suy cả đoạn. **Hủy** hoặc Esc bỏ đề xuất, Ctrl/⌘Z hoàn tác lần chấp nhận. Chuyển frame, đổi item hoặc chỉnh box sẽ bỏ đề xuất cũ. Thu nhỏ rồi **Áp dụng**, sau đó **Save trong CVAT** khi muốn lưu.
+**Chấp nhận** sửa vị trí/hướng frame đang chọn trong bản nháp; tool ghim trạng thái frame liền kề để không kéo theo nội suy cả đoạn. Kích thước mới áp cho cả track nếu bật **Khóa kích thước cả track**. **Hủy** hoặc Esc bỏ đề xuất, Ctrl/⌘Z hoàn tác lần chấp nhận. Chuyển frame, đổi item hoặc chỉnh box sẽ bỏ đề xuất cũ. Thu nhỏ rồi **Áp dụng**, sau đó **Save trong CVAT** khi muốn lưu.
 
 Đây là đề xuất hình học cần kiểm tra bằng mắt; số điểm tăng không chứng minh box chính xác hơn. Hướng dẫn và kết quả kiểm thử: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md).
 
 ### Mới trong v1.11.0
 
-- Phóng to frame thành **bốn view**: LiDAR 3D phía trên, Top / Side / Front phía dưới; ẩn thanh công cụ bên trái. Nút Undo nằm trên đầu frame; nhấn Esc để về thanh bên trái khi cần Áp dụng.
+- Phóng to frame thành **bốn view**: LiDAR 3D phía trên, Top / Side / Front phía dưới; ẩn thanh công cụ bên trái. Dùng Ctrl/⌘Z để Undo; nhấn Esc để về thanh bên trái khi cần Áp dụng.
 - View 3D dùng point cloud toàn frame từ cache chung, chỉ vẽ box của item đang chọn. Kéo chuột trái để xoay camera, kéo chuột phải/giữa để pan, cuộn để zoom; bấm **Về box** hoặc double-click để đặt lại camera.
 - Cuboid orientation: mũi tên X đỏ, Y xanh lá, Z xanh dương. Mặc định luôn hiển thị trên box; không còn nút bật/tắt ở sidebar.
 - Xoay box trong cả ba view bằng tay nắm tròn; giữ Shift khi kéo để bước 15°.
@@ -134,6 +134,10 @@ Tool dùng API Commit của CVAT, nên số **# trên sidebar có thể đổi**
 
 ### Tách object sau khi mất dấu
 
+Để chuyển qua lại: trong preview bấm **Đoạn gốc / Đoạn mới 2 / …** ở sidebar hoặc dưới frame mở rộng để tới đầu đoạn. Sau **Áp dụng**, các nút chọn item tương ứng và giữ bản nháp khi chuyển. Khi đang xem item con, chữ vàng **Tạo từ item #…** trên thanh số frame cho biết nguồn; **Đến item gốc** mở đoạn đầu còn giữ lại sau tách, không khôi phục track chưa tách.
+
+Quan hệ nguồn chỉ có cho các lần tách tool ghi nhận trong phiên tab/job hiện tại. Sau reload, tool không tự suy ra nguồn cũ. Nếu Undo/Redo làm item đích không còn tồn tại, tool yêu cầu tải lại thay vì chọn nhầm. Bảng đối chiếu sau Áp dụng là lịch sử tại thời điểm áp dụng, không phải danh sách ID luôn cập nhật sau Save.
+
 Ví dụ frame 10 còn hiện, frame 11–16 outside, frame 17 hiện lại: đoạn đầu giữ box đến frame 10 và keyframe outside ở frame 11; object mới bắt đầu tại frame 17. Mất dấu 5 frame thì chưa tách; nhiều khoảng ngắn không cộng dồn. Nếu có nhiều khoảng outside đủ dài, tool tạo nhiều track. Outside ở đầu/cuối mà chưa có đoạn hiện trước/sau không tạo object rỗng.
 
 Quy tắc chạy trên trạng thái outside cuối cùng của preview, gồm outside có sẵn, do đếm điểm hoặc do bạn sửa tay. Thay đổi outside cập nhật ngay dự kiến tách. Tool chỉ tách track đang chọn trong phạm vi job hiện tại. Các đoạn giữ nguyên hình học/class, attribute cố định; attribute thay đổi theo frame được kế thừa đầy đủ tại đầu đoạn mới.
@@ -151,7 +155,7 @@ Mỗi frame hiện 3 mặt nhìn theo trục của box: Top (x–y), Side (x–z
   - **con mắt**: ẩn / hiện frame đó;
   - **chìa khoá**: bật / tắt keyframe (nền đỏ = đang bật);
   - **phóng to** một frame.
-- Thanh trên cùng có bộ lọc **Keyframe / Frame ẩn / Frame khớp kém**, nút **Xoá keyframe** (chỉ bỏ keyframe thừa, box giữ nguyên vị trí), **⛶** toàn màn hình và **✕** đóng.
+- Thanh trên cùng có bộ lọc **Keyframe / Frame ẩn / Frame khớp kém**, nút **Xoá keyframe** (chỉ bỏ keyframe thừa, box giữ nguyên vị trí), **⛶** toàn màn hình và **Thoát xem trước**.
 - Nếu bộ lọc không có kết quả, màn hình báo rõ và có nút **Bỏ bộ lọc**. Số frame trên thanh công cụ hiển thị số khớp / tổng số khi đang lọc.
 - Đầu mỗi frame hiển thị số điểm **nằm trong box**, ở cả dạng lưới và phóng to; số điểm cập nhật khi chỉnh box. Hiện “…” khi chưa tải được dữ liệu, “—” khi tải lỗi.
 - Frame đang thao tác có viền đỏ.
@@ -160,11 +164,14 @@ Mỗi frame hiện 3 mặt nhìn theo trục của box: Top (x–y), Side (x–z
 | Phím | Tác dụng |
 |---|---|
 | `D` / `F` | Frame trước / sau |
-| `Esc` | Thu nhỏ frame đang phóng to, hiện lại thanh công cụ |
-| `←` / `↑` / `↓` / `→` | Trong frame phóng to: dịch box 5 cm theo view được chọn (viền vàng) |
+| `Esc` | Đóng hướng dẫn nếu đang mở; nếu không, hủy đề xuất khớp; nếu không, thu nhỏ frame |
+| `Enter` | Chấp nhận đề xuất khớp đã tính xong |
+| `←` / `↑` / `↓` / `→` | Ở frame thu nhỏ hoặc mở rộng: dịch box 5 cm theo view được chọn (viền vàng) |
 | `Shift` + mũi tên | Dịch chính xác 1 cm |
 | `Alt` + mũi tên | Dịch 20 cm |
 | `PageUp` / `PageDown` | Nâng / hạ box 5 cm theo Z thế giới (cũng dùng Shift / Alt) |
+| `,` / `.` | Xoay box −1° / +1° theo view đang chọn; 3D dùng yaw |
+| `Shift` + `,` / `.` | Xoay theo bước 15° |
 | `⌘Z` / `Ctrl+Z` | Hoàn tác |
 
 Trong view 3D, phím mũi tên dịch theo mặt phẳng camera; trong Top / Side / Front, dịch theo trục cục bộ của box. Click vào vùng canvas để chọn view; gõ trong ô class/attribute không dịch box. Xoay camera không thay đổi annotation. Chỉnh hình học bằng chuột ở ba view bên dưới cập nhật ngay box 3D. Khi đổi frame, camera giữ hướng nhìn, zoom tương đối và độ lệch pan quanh box mới. Cần WebGL để hiển thị LiDAR 3D; nếu không có WebGL, ba view chỉnh sửa vẫn dùng được.
@@ -194,7 +201,7 @@ Frame bạn đã sửa tay được giữ nguyên và dùng làm điểm neo. Fr
 ### Dữ liệu và quyền
 
 - Extension đọc annotation đang mở qua plugin API của CVAT và chỉ tải point cloud từ chính server CVAT (`/api/...`). **Áp dụng** chỉ sửa bộ nhớ của CVAT; việc ghi server thuộc nút Save hoặc Auto Save nếu bạn đã bật trong CVAT. Không gửi dữ liệu đi nơi khác, không khai báo `permissions` nào.
-- Point cloud được lưu trong IndexedDB của server CVAT đang mở, có thể còn sau khi đóng trình duyệt; xóa bằng **Xóa cache**. Cache tách theo origin, job, metadata và phiên bản bộ đọc; metadata được kiểm tra khi vào job. Annotation và bản nháp preview chỉ nằm trong RAM, không lưu vào IndexedDB. `localStorage` chỉ lưu vị trí của panel.
+- Point cloud được lưu trong IndexedDB của server CVAT đang mở, có thể còn sau khi đóng trình duyệt; xóa bằng **Xóa cache**. Cache tách theo origin, job, metadata và phiên bản bộ đọc; metadata được kiểm tra khi vào job. Annotation và bản nháp preview chỉ nằm trong RAM, không lưu vào IndexedDB. `localStorage` lưu vị trí panel và dấu đã kiểm tra theo job/ID server. Quan hệ item gốc–con và lịch sử Áp dụng chỉ giữ trong RAM của tab, mất khi reload hoặc đổi job.
 - Đọc point cloud dạng PCD `ascii` và `binary` (tọa độ float).
 
 ---
@@ -239,7 +246,7 @@ node --check cvat-resize-extension/lidar-view.js
 node --test tests/*.test.cjs
 ```
 
-80 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
+124 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
 
 Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã được thử trên CVAT 3D thật qua Ego; dữ liệu server không đổi trong lần kiểm thử. Xem [báo cáo Apply trực tiếp](docs/LIVE-APPLY.md), [báo cáo trải nghiệm](docs/EGO-UX-AUDIT.md), [báo cáo bốn view và orientation](docs/ORIENTATION-FOUR-VIEW.md), [kiểm thử tách object trên CVAT thật](docs/TRACK-SPLIT.md) và [cache v1.9](docs/BACKGROUND-CACHE.md) để biết phạm vi và giới hạn đã kiểm chứng.
 
@@ -248,5 +255,3 @@ Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã đư
 ## License
 
 © 2026 danhtongAI11. Phát hành theo giấy phép [MIT](LICENSE).
-
-Phím `,` / `.` xoay box −1° / +1° trong Top/Side/Front đang chọn (view 3D dùng yaw). Giữ Shift để xoay 15°. Phím này và phím mũi tên dùng được ở frame thu nhỏ; không tác động khi đang nhập liệu.

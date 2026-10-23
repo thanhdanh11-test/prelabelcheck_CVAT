@@ -2,6 +2,11 @@
 
 Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên bản của dự án.
 
+## [v1.13.5] - 2026-10-23: Refresh current usage guidance
+- Update README, in-app help and review workflow for split origins/navigation, collapsed-frame shortcuts, free pan/zoom and upright-fit limits.
+- Correct whole-track size-lock scope, checklist storage, close controls and test count; distinguish historical browser evidence from current unverified live Apply navigation.
+- Validation: 124/124 Node tests, zero skips; content.js syntax check passes. Documentation/help only; company-server QA remains pending.
+
 ## [v1.13.4] - 2026-10-23: Clarify split origin and frame intervals
 - Preview labels source item/server ID, segment bounds and hidden gaps; mark the first frame of each new segment.
 - Apply returns uniquely matched destination client/server IDs and shows a historical sidebar receipt; unknown mappings remain explicit, no automatic retry.
