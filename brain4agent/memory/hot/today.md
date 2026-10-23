@@ -61,3 +61,6 @@ Ego local: nút sidebar tới16, nút mở rộng16→0→16, shapes JSON không
 
 ## 2026-10-23T03:36:36Z — v1.13.5 hướng dẫn hiện tại
 Mốc v1.13.4 đã commit/push main: 09ee43f4daab30e011665bb27207f9e9c7d87003; thay thế trạng thái chưa push ở các ghi chú trước. Cập nhật README, help trong tool và REVIEW-WORKFLOW: điều hướng nguồn item, thời hạn lưu quan hệ, phím xoay/dịch ở frame thu nhỏ, pan/zoom, tilt ≤0,01 rad, kích thước theo khóa cả track và checklist localStorage. Không đổi thuật toán. 124/124 tests, 0 skip; syntax đạt. Bản docs/help v1.13.5 chưa commit/push. QA Apply/toolbar thật trên server công ty vẫn chưa thực hiện.
+
+## 2026-10-23T03:50:59Z — v1.13.6 giữ nguồn qua reload
+v1.13.5 đã push main ở 6fb29a9. Người dùng báo mất nguồn/nút về gốc sau reload: nguyên nhân RAM-only. Đã thêm localStorage theo server/job, ID server ưu tiên, fingerprint duy nhất cho pending; cập nhật nhãn/nút từ clientID mới, lỗi storage báo rõ. 128/128 tests, mutation tắt persistence đỏ 4 ca. Chưa kiểm Save/reload trên server công ty, chưa commit/push bản sửa. Không khôi phục được nguồn đã mất trước bản này.

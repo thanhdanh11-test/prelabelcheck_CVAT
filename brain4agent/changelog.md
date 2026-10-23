@@ -2,6 +2,11 @@
 
 Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên bản của dự án.
 
+## [v1.13.6] - 2026-10-23: Persist split origins across reload
+- Store origin identities per browser origin/job; rebuild runtime shortcuts using stable server IDs or unique pending geometry matches, never persisted client IDs.
+- Preserve source labels for missing parents, disable unsafe navigation and report storage failures. Existing lost lineage cannot be recovered retroactively.
+- Validation: 128/128 tests, zero skips; disabling persistence fails four regression tests; JS syntax passes. Live company Save/reload remains pending.
+
 ## [v1.13.5] - 2026-10-23: Refresh current usage guidance
 - Update README, in-app help and review workflow for split origins/navigation, collapsed-frame shortcuts, free pan/zoom and upright-fit limits.
 - Correct whole-track size-lock scope, checklist storage, close controls and test count; distinguish historical browser evidence from current unverified live Apply navigation.

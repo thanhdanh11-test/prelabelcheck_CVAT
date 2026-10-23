@@ -9,7 +9,7 @@ test('server-ID dropdown uses each track range rather than preview frame bounds'
   const ctx = vm.createContext({});
   vm.runInContext(`
     let jobId=97,dataGeneration=0,job,annotations,labels;
-    const sel={},frames=[100,200],$=()=>sel,setStatus=()=>{},withUiIds=()=>{},renderReviewState=()=>{},renderInputs=()=>{},prepareCache=async()=>{};
+    const sel={},frames=[100,200],$=()=>sel,setStatus=()=>{},withUiIds=()=>{},syncStoredOrigins=()=>{},originStorageWarning="",renderReviewState=()=>{},renderInputs=()=>{},prepareCache=async()=>{};
     const bridgeRequest=async()=>({job:{},labels:[],annotations:{tracks:[
       {id:49,uiId:1,shapes:[{frame:10,type:'cuboid'},{frame:20,type:'cuboid'}]},
       {id:70,uiId:2,shapes:[{frame:30,type:'cuboid'},{frame:45,type:'cuboid'}]}

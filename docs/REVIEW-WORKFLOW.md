@@ -1,13 +1,13 @@
 # Hướng dẫn duyệt item, camera và điều khiển box
 
-Hướng dẫn hiện tại v1.13.5. Các số đo v1.12.0 ở cuối là bằng chứng lịch sử, không xác nhận thao tác mới trên server công ty.
+Hướng dẫn hiện tại v1.13.6. Các số đo v1.12.0 ở cuối là bằng chứng lịch sử, không xác nhận thao tác mới trên server công ty.
 
 ## Thao tác nhanh
 
 1. Chọn item, Xem trước rồi click view ở frame thu nhỏ hoặc mở rộng. Mũi tên dịch 5 cm (Shift 1 cm, Alt 20 cm); PageUp/Down nâng/hạ. Phím `,` / `.` xoay 1° theo view, Shift 15°; 3D dùng yaw.
 2. Trong Top/Side/Front mở rộng, cuộn để zoom quanh con trỏ, kéo phải/giữa để pan tự do; kéo trái vùng trống cũng pan nếu tắt Kéo vùng. Double-click về box. Không còn trần zoom-out 3×; chỉ xem cloud frame hiện tại.
 3. Tự động khớp đưa ra đề xuất, Enter nhận hoặc Esc hủy. Luôn bật yaw và sáu mặt; cần ≥30 điểm, |rx| và |ry| ≤0,01 rad (~0,57°). Box nghiêng quá ngưỡng vẫn chỉnh tay được. Nhận kích thước theo tùy chọn khóa cả track.
-4. Với tách outside ≥6 frame, xem nhãn vàng đầu đoạn mới; dùng Đoạn gốc/Đoạn mới để nhảy đầu đoạn. Sau Áp dụng, nút chuyển item tương ứng. Chữ vàng Tạo từ item #… và Đến item gốc trên thanh số frame dẫn về đoạn đầu giữ lại. Quan hệ chỉ giữ trong tab/job, mất khi reload. Xem [TRACK-SPLIT.md](TRACK-SPLIT.md).
+4. Với tách outside ≥6 frame, xem nhãn vàng đầu đoạn mới; dùng Đoạn gốc/Đoạn mới để nhảy đầu đoạn. Sau Áp dụng, nút chuyển item tương ứng. Chữ vàng Tạo từ item #… và Đến item gốc trên thanh số frame dẫn về đoạn đầu giữ lại. Quan hệ lưu theo server/job trong trình duyệt và khôi phục sau reload; Save trước khi reload. Item chưa có ID được đối chiếu hình học duy nhất; nguồn đã mất từ bản cũ không khôi phục được. Xem [TRACK-SPLIT.md](TRACK-SPLIT.md).
 5. Áp dụng cập nhật annotation trong CVAT; Save của CVAT mới lưu server. Số #/clientID có thể đổi; bảng kết quả Áp dụng là lịch sử, không cập nhật theo Undo/Redo/Save.
 
 ## Camera
@@ -35,7 +35,7 @@ Lỗi/quota storage: giữ dấu trong bộ nhớ và báo chỉ giữ trong phi
 
 ## Kiểm chứng hiện tại
 
-Bộ test hiện tại: `node --test tests/*.test.cjs` — 124/124 pass, 0 skip. Điều hướng và nguồn item có kiểm thử tự động; trình duyệt local mới kiểm với nháp/receipt tổng hợp. Chưa xác nhận toolbar/điều hướng sau Apply thật trên server công ty.
+Bộ test hiện tại: `node --test tests/*.test.cjs` — 128/128 pass, 0 skip. Điều hướng và nguồn item có kiểm thử tự động; trình duyệt local mới kiểm với nháp/receipt tổng hợp. Chưa xác nhận toolbar/điều hướng sau Apply thật trên server công ty.
 
 ## Bằng chứng lịch sử v1.12.0
 

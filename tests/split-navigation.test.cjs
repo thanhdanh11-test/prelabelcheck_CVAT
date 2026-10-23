@@ -3,8 +3,8 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync('cvat-resize-extension/content.js','utf8');
-function setup() {
-  const ctx=vm.createContext({structuredClone});
+function setup(storage = new Map()) {
+  const ctx=vm.createContext({structuredClone, localStorage: {getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value)}});
   vm.runInContext(`
     const controls={'.split-side-nav':{},'.split-zoom-nav':{},'.only-key':{checked:true},'.only-hid':{checked:true},'.only-bad':{checked:true}};
     const $=s=>controls[s],job={start_frame:0,stop_frame:40},events=[];
@@ -83,4 +83,60 @@ test('origin button refuses navigation if original segment was removed by Undo',
   await run(ctx,"navigateSplit('origin',0)");
   assert.equal(run(ctx,'plan.track.clientID'),4);
   assert.match(run(ctx,'events[0][1]'),/không còn khớp/);
+});
+
+function seedOrigins(ctx) {
+  run(ctx, `annotations.tracks.splice(0, 2,
+    {clientID:3,uiId:3,id:49,label_id:1,shapes:[{frame:0,type:'cuboid',points:[1,2,3]}]},
+    {clientID:4,uiId:4,label_id:1,shapes:[{frame:16,type:'cuboid',points:[4,5,6]}]});
+    recordSplitOrigins({clientID:1,uiId:1,id:49},[{clientID:3,id:49,startFrame:0,endFrame:15},{clientID:4,startFrame:16,endFrame:40}]);
+    syncStoredOrigins(annotations.tracks);`);
+}
+test('origin survives full tool reload and Save-assigned IDs; navigation uses new client IDs', async()=>{
+  const storage=new Map(), before=setup(storage);seedOrigins(before);
+  const ctx=setup(storage);
+  run(ctx, `annotations.tracks.splice(0, 2,
+    {clientID:80,uiId:80,id:49,label_id:1,shapes:[{id:900,frame:0,type:'cuboid',points:[1,2,3]}]},
+    {clientID:81,uiId:81,id:50,label_id:1,shapes:[{id:901,frame:16,type:'cuboid',points:[4,5,6]}]});
+    syncStoredOrigins(annotations.tracks); plan={track:annotations.tracks[1]};fresh={annotations:structuredClone(annotations)};`);
+  assert.equal(run(ctx,'itemOrigins.get(81).target.clientID'),80);
+  await run(ctx,"navigateSplit('origin',0)");
+  assert.equal(run(ctx,'plan.track.clientID'),80);
+  const saved=JSON.parse(storage.get('cvat-track-origins:v1:97'));
+  assert.equal(saved.links[0].child.id,50);
+  assert.equal(saved.links[0].child.clientID,undefined);
+  // Stable server IDs remain authoritative after geometry edits.
+  run(ctx,'annotations.tracks[1].shapes[0].points=[9,9,9];syncStoredOrigins(annotations.tracks)');
+  assert.equal(run(ctx,'itemOrigins.has(81)'),true);
+});
+test('pending fingerprint cannot choose duplicate geometry or reused client IDs; job isolation',()=>{
+  const storage=new Map(), ctx=setup(storage);seedOrigins(ctx);
+  run(ctx, `originsChanged=false;annotations.tracks.push({...structuredClone(annotations.tracks[1]),clientID:5});
+    syncStoredOrigins(annotations.tracks);`);
+  assert.equal(run(ctx,'itemOrigins.size'),0);
+  run(ctx,'annotations.tracks.pop();annotations.tracks[1].shapes[0].points=[999];syncStoredOrigins(annotations.tracks)');
+  assert.equal(run(ctx,'itemOrigins.size'),0);
+  run(ctx,'jobId=98;syncStoredOrigins(annotations.tracks)');
+  assert.equal(run(ctx,'itemOrigins.size'),0);
+  assert.equal(JSON.parse(storage.get('cvat-track-origins:v1:97')).links.length,1);
+});
+test('missing saved parent disables navigation, and restored parent recovers without guessing',()=>{
+  const storage=new Map(), ctx=setup(storage);seedOrigins(ctx);
+  run(ctx,'annotations.tracks.shift();syncStoredOrigins(annotations.tracks)');
+  assert.equal(run(ctx,'itemOrigins.get(4).target.clientID'),undefined);
+  run(ctx,`annotations.tracks.push({clientID:90,id:100,label_id:1,shapes:[{frame:0,type:'cuboid',points:[1,2,3]}]});syncStoredOrigins(annotations.tracks)`);
+  assert.equal(run(ctx,'itemOrigins.get(4).target.clientID'),undefined);
+  run(ctx,'annotations.tracks[1].id=49;syncStoredOrigins(annotations.tracks)');
+  assert.equal(run(ctx,'itemOrigins.get(4).target.clientID'),90);
+});
+test('storage corruption and quota failures preserve live links and report degraded persistence',()=>{
+  const storage=new Map(), ctx=setup(storage);seedOrigins(ctx);
+  storage.set('cvat-track-origins:v1:97','{broken');
+  run(ctx,'syncStoredOrigins(annotations.tracks)');
+  assert.equal(run(ctx,'itemOrigins.get(4).target.clientID'),3);
+  assert.match(run(ctx,'originStorageWarning'),/Không lưu/);
+  storage.delete('cvat-track-origins:v1:97');
+  run(ctx,"originsChanged=true;localStorage.setItem=()=>{throw Error('quota')};syncStoredOrigins(annotations.tracks)");
+  assert.equal(run(ctx,'originsChanged'),true);
+  assert.equal(run(ctx,'itemOrigins.get(4).target.clientID'),3);
 });

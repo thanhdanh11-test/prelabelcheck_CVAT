@@ -11,7 +11,7 @@ Gồm hai phần:
 
 CVAT nội suy tuyến tính giữa các keyframe. Cả hai công cụ đều làm việc bằng cách sửa hoặc thêm keyframe, nên kết quả hiển thị đúng như nhau trên mọi frame.
 
-> **Extension v1.13.5:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
+> **Extension v1.13.6:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
 >
 > **Script Python:** vẫn ghi trực tiếp lên server. Save trong CVAT trước khi chạy script, rồi tải lại trang CVAT để xem kết quả.
 
@@ -31,7 +31,7 @@ Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` r�
 
 ### Nhận biết item sau tách (từ v1.13.4)
 
-Preview ghi item gốc, khoảng frame từng đoạn và khoảng outside; frame bắt đầu đoạn mới có nhãn **BẮT ĐẦU ITEM MỚI**. Item con có chữ vàng **Tạo từ item #…** cạnh số frame và nút **Đến item gốc**. Quan hệ được giữ trong phiên tab, không truy ngược được item đã tạo trước khi tool ghi nhận. Nút **Đoạn gốc / Đoạn mới 2 / …** ở sidebar và frame mở rộng chuyển đến đầu đoạn; sau Áp dụng chọn item tương ứng, giữ bản nháp khi chuyển qua lại. Sau Áp dụng, bảng đối chiếu ghi item gốc → số item mới/ID server và khoảng frame. Item chưa Save ghi “chưa có ID server”. Bảng là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save và không lưu qua reload.
+Preview ghi item gốc, khoảng frame từng đoạn và khoảng outside; frame bắt đầu đoạn mới có nhãn **BẮT ĐẦU ITEM MỚI**. Item con có chữ vàng **Tạo từ item #…** cạnh số frame và nút **Đến item gốc**. Từ v1.13.6, quan hệ lưu trên trình duyệt theo server/job và được khôi phục sau reload; không truy ngược được nguồn đã mất từ bản cũ. Nút **Đoạn gốc / Đoạn mới 2 / …** ở sidebar và frame mở rộng chuyển đến đầu đoạn; sau Áp dụng chọn item tương ứng, giữ bản nháp khi chuyển qua lại. Sau Áp dụng, bảng đối chiếu ghi item gốc → số item mới/ID server và khoảng frame. Item chưa Save ghi “chưa có ID server”. Bảng là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save và không lưu qua reload.
 
 ### v1.13.3: di chuyển toàn cảnh
 
@@ -136,7 +136,7 @@ Tool dùng API Commit của CVAT, nên số **# trên sidebar có thể đổi**
 
 Để chuyển qua lại: trong preview bấm **Đoạn gốc / Đoạn mới 2 / …** ở sidebar hoặc dưới frame mở rộng để tới đầu đoạn. Sau **Áp dụng**, các nút chọn item tương ứng và giữ bản nháp khi chuyển. Khi đang xem item con, chữ vàng **Tạo từ item #…** trên thanh số frame cho biết nguồn; **Đến item gốc** mở đoạn đầu còn giữ lại sau tách, không khôi phục track chưa tách.
 
-Quan hệ nguồn chỉ có cho các lần tách tool ghi nhận trong phiên tab/job hiện tại. Sau reload, tool không tự suy ra nguồn cũ. Nếu Undo/Redo làm item đích không còn tồn tại, tool yêu cầu tải lại thay vì chọn nhầm. Bảng đối chiếu sau Áp dụng là lịch sử tại thời điểm áp dụng, không phải danh sách ID luôn cập nhật sau Save.
+Quan hệ nguồn được lưu trong localStorage của trình duyệt theo server/job. Save annotation trước khi reload. ID server là định danh chính; với item chưa có ID lúc ghi nhận, tool chỉ nhận lại khi hình học khớp duy nhất, rồi lưu ID server. Nếu đã sửa hình học trong CVAT trước khi tool ghi nhận ID, liên kết có thể không khôi phục được; bấm Tải lại trong tool sau Save để cập nhật ID. Nguồn đã mất từ bản cũ không thể khôi phục chắc chắn. Xóa dữ liệu trang hoặc đổi trình duyệt/máy sẽ mất liên kết. Nếu Undo/Redo làm item đích không còn tồn tại, tool yêu cầu tải lại thay vì chọn nhầm. Bảng đối chiếu sau Áp dụng là lịch sử tại thời điểm áp dụng, không phải danh sách ID luôn cập nhật sau Save.
 
 Ví dụ frame 10 còn hiện, frame 11–16 outside, frame 17 hiện lại: đoạn đầu giữ box đến frame 10 và keyframe outside ở frame 11; object mới bắt đầu tại frame 17. Mất dấu 5 frame thì chưa tách; nhiều khoảng ngắn không cộng dồn. Nếu có nhiều khoảng outside đủ dài, tool tạo nhiều track. Outside ở đầu/cuối mà chưa có đoạn hiện trước/sau không tạo object rỗng.
 
@@ -201,7 +201,7 @@ Frame bạn đã sửa tay được giữ nguyên và dùng làm điểm neo. Fr
 ### Dữ liệu và quyền
 
 - Extension đọc annotation đang mở qua plugin API của CVAT và chỉ tải point cloud từ chính server CVAT (`/api/...`). **Áp dụng** chỉ sửa bộ nhớ của CVAT; việc ghi server thuộc nút Save hoặc Auto Save nếu bạn đã bật trong CVAT. Không gửi dữ liệu đi nơi khác, không khai báo `permissions` nào.
-- Point cloud được lưu trong IndexedDB của server CVAT đang mở, có thể còn sau khi đóng trình duyệt; xóa bằng **Xóa cache**. Cache tách theo origin, job, metadata và phiên bản bộ đọc; metadata được kiểm tra khi vào job. Annotation và bản nháp preview chỉ nằm trong RAM, không lưu vào IndexedDB. `localStorage` lưu vị trí panel và dấu đã kiểm tra theo job/ID server. Quan hệ item gốc–con và lịch sử Áp dụng chỉ giữ trong RAM của tab, mất khi reload hoặc đổi job.
+- Point cloud được lưu trong IndexedDB của server CVAT đang mở, có thể còn sau khi đóng trình duyệt; xóa bằng **Xóa cache**. Cache tách theo origin, job, metadata và phiên bản bộ đọc; metadata được kiểm tra khi vào job. Annotation và bản nháp preview chỉ nằm trong RAM, không lưu vào IndexedDB. `localStorage` lưu vị trí panel và dấu đã kiểm tra theo job/ID server. Quan hệ item gốc–con lưu trong localStorage theo server/job, gồm ID và dấu nhận dạng hình học để đối chiếu item chưa Save; không gửi metadata vào annotation. Lịch sử Áp dụng vẫn chỉ giữ trong RAM của tab, mất khi reload hoặc đổi job.
 - Đọc point cloud dạng PCD `ascii` và `binary` (tọa độ float).
 
 ---
@@ -246,7 +246,7 @@ node --check cvat-resize-extension/lidar-view.js
 node --test tests/*.test.cjs
 ```
 
-124 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
+128 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
 
 Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã được thử trên CVAT 3D thật qua Ego; dữ liệu server không đổi trong lần kiểm thử. Xem [báo cáo Apply trực tiếp](docs/LIVE-APPLY.md), [báo cáo trải nghiệm](docs/EGO-UX-AUDIT.md), [báo cáo bốn view và orientation](docs/ORIENTATION-FOUR-VIEW.md), [kiểm thử tách object trên CVAT thật](docs/TRACK-SPLIT.md) và [cache v1.9](docs/BACKGROUND-CACHE.md) để biết phạm vi và giới hạn đã kiểm chứng.
 

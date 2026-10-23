@@ -22,3 +22,6 @@ Tổng hợp các lỗi khó, các lưu ý dị biệt hoặc cách workaround �
 
 ## Tối ưu cache cần đo
 - Đếm-rồi-điền Float32Array trong `nearCloud` chậm hơn mảng JS tạm (quét hai lần; crop chỉ giữ ~0,5% điểm). Đừng "tối ưu" lại nếu chưa đo trên frame dày.
+
+## Nguồn item mất khi reload (v1.13.6)
+Bản ≤1.13.5 chỉ giữ itemOrigins bằng clientID trong RAM. Đã lưu theo server/job bằng ID server hoặc hình học khớp duy nhất khi chưa Save; không đoán từ clientID tái sử dụng. Quan hệ đã mất từ bản cũ không tự phục hồi; sửa hình học trước khi thu ID server có thể làm match pending thất bại an toàn. Save rồi tải lại danh sách tool để thu ID. Xóa dữ liệu trang/đổi máy không giữ nguồn.

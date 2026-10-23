@@ -27,3 +27,6 @@ Tài liệu thiết kế về cấu trúc dữ liệu, cơ chế lưu trữ bề
 Bridge Apply thêm `segments[{startFrame,endFrame,clientID?,id?}]` từ export sau commit; chỉ nhận match duy nhất, không đoán ID. Receipt nguồn→đích chỉ nằm trong DOM/tab, bị thay bởi Apply tiếp theo và xóa khi đổi job/reload. Không thêm metadata vào annotation/storage; không phản ánh Undo/Redo/Save sau thời điểm tạo receipt.
 
 `itemOrigins` (RAM theo job) ánh xạ clientID item con → nhãn nguồn lịch sử và đoạn đầu hiện tại. Cập nhật khi Apply đổi clientID; dùng cho nhãn vàng/nút về gốc trên fbar. Xóa khi đổi job/reload; không suy đoán lineage cho item cũ thiếu dữ liệu.
+
+## Nguồn item v1.13.6 (thay giới hạn RAM-only ở trên)
+`cvat-track-origins:v1:<job>` trong localStorage, tách theo origin; lưu child/parent `{id,fingerprint}`, nhãn nguồn lịch sử và khoảng frame. Snapshot sau Apply ghi dấu hình học trước Save; reload nhận theo server ID hoặc fingerprint duy nhất khi chưa có ID, nâng lên server ID khi có. Không dùng clientID làm định danh bền. Receipt vẫn chỉ trong tab. Không đổi annotation/API. Lỗi storage giữ runtime và báo cảnh báo; không đảm bảo merge ghi đồng thời nhiều tab.

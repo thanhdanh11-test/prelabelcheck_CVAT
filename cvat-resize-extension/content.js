@@ -630,7 +630,7 @@
   <h5>Item mới sau outside</h5>
   <ul><li>Mặc định tách khi outside ≥ 6 frame liên tiếp; đây là số frame, khác ngưỡng số điểm để tự ẩn. Preview đánh dấu vàng <b>BẮT ĐẦU ITEM MỚI</b> và ghi nguồn từng đoạn.</li>
     <li><b>Đoạn gốc / Đoạn mới 2 / …</b> ở sidebar và frame mở rộng đưa tới đầu đoạn; sau Áp dụng chọn item tương ứng, giữ nháp khi chuyển.</li>
-    <li>Chữ vàng <b>Tạo từ item #…</b> trên thanh số frame ghi nguồn. <b>Đến item gốc</b> mở đoạn đầu sau tách, không khôi phục track chưa tách. Quan hệ chỉ giữ trong phiên tab/job; reload sẽ mất.</li>
+    <li>Chữ vàng <b>Tạo từ item #…</b> trên thanh số frame ghi nguồn. <b>Đến item gốc</b> mở đoạn đầu sau tách, không khôi phục track chưa tách. Nguồn item lưu trên trình duyệt theo server/job và được khôi phục sau reload. Save annotation trước khi tải lại; item chưa có ID chỉ được nhận lại nếu hình học khớp duy nhất. Không khôi phục được nguồn đã mất từ bản cũ.</li>
     <li>Bảng ID là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save. Item mới có ID server sau Save; nếu item đích không còn tồn tại, tải lại danh sách.</li></ul>
   <h5>Vệt quỹ đạo</h5>
   <ul><li>Bật <b>Vệt quỹ đạo (Top)</b> để hiện đường nối tâm box các frame lân cận và khung mờ (ghost wireframe) của frame trước / sau trên khung nhìn Top, giúp căn chỉnh vị trí và hướng di chuyển mượt mà.</li></ul>
@@ -781,11 +781,14 @@
   }
 
   let splitReceipt = null, splitNavigating = false;
-  const itemOrigins = new Map(); // session only; CVAT client IDs are not stable across page reloads
+  const itemOrigins = new Map(); // runtime client IDs; persisted identities never use client IDs
+  let originsChanged = false;
+  let originStorageWarning = "";
 
   function recordSplitOrigins(source, segments) {
     const oldID = source.clientID ?? source.uiId, first = segments?.[0];
     if (oldID == null || !first) return;
+    originsChanged = true;
     const inherited = itemOrigins.get(oldID);
     itemOrigins.delete(oldID);
     // Applying even without splitting replaces client IDs. Keep existing children's parent link current.
@@ -795,6 +798,64 @@
     if (inherited && first.clientID != null) itemOrigins.set(first.clientID, inherited);
     for (const part of segments.slice(1)) if (part.clientID != null) {
       itemOrigins.set(part.clientID, { source: { ...source }, target: { ...first } });
+    }
+  }
+
+  // Keep only annotation identity fields; Save allocates track/shape IDs without changing these.
+  function originIdentity(track) {
+    const attrs = values => (values || []).map(a => [a.spec_id, a.value]).sort((a, b) => a[0] - b[0]);
+    return { id: track.id ?? null, fingerprint: JSON.stringify([track.label_id, attrs(track.attributes),
+      [...(track.shapes || [])].sort((a, b) => a.frame - b.frame).map(s =>
+        [s.frame, s.type, s.points, !!s.outside, !!s.occluded, s.rotation ?? 0, attrs(s.attributes)])]) };
+  }
+
+  function resolveOriginIdentity(identity, tracks) {
+    if (!identity || typeof identity.fingerprint !== "string") return null;
+    // Once a server ID is known, never fall back to geometry if that ID disappeared.
+    const matches = identity.id != null ? tracks.filter(t => t.id === identity.id) :
+      tracks.filter(t => originIdentity(t).fingerprint === identity.fingerprint);
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  function syncStoredOrigins(tracks) {
+    const key = `cvat-track-origins:v1:${jobId}`; // localStorage is already scoped to server origin
+    try {
+      const raw = localStorage.getItem(key), saved = raw ? JSON.parse(raw) : null;
+      if (saved && (saved.version !== 1 || !Array.isArray(saved.links))) throw new Error("Invalid origin storage");
+      let links = (saved?.links || []).filter(link => link && link.source && link.target && link.child &&
+        Number.isSafeInteger(link.startFrame) && Number.isSafeInteger(link.endFrame));
+      if (originsChanged) {
+        // Snapshot the new collection immediately after Apply, before native Save assigns IDs.
+        const fresh = [];
+        for (const [clientID, origin] of itemOrigins) {
+          const child = tracks.find(t => t.clientID === clientID);
+          const parent = tracks.find(t => t.clientID === origin.target.clientID);
+          if (!child || !parent) continue;
+          fresh.push({ child: originIdentity(child), target: originIdentity(parent),
+            source: { uiId: origin.source.uiId ?? origin.source.clientID, id: origin.source.id },
+            startFrame: origin.target.startFrame, endFrame: origin.target.endFrame });
+        }
+        // Keep unresolved history for native Undo/Redo; current links take precedence.
+        links = links.filter(link => !resolveOriginIdentity(link.child, tracks));
+        links.push(...fresh);
+      }
+      const restored = new Map();
+      for (const link of links) {
+        const child = resolveOriginIdentity(link.child, tracks), parent = resolveOriginIdentity(link.target, tracks);
+        if (!child) continue;
+        link.child = originIdentity(child); // promote to stable server ID after Save
+        if (parent) link.target = originIdentity(parent);
+        restored.set(child.clientID, { source: link.source, target: { clientID: parent?.clientID,
+          id: parent?.id, startFrame: link.startFrame, endFrame: link.endFrame } });
+      }
+      // A failed write must keep the live links and display a persistence warning.
+      localStorage.setItem(key, JSON.stringify({ version: 1, links }));
+      itemOrigins.clear();
+      for (const [id, origin] of restored) itemOrigins.set(id, origin);
+      originsChanged = false;
+      originStorageWarning = "";
+    } catch {
+      originStorageWarning = "Không lưu/đọc được nguồn item trên trình duyệt; liên kết hiện tại chỉ giữ trong phiên. Không xóa dữ liệu trình duyệt nếu cần giữ nguồn item.";
     }
   }
 
@@ -934,6 +995,7 @@
     annotations = loaded.annotations;
     labels = loaded.labels;
     withUiIds(annotations);
+    syncStoredOrigins(annotations.tracks);
     const sel = $(".track");
     sel.innerHTML = annotations.tracks.length
       ? annotations.tracks.map((t) => {
@@ -945,7 +1007,7 @@
       : `<option value="">(job này không có track nào)</option>`;
     if (keep && annotations.tracks.some((t) => t.uiId === keep)) sel.value = String(keep);
     renderReviewState();
-    setStatus(`${annotations.tracks.length} track.`);
+    setStatus(originStorageWarning || `${annotations.tracks.length} track.`, !!originStorageWarning);
     renderInputs();
     await prepareCache(job);
   }
@@ -1115,7 +1177,7 @@
       showSplitReceipt(applyingPlan.track, result.segments);
       closePlan();
       await loadData(result.clientID);
-      setStatus(result.warning || `Đã áp dụng ${result.trackCount || 1} object vào CVAT, chưa lưu server.`, !!result.warning);
+      setStatus(originStorageWarning || result.warning || `Đã áp dụng ${result.trackCount || 1} object vào CVAT, chưa lưu server.`, !!(originStorageWarning || result.warning));
     } catch (e) {
       if (applyingJob === jobId) {
         if (plan === applyingPlan) plan.stale = true;
@@ -3165,6 +3227,8 @@
       jobId = id;
       splitReceipt = null;
       itemOrigins.clear();
+      originsChanged = false;
+      originStorageWarning = "";
       $(".split-receipt").hidden = true;
       $(".split-receipt").textContent = "";
       closePlan();

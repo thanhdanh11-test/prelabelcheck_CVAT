@@ -1,11 +1,11 @@
 {
-  "current_version": "1.13.5",
+  "current_version": "1.13.6",
   "brain_template_version": "1.7.1",
   "system_status": "unit_verified_live_apply_pending",
   "last_verification": {
-    "timestamp": "2026-10-23T03:36:36Z",
-    "tests": 124,
-    "passed": 124,
+    "timestamp": "2026-10-23T03:50:59Z",
+    "tests": 128,
+    "passed": 128,
     "failed": 0,
     "skipped": 0,
     "command": "node --test tests/*.test.cjs",
@@ -37,5 +37,5 @@
     "license": ""
   },
   "merged_upstream": "203456bf33fe351d22a7aa412ad59d5a0ed9f5c6",
-  "last_published_commit": "09ee43f4daab30e011665bb27207f9e9c7d87003"
+  "last_published_commit": "6fb29a9"
 }
