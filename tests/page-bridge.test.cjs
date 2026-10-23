@@ -21,7 +21,12 @@ function setup(options = {}) {
   const job = {
     id: 97, startFrame: 0, stopFrame: 10, labels: [{toJSON: () => ({id: 2, name: 'car', attributes: []})}],
     annotations: {
-      export: async () => clone(exports),
+      export: async () => {
+        if (options.exportFailure && calls.length) throw Error('export failed');
+        const copy = clone(exports);
+        if (options.reverseExport && calls.length) copy.tracks.reverse();
+        return copy;
+      },
       get: async () => {
         if (options.refreshFailure && calls.length) throw Error('render failed');
         return exports.tracks.map(t => ({clientID: t.clientID, points: t.shapes[0].points, lock: !!options.locked}));
@@ -148,4 +153,26 @@ test('invalid split threshold or stale split baseline never commits', async () =
   const app=setup(),baseline=clone(app.data.tracks[0]); app.data.tracks[0].group=123;
   const reply=await app.request('apply',{jobId:97,baseline,track:baseline,splitGap:6});
   assert.match(reply.error,/Track đã/); assert.equal(app.calls.length,0);
+});
+
+test('split receipt maps each interval to new client IDs even if export order changes',async()=>{
+  const app=setup({reverseExport:true});app.job.stopFrame=40;
+  app.data.tracks[0].shapes=[box(0),{...box(10),outside:true},box(16),{...box(20),outside:true},box(26)];
+  const baseline=clone(app.data.tracks[0]);
+  const reply=await app.request('apply',{jobId:97,baseline,track:baseline,splitGap:6});
+  assert.deepEqual(reply.result.segments,[
+    {startFrame:0,endFrame:15,clientID:3,id:49},
+    {startFrame:16,endFrame:25,clientID:4,id:undefined},
+    {startFrame:26,endFrame:40,clientID:5,id:undefined}
+  ]);
+  assert.equal(app.calls.length,1);assert.equal(reply.result.clientID,3);
+});
+test('failed post-commit export returns ranges without inventing IDs or retrying commit',async()=>{
+  const app=setup({exportFailure:true});app.job.stopFrame=30;
+  app.data.tracks[0].shapes=[box(0),{...box(10),outside:true},box(16)];
+  const baseline=clone(app.data.tracks[0]);
+  const reply=await app.request('apply',{jobId:97,baseline,track:baseline,splitGap:6});
+  assert.equal(reply.result.applied,true);assert.match(reply.result.warning,/export failed/);
+  assert.deepEqual(reply.result.segments,[{startFrame:0,endFrame:15},{startFrame:16,endFrame:30}]);
+  assert.equal(app.calls.length,1);
 });

@@ -34,3 +34,31 @@ After the final reload, native `job.annotations.get` was checked for all 24 fram
 The scripts were loaded in manifest order into real MAIN/isolated execution worlds; this was not an unpacked-extension installation test. Automatic outside-by-point-count was disabled to isolate splitting of explicit source outside flags. No new defect was found in the exercised flows. Real-world occlusion detection and automatic outside generation are separate behaviors.
 
 Local evidence: ignored `docs/evidence/split-*.json` files contain baseline, Apply, saved and reloaded annotations; `split-six-preview.png` and `split-reopened-frame9.png` capture the UI.
+
+## v1.13.4 — identify source and resulting segments
+
+Preview lists the source CVAT item number and server ID, each segment's frame interval, and the outside interval preceding a split. Frame headers show `Đoạn N từ item #…`; a reappearance starting a new item gets `BẮT ĐẦU ITEM MỚI` and a highlighted top border in the grid. These are proposed segments, not assigned item IDs. Intervals include hidden trailing frames owned by the previous segment; they do not imply visible boxes throughout. No frame data is created.
+
+Shared contract: `CvatTrackSplit.ranges(shapes, cuts, start, stop)` returns `{startFrame,endFrame}[]`. Apply's existing result adds `segments: {startFrame,endFrame,clientID?,id?}[]`. The bridge computes ranges from the same cuts as the actual split; after the single native commit it maps replacements to newly exported client IDs by label, first keyframe and points, accepting only unique matches. It does not rely on export array order. Export failure leaves IDs absent and returns the existing applied-with-warning result; never retry the commit automatically. Existing request fields and split geometry are unchanged.
+
+Sidebar retains the last Apply receipt with source → destination item numbers, server IDs and intervals. New tracks without server IDs explicitly say so. Unknown/ambiguous mappings say `chưa xác định item mới`; never invent IDs. This is a historical receipt at Apply time, not live lineage: it does not follow Undo/Redo/Save, disappears on page reload/job switch, and is replaced by the next Apply (hidden for an unsplit Apply). No annotation attributes or persistent storage are added.
+
+Validation: 124/124 Node tests, zero skips; ID mapping mutation makes two bridge tests fail. Covers preview changes/disabled split, first-new-frame label, server versus client IDs, reordered export, post-commit export failure without retry, and native Undo/Redo. Ego local job 97 verifies preview/receipt DOM with synthetic draft and receipt data only; no Apply/Save. Real Apply receipt validation on company CVAT remains open.
+
+### Segment navigation
+
+Sidebar and expanded frame both expose `Đoạn gốc`, `Đoạn mới 2`, … with frame intervals. Preview buttons select/reveal the segment's first frame and clear frame filters so the destination is visible; expanded mode stays expanded. After Apply, buttons use the receipt's client IDs, verify against a fresh bridge snapshot, then reuse `switchTrack` to retain per-item draft and Undo before revealing the segment start. They select items inside the extension; they do not restore the old unsplit track or mutate annotations.
+
+`navigateSplit(kind,index)` accepts `preview` or `receipt`; ignores invalid indices, concurrent navigation and pending fit/Apply/preview. Missing IDs disable destination buttons. Missing/stale targets after native Undo/Redo or edits report a reload requirement rather than guessing another ID. Late responses after job/plan/receipt changes are ignored. No persistent lineage is introduced.
+
+Tests cover both directions, small/expanded views, filter clearing, existing switch path, missing/unknown IDs and stale async replies.
+
+Ego local job 97, synthetic draft: sidebar button selects frame 16; expanded buttons switch 16 → 0 → 16. Draft shapes JSON unchanged throughout; no Apply/Save. Post-Apply item navigation remains covered by mocked bridge tests, not a live company-server run.
+
+### Origin shortcut on the frame toolbar
+
+The frame toolbar (beside the frame count) displays yellow `Tạo từ item #… · ID server …` for a known split child, with `Đến item gốc`. The source label records the item before splitting; the button targets the retained first segment's current client ID, not a deleted pre-split object. It reuses the verified navigation path and preserves drafts. Unknown target IDs disable the button; missing targets after Undo report a reload requirement.
+
+A job-local RAM map `itemOrigins` retains known links across later Apply operations, including an unsplit Apply replacing parent/child client IDs. Links clear on job change/page reload; no annotation or persistent storage changes. Previously created items without a recorded link cannot be attributed retroactively. Origin text is hidden on unrelated items and on the retained parent (unless that parent was itself a known child).
+
+124/124 tests; new coverage checks toolbar content/visibility, parent navigation, unrelated Apply, parent/child ID replacement and missing parent after Undo. The new toolbar shortcut has not yet been exercised with a real split Apply on company CVAT.

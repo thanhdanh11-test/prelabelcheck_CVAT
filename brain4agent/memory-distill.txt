@@ -14,8 +14,9 @@
 - Tech Stack: Chrome MV3 extension, JavaScript thuần, Canvas/WebGL; Node built-in test runner (không npm dependencies).
 - Data/State: CVAT MAIN bridge Apply/Undo; Save native; point cloud RAM/IndexedDB; checklist localStorage theo origin/job/server track ID.
 - Planning & RFCs: Thư mục `planning/` lưu trữ các bản kế hoạch theo định dạng `[STT]_[YYYY-MM-DD]_[Ten-Ngan]` (25-35 ký tự, cố định path).
-- Release: v1.13.3; khớp một frame đủ sáu mặt, icon khớp/chấp nhận/hủy ở view thu nhỏ, view mở rộng phóng riêng + zoom in/out + kéo vùng đưa box về; Xoá keyframe chỉ bỏ keyframe thừa. 114/114 tests; mũi tên ở frame thu nhỏ, dấu phẩy/chấm xoay; pan tự do, không trần zoom-out 3×; QA local job 97 đạt, server công ty chưa chạy; xem docs/EXPERIMENT-INTERPOLATION.md.
+- Release: v1.13.4; khớp một frame đủ sáu mặt, icon khớp/chấp nhận/hủy ở view thu nhỏ, view mở rộng phóng riêng + zoom in/out + kéo vùng đưa box về; Xoá keyframe chỉ bỏ keyframe thừa. 124/124 tests; mũi tên ở frame thu nhỏ, dấu phẩy/chấm xoay; pan tự do, không trần zoom-out 3×; QA local job 97 đạt, server công ty chưa chạy; xem docs/EXPERIMENT-INTERPOLATION.md.
 - Đã gộp upstream 203456b: vệt quỹ đạo Top, cache theo frame xem, checklist O(n), ưu tiên nhãn ID server; đã sửa dropdown nhầm frames preview. Không khẳng định sửa nhảy clientID sau Apply.
+- Tách outside: nút chuyển đoạn gốc/mới, nhãn vàng/nút về nguồn trên fbar + khoảng frame trong preview, receipt Apply trả segments/clientID/server ID; lịch sử trong tab, không theo Undo/Save; docs/TRACK-SPLIT.md.
 </project_foundation>
 
 <brain_file_roles>

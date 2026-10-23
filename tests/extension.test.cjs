@@ -158,7 +158,7 @@ test('Apply sends an immutable baseline through bridge, then refreshes without s
   const baseline={clientID:1,id:49,label_id:1,shapes:[box(0)]};
   const changed={...baseline,label_id:2};
   const plan={track:changed,baseline,shapes:[{...box(0),points:[0,0,0,0,0,0,5,2,2]}]};
-  const controls={'.apply':{disabled:false}};
+  const controls={'.apply':{disabled:false},'.split-receipt':{}};
   const requests=[];
   const ctx=vm.createContext({plan,controls,requests});
   vm.runInContext(`
@@ -170,7 +170,7 @@ test('Apply sends an immutable baseline through bridge, then refreshes without s
     const closePlan=()=>{plan=null;},loadData=async()=>{refreshed=true;};
     const fetch=()=>{throw Error('Must not write server');};
     const location={reload:()=>{throw Error('Must not reload');}};
-  `+source.slice(source.indexOf('  async function apply('),source.indexOf('  function savePreview(')),ctx);
+  `+source.slice(source.indexOf('  let splitReceipt ='),source.indexOf('  function updateSplitPreview('))+source.slice(source.indexOf('  async function apply('),source.indexOf('  function savePreview(')),ctx);
   await vm.runInContext('apply()',ctx);
   assert.equal(requests.length,1);assert.equal(requests[0].action,'apply');
   assert.equal(requests[0].payload.baseline.label_id,1);

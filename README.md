@@ -29,6 +29,10 @@ Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.va
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
 
+### v1.13.4: nhận biết item sau tách
+
+Preview ghi item gốc, khoảng frame từng đoạn và khoảng outside; frame bắt đầu đoạn mới có nhãn **BẮT ĐẦU ITEM MỚI**. Item con có chữ vàng **Tạo từ item #…** cạnh số frame và nút **Đến item gốc**. Quan hệ được giữ trong phiên tab, không truy ngược được item đã tạo trước khi tool ghi nhận. Nút **Đoạn gốc / Đoạn mới 2 / …** ở sidebar và frame mở rộng chuyển đến đầu đoạn; sau Áp dụng chọn item tương ứng, giữ bản nháp khi chuyển qua lại. Sau Áp dụng, bảng đối chiếu ghi item gốc → số item mới/ID server và khoảng frame. Item chưa Save ghi “chưa có ID server”. Bảng là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save và không lưu qua reload.
+
 ### v1.13.3: di chuyển toàn cảnh
 
 Top/Side/Front mở rộng không còn khóa pan quanh box và không còn trần zoom-out 3×. Cuộn để zoom theo con trỏ; kéo chuột phải/giữa để pan; double-click trở về box. Phạm vi dữ liệu là point cloud của frame hiện tại, không ghép map qua nhiều frame.

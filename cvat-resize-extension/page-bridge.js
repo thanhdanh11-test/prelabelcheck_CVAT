@@ -86,7 +86,7 @@
     const states = await job.annotations.get(original.shapes[0].frame, true, []);
     if (states.find((s) => s.clientID === original.clientID)?.lock) throw new Error("Track đang khóa trong CVAT. Mở khóa trước khi áp dụng.");
     current(jobId, true);
-    const { tracks: replacements } = CvatTrackSplit.split(track, splitGap, job.startFrame, job.stopFrame);
+    const { tracks: replacements, cuts } = CvatTrackSplit.split(track, splitGap, job.startFrame, job.stopFrame);
     const replacement = replacements[0];
     const shapeIDs = new Map(original.shapes.map((shape) => [shape.frame, shape.id]));
     replacement.shapes = replacement.shapes.map((shape) => {
@@ -101,13 +101,22 @@
     await job.annotations.commit({ tracks: replacements }, { tracks: [original] }, current(jobId).annotation.player.frame.number);
     // Commit is now in native history; a refresh failure must never cause an automatic second commit.
     let warning = "", clientID;
+    const segments = CvatTrackSplit.ranges(track.shapes, cuts, job.startFrame, job.stopFrame);
     try {
       const previousIDs = new Set(exported.tracks.map((t) => t.clientID));
       const updated = await job.annotations.export();
-      clientID = updated.tracks.find((t) => !previousIDs.has(t.clientID) && t.id === original.id)?.clientID;
+      const added = updated.tracks.filter(t => !previousIDs.has(t.clientID));
+      replacements.forEach((part, i) => {
+        const matches = added.filter(t => t.label_id === part.label_id &&
+          t.shapes[0]?.frame === part.shapes[0].frame &&
+          JSON.stringify(t.shapes[0]?.points) === JSON.stringify(part.shapes[0].points));
+        // Do not guess an ID if the export is ambiguous or incomplete.
+        if (matches.length === 1) Object.assign(segments[i], { clientID: matches[0].clientID, id: matches[0].id });
+      });
+      clientID = segments[0]?.clientID;
       await refresh(jobId);
     } catch (error) { warning = error.message; }
-    return { applied: true, clientID, trackCount: replacements.length, warning: warning ? `Đã áp dụng vào bộ nhớ CVAT, chưa lưu server. Chuyển frame để làm mới box hoặc Undo trong CVAT. Chi tiết: ${warning}` : "" };
+    return { applied: true, clientID, segments, trackCount: replacements.length, warning: warning ? `Đã áp dụng vào bộ nhớ CVAT, chưa lưu server. Chuyển frame để làm mới box hoặc Undo trong CVAT. Chi tiết: ${warning}` : "" };
   }
 
   window.addEventListener("message", async (event) => {

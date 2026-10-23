@@ -24,6 +24,12 @@
     return result;
   }
 
+  // Frame ownership intervals, including hidden gaps at the end of the preceding segment.
+  function ranges(shapes, boundaries, start, stop) {
+    const starts = [Math.max(start, shapes[0].frame), ...boundaries.map(cut => cut.reappearFrame)];
+    return starts.map((startFrame, i) => ({ startFrame, endFrame: (starts[i + 1] ?? stop + 1) - 1 }));
+  }
+
   function split(track, gap = 0, start = track.shapes[0]?.frame, stop = Infinity) {
     const boundaries = cuts(track.shapes, gap, start, stop);
     const indexes = new Map(track.shapes.map((shape, i) => [shape.frame, i]));
@@ -48,5 +54,5 @@
     });
     return { tracks, cuts: boundaries };
   }
-  globalThis.CvatTrackSplit = { cuts, split };
+  globalThis.CvatTrackSplit = { cuts, split, ranges };
 })();

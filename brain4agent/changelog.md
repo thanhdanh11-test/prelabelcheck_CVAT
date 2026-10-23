@@ -2,6 +2,14 @@
 
 Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên bản của dự án.
 
+## [v1.13.4] - 2026-10-23: Clarify split origin and frame intervals
+- Preview labels source item/server ID, segment bounds and hidden gaps; mark the first frame of each new segment.
+- Apply returns uniquely matched destination client/server IDs and shows a historical sidebar receipt; unknown mappings remain explicit, no automatic retry.
+- No split geometry, annotation attributes or storage changes. Receipt cleared on job change/reload; not synchronized with native Undo/Redo/Save.
+- Add segment buttons in sidebar/expanded view; receipt navigation verifies live client IDs and reuses draft-preserving item switching.
+- Frame toolbar shows yellow source label and parent shortcut for known children; job-local RAM links survive subsequent Apply/client-ID replacements, clear on reload/job change.
+- Validation: 124/124 tests, zero skips; ID mapping mutation fails two tests. Local browser UI checked using synthetic draft/receipt; live Apply receipt on company CVAT unverified.
+
 ## [v1.13.3] - 2026-10-23: Free expanded-view navigation
 - Remove box-relative pan clamp and 3x zoom-out cap in Top/Side/Front; keep pointer-anchored wheel zoom, adaptive cloud crop and double-click reset.
 - Normalize wheel delta modes; reject non-finite viewport values; preserve annotation geometry.

@@ -81,10 +81,10 @@ test('reject malformed key ordering or frame thresholds',()=>{
 
 function previewUI() {
   const source=fs.readFileSync('cvat-resize-extension/content.js','utf8');
-  const controls={'.split-gap':{value:'6'},'.split-outside':{checked:true},'.split-summary':{},'.apply':{}};
+  const controls={'.split-gap':{value:'6'},'.split-outside':{checked:true},'.split-summary':{},'.split-receipt':{},'.apply':{}};
   const ui=vm.createContext({controls,CvatTrackSplit:ctx.CvatTrackSplit,shapes:[key(0),key(10,true),key(16)]});
   vm.runInContext(`const $=s=>controls[s],job={start_frame:0,stop_frame:40};
-    let plan={shapes,stale:false},saving=false;`+
+    let plan={track:{id:49,uiId:7},shapes,stale:false},saving=false;`+
     source.slice(source.indexOf('  function readSplitGap('),source.indexOf('  const confirmDrop')),ui);
   return {ui,controls,update:()=>vm.runInContext('updateSplitPreview()',ui)};
 }
@@ -104,4 +104,33 @@ test('invalid split setting blocks Apply; disabling split or fixing it restores 
   controls['.split-outside'].checked=true; controls['.split-gap'].value='6'; update();
   assert.equal(controls['.apply'].disabled,false);
   vm.runInContext('plan.stale=true',ui); update(); assert.equal(controls['.apply'].disabled,true);
+});
+
+test('split labels explain source, intervals, hidden gap and new-item boundary',()=>{
+  const {ui,controls,update}=previewUI();update();
+  const text=controls['.split-summary'].textContent;
+  assert.match(text,/item #7 · ID server 49/);
+  assert.match(text,/Đoạn 1.*frame 0–15 · ẩn 10–15/);
+  assert.match(text,/Đoạn 2 \(item mới\): frame 16–40/);
+  assert.match(vm.runInContext('splitFrameLabel(16)',ui),/BẮT ĐẦU ITEM MỚI.*Đoạn 2.*#7/);
+  assert.doesNotMatch(vm.runInContext('splitFrameLabel(17)',ui),/BẮT ĐẦU/);
+  controls['.split-outside'].checked=false;update();
+  assert.equal(vm.runInContext('splitFrameLabel(16)',ui),'');
+});
+test('receipt preserves source and distinguishes client IDs, server IDs and unresolved mapping',()=>{
+  const {ui,controls}=previewUI();
+  vm.runInContext(`showSplitReceipt({uiId:7,id:49},[
+    {startFrame:0,endFrame:15,clientID:9,id:49},
+    {startFrame:16,endFrame:40,clientID:10},
+    {startFrame:41,endFrame:50}
+  ])`,ui);
+  assert.equal(controls['.split-receipt'].hidden,false);
+  const text=controls['.split-receipt'].textContent;
+  assert.match(text,/từ item #7 · ID server 49/);
+  assert.match(text,/frame 0–15 → item #9 · ID server 49/);
+  assert.match(text,/frame 16–40 → item #10 · chưa có ID server/);
+  assert.match(text,/chưa xác định item mới/);
+  assert.match(text,/không cập nhật theo Undo\/Redo\/Save/);
+  vm.runInContext('showSplitReceipt({},[])',ui);
+  assert.equal(controls['.split-receipt'].hidden,true);
 });

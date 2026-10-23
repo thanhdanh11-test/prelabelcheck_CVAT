@@ -1,16 +1,16 @@
 {
-  "current_version": "1.13.3",
+  "current_version": "1.13.4",
   "brain_template_version": "1.7.1",
-  "system_status": "verified_local",
+  "system_status": "unit_verified_live_apply_pending",
   "last_verification": {
-    "timestamp": "2026-10-22T17:56:53Z",
-    "tests": 114,
-    "passed": 114,
+    "timestamp": "2026-10-23T03:19:26Z",
+    "tests": 124,
+    "passed": 124,
     "failed": 0,
     "skipped": 0,
     "command": "node --test tests/*.test.cjs",
     "npm_audit": "ENOLOCK: no npm package/lockfile",
-    "browser": "Ego local job 97: DOM-dispatched pan at 1x, zoom 42.521x, crop 300820 points, reset and unchanged draft; no Apply/Save"
+    "browser": "Ego local job97 synthetic draft: sidebar ->16, expanded 16->0->16, shapes unchanged; receipt rendering simulated; live post-Apply item navigation pending"
   },
   "active_plans_completed": 0,
   "engine_sha": "0c1ac09f2181206e841c2dd5bfc23c78a13cabfd",

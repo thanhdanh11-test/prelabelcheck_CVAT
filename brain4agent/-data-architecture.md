@@ -22,3 +22,8 @@ Tài liệu thiết kế về cấu trúc dữ liệu, cơ chế lưu trữ bề
 
 ## Hợp nhất v1.13.2
 `drawView(..., win, ..., proposed, f)` nhận cửa sổ zoom/pan và frame để vẽ quỹ đạo Top từ bản nháp. UI ưu tiên server ID nhưng selection/bridge tiếp tục theo clientID; Apply vẫn dùng native commit thay track. CLI từ upstream chỉ chọn bằng `--track` (server ID).
+
+## Tách item v1.13.4
+Bridge Apply thêm `segments[{startFrame,endFrame,clientID?,id?}]` từ export sau commit; chỉ nhận match duy nhất, không đoán ID. Receipt nguồn→đích chỉ nằm trong DOM/tab, bị thay bởi Apply tiếp theo và xóa khi đổi job/reload. Không thêm metadata vào annotation/storage; không phản ánh Undo/Redo/Save sau thời điểm tạo receipt.
+
+`itemOrigins` (RAM theo job) ánh xạ clientID item con → nhãn nguồn lịch sử và đoạn đầu hiện tại. Cập nhật khi Apply đổi clientID; dùng cho nhãn vàng/nút về gốc trên fbar. Xóa khi đổi job/reload; không suy đoán lineage cho item cũ thiếu dữ liệu.

@@ -415,7 +415,16 @@
   .chip.on { border-color: var(--primary); }
   .chip b { font-weight: 600; }
   .split-summary { margin-top: 6px; color: var(--muted); font-size: 12px; }
-  .split-summary[hidden] { display: none; }
+  .split-summary[hidden], .split-receipt[hidden] { display: none; }
+  .split-summary, .split-receipt { white-space: pre-line; line-height: 1.6; }
+  .split-receipt { margin-top: 8px; padding: 8px; border: 1px solid var(--hairline); font-size: 12px; }
+  .item-origin { color: #f6d365; display: inline-flex; gap: 8px; align-items: center; font-size: 12px; }
+  .item-origin[hidden] { display: none; }
+  .split-nav { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+  .split-nav[hidden] { display: none; }
+  .split-nav .nav-label { flex-basis: 100%; color: var(--muted); font-size: 11px; }
+  .cell.split-start { border-top: 3px solid #d8a44c; }
+  .tag.split-origin { color: #d8a44c; }
   details.advanced { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--hairline); }
   details.advanced summary { cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; }
   .cache-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
@@ -581,6 +590,8 @@
   </div>
   <div class="status" role="status" aria-live="polite"></div>
   <div class="split-summary" role="status" aria-live="polite" hidden></div>
+  <div class="split-receipt" role="status" aria-live="polite" hidden></div>
+  <div class="split-nav split-side-nav" hidden></div>
   <details class="advanced">
     <summary>Nâng cao</summary>
     <div class="option-row"><label><input type="checkbox" class="auto" checked>Tự động outside ≤</label>
@@ -632,6 +643,7 @@
  <div class="editor" hidden tabindex="-1">
   <div class="fbar">
     <span class="badge fcount"></span>
+    <span class="item-origin" hidden><span class="item-origin-label"></span> <button class="btn sm" data-split-kind="origin" data-split-index="0">Đến item gốc</button></span>
     <span class="sp"></span>
     <label><input type="checkbox" class="only-key">Keyframe</label>
     <label><input type="checkbox" class="only-hid">Frame ẩn</label>
@@ -656,6 +668,7 @@
       <div class="view"><canvas data-v="1" width="0" height="0"></canvas><div class="cap">Side · x–z</div><button class="btn sm ico view-max" data-slot="1" title="Phóng to riêng view này"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>
       <div class="view"><canvas data-v="2" width="0" height="0"></canvas><div class="cap">Front · y–z</div><button class="btn sm ico view-max" data-slot="2" title="Phóng to riêng view này"><svg viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button></div>
     </div>
+    <div class="split-nav split-zoom-nav" hidden></div>
     <div class="zoom-status" role="status" aria-live="polite"></div>
   </div>
  </div>
@@ -752,6 +765,7 @@
     planning++;
     $(".apply").disabled = true;
     $(".split-summary").hidden = true;
+    renderSplitNavigation();
   }
 
   function readSplitGap() {
@@ -759,6 +773,113 @@
     const gap = Number($(".split-gap").value);
     if (!Number.isSafeInteger(gap) || gap < 1) throw new Error("Nhập số frame tách object là số nguyên ≥ 1.");
     return gap;
+  }
+
+  let splitReceipt = null, splitNavigating = false;
+  const itemOrigins = new Map(); // session only; CVAT client IDs are not stable across page reloads
+
+  function recordSplitOrigins(source, segments) {
+    const oldID = source.clientID ?? source.uiId, first = segments?.[0];
+    if (oldID == null || !first) return;
+    const inherited = itemOrigins.get(oldID);
+    itemOrigins.delete(oldID);
+    // Applying even without splitting replaces client IDs. Keep existing children's parent link current.
+    for (const [id, origin] of itemOrigins) if (origin.target.clientID === oldID) {
+      itemOrigins.set(id, { ...origin, target: { ...first } });
+    }
+    if (inherited && first.clientID != null) itemOrigins.set(first.clientID, inherited);
+    for (const part of segments.slice(1)) if (part.clientID != null) {
+      itemOrigins.set(part.clientID, { source: { ...source }, target: { ...first } });
+    }
+  }
+
+  function renderItemOrigin() {
+    const el = $(".item-origin");
+    if (!el) return;
+    const origin = itemOrigins.get(plan?.track.clientID);
+    el.hidden = !origin;
+    $(".item-origin-label").textContent = origin ? `Tạo từ ${splitSourceLabel(origin.source)}` : "";
+    const button = el.querySelector("button");
+    button.disabled = origin?.target.clientID == null;
+    button.title = origin?.target.clientID == null ? "Chưa xác định được item gốc hiện tại" :
+      `Đến đoạn gốc hiện tại: item #${origin.target.clientID}, frame ${origin.target.startFrame}`;
+  }
+
+  function renderSplitNavigation() {
+    renderItemOrigin();
+    let html = "";
+    const buttons = (parts, kind) => parts.map((part, i) =>
+      `<button class="btn sm" data-split-kind="${kind}" data-split-index="${i}" ${kind === "receipt" && part.clientID == null ? "disabled" : ""}>${i ? `Đoạn mới ${i + 1}` : "Đoạn gốc"} · ${part.startFrame}–${part.endFrame}</button>`).join("");
+    if (plan?.cuts?.length) html += '<span class="nav-label">Chuyển đoạn trong bản nháp</span>' +
+      buttons(CvatTrackSplit.ranges(plan.shapes, plan.cuts, job.start_frame, job.stop_frame), "preview");
+    if (splitReceipt?.length > 1) html += '<span class="nav-label">Chọn item từ lần Áp dụng gần nhất</span>' + buttons(splitReceipt, "receipt");
+    for (const selector of [".split-side-nav", ".split-zoom-nav"]) {
+      const el = $(selector);
+      if (el) { if (el.innerHTML !== html) el.innerHTML = html; el.hidden = !html; }
+    }
+  }
+
+  async function navigateSplit(kind, index) {
+    if (!Number.isSafeInteger(index) || index < 0 || splitNavigating) return;
+    if (saving || fitting || previewRun !== null) return setStatus("Chờ tác vụ hiện tại xong rồi chuyển đoạn.", true);
+    let part;
+    const expanded = zoomFrame !== null;
+    if (kind === "preview") {
+      if (!plan?.cuts?.length) return;
+      part = CvatTrackSplit.ranges(plan.shapes, plan.cuts, job.start_frame, job.stop_frame)[index];
+    } else if (kind === "receipt" || kind === "origin") {
+      const ownerJob = jobId, ownerPlan = plan;
+      const currentLink = () => kind === "origin" ? itemOrigins.get(ownerPlan?.track.clientID) : splitReceipt;
+      const receipt = currentLink();
+      part = kind === "origin" ? receipt?.target : receipt?.[index];
+      if (part?.clientID == null) return;
+      splitNavigating = true;
+      try {
+        const fresh = await bridgeRequest("snapshot", { jobId: ownerJob });
+        if (jobId !== ownerJob || currentLink() !== receipt || plan !== ownerPlan || saving || fitting || previewRun !== null) return;
+        const target = fresh.annotations.tracks.find(t => t.clientID === part.clientID);
+        const local = annotations.tracks.find(t => t.clientID === part.clientID);
+        if (!target || !local || (part.id != null && target.id !== part.id)) {
+          return setStatus("Item của đoạn này không còn khớp sau Undo/Redo hoặc tải lại. Bấm Tải lại để kiểm tra danh sách hiện tại.", true);
+        }
+        if (JSON.stringify(target.shapes) !== JSON.stringify(local.shapes) || target.label_id !== local.label_id) {
+          return setStatus("Dữ liệu item đã đổi trong CVAT. Bấm Tải lại trước khi chuyển theo bảng kết quả.", true);
+        }
+        // Keep the existing switch path: it caches drafts and Undo for both items.
+        if (plan?.track.clientID !== part.clientID) await switchTrack(local.uiId);
+        if (jobId !== ownerJob || currentLink() !== receipt || plan?.track.clientID !== part.clientID) return;
+      } finally { splitNavigating = false; }
+    } else return;
+    if (!part || !plan || !cells.has(part.startFrame)) return;
+    for (const selector of [".only-key", ".only-hid", ".only-bad"]) $(selector).checked = false;
+    applyFilters();
+    setActive(part.startFrame);
+    if (expanded) openZoom(part.startFrame);
+    else reveal(part.startFrame);
+    scheduleDraw();
+  }
+
+  function splitSourceLabel(track) {
+    return `item #${track?.uiId ?? track?.clientID ?? "?"} · ${track?.id == null ? "chưa có ID server" : `ID server ${track.id}`}`;
+  }
+
+  function splitFrameLabel(f) {
+    if (!plan?.cuts?.length) return "";
+    const index = plan.cuts.filter(cut => cut.reappearFrame <= f).length;
+    const start = index > 0 && plan.cuts[index - 1].reappearFrame === f;
+    return `${start ? "BẮT ĐẦU ITEM MỚI · " : ""}Đoạn ${index + 1} từ ${splitSourceLabel(plan.track)}`;
+  }
+
+  function showSplitReceipt(source, segments) {
+    recordSplitOrigins(source, segments);
+    splitReceipt = segments?.length > 1 ? segments.map(part => ({ ...part })) : null;
+    const el = $(".split-receipt");
+    el.hidden = !segments || segments.length < 2;
+    el.textContent = el.hidden ? "" : `Lần Áp dụng gần nhất — từ ${splitSourceLabel(source)}\n` +
+      segments.map((part, i) => `Đoạn ${i + 1}: frame ${part.startFrame}–${part.endFrame} → ` +
+        (part.clientID == null ? "chưa xác định item mới" : `item #${part.clientID} · ${part.id == null ? "chưa có ID server" : `ID server ${part.id}`}`)).join("\n") +
+      "\nID tại thời điểm Áp dụng; chưa Save. Bảng lịch sử không cập nhật theo Undo/Redo/Save; mất khi tải lại trang.";
+    renderSplitNavigation();
   }
 
   function updateSplitPreview() {
@@ -770,14 +891,17 @@
       plan.cuts = CvatTrackSplit.cuts(plan.shapes, gap, job.start_frame, job.stop_frame);
       summary.textContent = !gap ? "Không tách object theo outside." : !plan.cuts.length ?
         "Giữ 1 object." :
-        `Sẽ tạo ${plan.cuts.length + 1} object riêng · ` + plan.cuts.map((cut, i) =>
-          `Object ${i + 2}: frame ${cut.reappearFrame}`).join(" ");
+        `Sẽ tạo ${plan.cuts.length + 1} object riêng từ ${splitSourceLabel(plan.track)}\n` +
+        CvatTrackSplit.ranges(plan.shapes, plan.cuts, job.start_frame, job.stop_frame).map((part, i) =>
+          `Đoạn ${i + 1}${i ? " (item mới)" : plan.track?.id == null ? " (đoạn đầu)" : " (giữ ID server gốc)"}: frame ${part.startFrame}–${part.endFrame}` +
+          (plan.cuts[i] ? ` · ẩn ${plan.cuts[i].outsideFrame}–${plan.cuts[i].reappearFrame - 1}` : "")).join("\n");
       $(".apply").disabled = plan.stale || saving;
     } catch (error) {
       plan.cuts = [];
       summary.textContent = error.message;
       $(".apply").disabled = true;
     }
+    renderSplitNavigation();
   }
 
   const confirmDrop = () => !dirty() || confirm("Bỏ các chỉnh tay trong xem trước?");
@@ -983,6 +1107,7 @@
       });
       applied = result.applied;
       if (applyingJob !== jobId || applyingPlan !== plan) return;
+      showSplitReceipt(applyingPlan.track, result.segments);
       closePlan();
       await loadData(result.clientID);
       setStatus(result.warning || `Đã áp dụng ${result.trackCount || 1} object vào CVAT, chưa lưu server.`, !!result.warning);
@@ -2161,7 +2286,7 @@
     const n = previewPointCount(f, st.points);
     return `<span class="f">${f}</span>${classHtml(f)}
       <span class="n" title="Số điểm point cloud nằm trong box hiện tại">${n === null ? (err ? "—" : "…") : n.toLocaleString("vi-VN")} điểm trong box</span>
-      ${plan.cuts?.length ? `<span class="tag" title="Đoạn dự kiến sau khi tách, không phải ID CVAT">Object ${1 + plan.cuts.filter(cut => cut.reappearFrame <= f).length}</span>` : ""}
+      ${plan.cuts?.length ? `<span class="tag split-origin" title="Đoạn dự kiến, chưa tạo item; khoảng frame bao gồm cả frame ẩn">${esc(splitFrameLabel(f))}</span>` : ""}
       ${err ? '<span class="tag bad" title="Không tải được point cloud">!</span>' : ""}${
       plan.flagged.has(f) ? '<span class="tag bad" title="Tự khớp không chắc chắn ở frame này: kiểm tra lại">Khớp kém</span>' : ""}
       <span class="acts"><button class="btn sm ico${st.outside ? " on" : ""}" data-act="out" data-f="${f}"
@@ -2185,6 +2310,7 @@
     c.cell.classList.toggle("hidden-frame", st.outside);
     setHead(c.head, headHtml(f, st, `${fitControlsHtml(f, st)}<button class="btn sm ico" data-act="zoom" data-f="${f}" title="Phóng to frame này">${ICON.zoom}</button>`) + fitNoteHtml(f));
     c.cell.classList.toggle("active", f === activeFrame);
+    c.cell.classList.toggle("split-start", !!plan.cuts?.some(cut => cut.reappearFrame === f));
     drawFrame(c.canvases, f, st);
   }
 
@@ -3013,6 +3139,11 @@
   $(".bottom").addEventListener("change", markStale);
   $(".auto").addEventListener("change", markStale);
   $(".thr").addEventListener("input", markStale);
+  root.addEventListener("click", e => {
+    const button = e.target.closest("button[data-split-kind]");
+    if (!button || button.disabled) return;
+    void navigateSplit(button.dataset.splitKind, Number(button.dataset.splitIndex)).catch(error => setStatus(error.message, true));
+  });
   $(".split-outside").addEventListener("change", modelChanged);
   $(".split-gap").addEventListener("input", modelChanged);
   if ($(".trail")) $(".trail").addEventListener("change", scheduleDraw);
@@ -3027,6 +3158,10 @@
       dataGeneration++;
       switchGeneration++;
       jobId = id;
+      splitReceipt = null;
+      itemOrigins.clear();
+      $(".split-receipt").hidden = true;
+      $(".split-receipt").textContent = "";
       closePlan();
       job = annotations = null;
       cacheJob = cacheSetup = null;

@@ -50,3 +50,11 @@ Người dùng xác nhận gộp và commit. Mốc local 121b01b; gộp origin/m
 
 ## 2026-10-22T17:56:53Z — v1.13.3
 Yêu cầu pan toàn map: gỡ clamp ±base*|1−k| và trần k=3. Giữ crop thích nghi, zoom theo con trỏ, reset double-click. 114/114 tests; hồi quy pan đỏ trước sửa. Ego local job 97: pan ở k=1, zoom42,521×, crop300.820 điểm; shapes không đổi, reset đạt. Không Apply/Save, chưa commit/push thay đổi này.
+
+## 2026-10-23T02:56:00Z — v1.13.4 nguồn gốc đoạn tách
+Đã thêm nhãn item gốc/đoạn/frame ẩn, dấu bắt đầu item mới và receipt Apply có ID thực nếu match duy nhất. 118/118 tests; mutation ID mapping làm đỏ 2 tests. Ego local job97 kiểm DOM bằng nháp/receipt tổng hợp, không Apply/Save. Chưa commit/push; chưa live Apply receipt trên server công ty.
+
+2026-10-23T03:11:59Z — Bổ sung nút Đoạn gốc/Đoạn mới ở sidebar và view mở rộng. Preview nhảy đầu đoạn; sau Apply kiểm clientID bằng snapshot mới, dùng switchTrack giữ nháp/Undo. Không khôi phục track gốc chưa tách. 121/121 tests; chưa commit/push.
+Ego local: nút sidebar tới16, nút mở rộng16→0→16, shapes JSON không đổi. Không Apply/Save.
+
+2026-10-23T03:19:26Z — Thêm chữ vàng Tạo từ item #… và Đến item gốc trên fbar đúng ảnh người dùng. Map nguồn trong RAM giữ liên kết qua Apply đổi clientID; clear theo job/reload. 124/124 tests; chưa commit/push hoặc live toolbar sau Apply.
