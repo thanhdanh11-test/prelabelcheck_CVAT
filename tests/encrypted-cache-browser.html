@@ -1,0 +1,47 @@
+<!doctype html><meta charset="utf-8"><title>Encrypted cache tests</title>
+<h1>Encrypted cache — real browser checks</h1><pre id="results">Running…</pre>
+<script src="../cvat-resize-extension/cache-vault.js"></script>
+<script src="../cvat-resize-extension/cloud-cache.js"></script>
+<script>
+(async()=>{
+ const results=[],prefix='vault-test-'+crypto.randomUUID()+':',name=prefix+'cloud',legacy=prefix+'legacy';
+ const storage={getItem:k=>localStorage.getItem(prefix+k),setItem:(k,v)=>localStorage.setItem(prefix+k,v),removeItem:k=>localStorage.removeItem(prefix+k),
+   key:i=>Object.keys(localStorage).filter(k=>k.startsWith(prefix))[i]?.slice(prefix.length),get length(){return Object.keys(localStorage).filter(k=>k.startsWith(prefix)).length;}};
+ const vault=()=>CvatCacheVault.create({storage}),raw=CvatCloudCache.openStore({name}),points=new Float32Array([123.5,2,9]);
+ const assert=(v,m)=>{if(!v)throw Error(m);};
+ const test=async(name,fn)=>{try{await fn();results.push({name,passed:true});}catch(e){results.push({name,passed:false,error:e.message});}document.querySelector('#results').textContent=JSON.stringify(results,null,2);};
+ let v=vault(),adapter=v.wrapStore(raw);
+ await test('encrypted IDB roundtrip and reopened vault',async()=>{
+  await v.unlock('browser test password');await adapter.put('job:0','job',points);
+  const persisted=await raw.get('job:0');assert(persisted instanceof Uint8Array,'ciphertext must be bytes');
+  assert(!new TextDecoder().decode(persisted).includes('123.5'),'plaintext coordinate leaked');
+  v.lock();assert(await adapter.get('job:0')===null,'locked read');v=vault();adapter=v.wrapStore(raw);
+  await v.unlock('browser test password');assert((await adapter.get('job:0'))[0]===123.5,'reopen value');
+ });
+ await test('ciphertext tamper is rejected',async()=>{
+  const bytes=await raw.get('job:0'),envelope=JSON.parse(new TextDecoder().decode(bytes));envelope.data=(envelope.data[0]==='A'?'B':'A')+envelope.data.slice(1);
+  await raw.put('job:0','job',new TextEncoder().encode(JSON.stringify(envelope)));
+  let rejected=false;try{await adapter.get('job:0');}catch{rejected=true;}assert(rejected,'tamper accepted');
+ });
+ await test('legacy cloud upgrade clears bytes and fences version1 writers',async()=>{
+  const old=CvatCloudCache.openStore({name:legacy});await old.put('x','job',points);
+  await CvatCacheVault.retireLegacy({name:legacy});
+  let rejected=false;try{await old.put('x','job',points);}catch{rejected=true;}assert(rejected,'old writer accepted');
+  const db=await new Promise((resolve,reject)=>{const r=indexedDB.open(legacy,2);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+  const count=await new Promise((resolve,reject)=>{const r=db.transaction('frames').objectStore('frames').count();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+  db.close();assert(count===0,'legacy bytes remain');
+ });
+ await test('migration preserves source JSON and removes plaintext',async()=>{
+  storage.setItem('cvat-track-origins:v1:97','{"links":["private geometry"]}');await v.migrateOrigins();
+  assert(storage.getItem('cvat-track-origins:v1:97')===null,'legacy source remains');
+  assert((await v.readOrigins('cvat-track-origins:v1:97')).includes('private geometry'),'source lost');
+ });
+ await test('clear leaves no IDB cloud records and preserves encrypted source',async()=>{
+  await adapter.clear();assert(await raw.count('job')===0,'cloud remains');assert(await v.readOrigins('cvat-track-origins:v1:97'),'source lost');
+ });
+ await raw.clear();await v.reset();
+ window.testResults=results;document.title=results.every(r=>r.passed)?'PASS encrypted cache':'FAIL encrypted cache';
+ // Only temporary fixture databases are deleted. Existing store closes on versionchange.
+ for(const db of [name,legacy]){const r=indexedDB.deleteDatabase(db);r.onerror=()=>{};}
+})();
+</script>

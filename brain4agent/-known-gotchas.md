@@ -25,3 +25,13 @@ Tổng hợp các lỗi khó, các lưu ý dị biệt hoặc cách workaround �
 
 ## Nguồn item mất khi reload (v1.13.6)
 Bản ≤1.13.5 chỉ giữ itemOrigins bằng clientID trong RAM. Đã lưu theo server/job bằng ID server hoặc hình học khớp duy nhất khi chưa Save; không đoán từ clientID tái sử dụng. Quan hệ đã mất từ bản cũ không tự phục hồi; sửa hình học trước khi thu ID server có thể làm match pending thất bại an toàn. Save rồi tải lại danh sách tool để thu ID. Xóa dữ liệu trang/đổi máy không giữ nguồn.
+
+## Cache mã hóa v1.14.0
+Không await crypto trong IDB transaction. Lock loại crypto trả muộn; getter unlocked không tăng generation khi derive key. Reset giữ Web Lock đến hết clear; nguồn khóa toàn bộ read-merge-write. Merge từ RAM giữ link cũ không liên quan. CSS display:grid cần override [hidden]. Legacy upgrade2 chặn writer1, localStorage tab cũ vẫn phải reload. Không hứa xóa vật lý/chống máy bị chiếm quyền.
+
+## Audit v1.14.0 chưa phát hành
+MAIN world đọc được input mật khẩu trong open Shadow DOM dù extension JS ở isolated world; sau khóa vẫn giải mã nếu đã chụp pass. Tiền đề là code độc trên trang, không khẳng định CVAT có XSS. Khóa chỉ tab hiện tại (browser2 tab xác nhận); replay ciphertext cũ vẫn hợp lệ; mật khẩu12 ký tự có thể yếu. Chưa sửa. docs/CACHE-SECURITY-AUDIT.md.
+
+
+### Cache popup hardening 2026-10-23
+Shared DOM is visible across isolated worlds: password belongs in extension popup. reset on an empty vault must rotate shared revocation token before waiting for Web Lock; removing absent header emits no useful cross-tab invalidation. Regression147/147; reset mutation fails. Replay/weak password limits remain.

@@ -3,6 +3,9 @@
 File này chứa danh sách các tính năng, mục tiêu sắp tới và tình trạng công việc hiện tại.
 
 ## Mục tiêu hiện tại (Active)
+- [x] Sửa local A1/A2: popup riêng và khóa đa tab, reset hủy proof cũ; 147/147 Node.
+- [ ] Trước phát hành v1.14.0: kiểm popup Chrome cài thật + công ty; replay và mật khẩu yếu còn là giới hạn.
+- [ ] Kế hoạch 04: QA cache mã hóa trên server công ty (Apply/Save/reload/nguồn item).
 - [ ] Đo hiệu quả kiểm relabel trên nhiều item thực tế.
 - [ ] Đóng kế hoạch 02: nhảy tới giữa job lớn trong Chrome, xác nhận tải nền bắt đầu quanh frame đó.
 - [ ] Đóng kế hoạch 01: chạy Truy vết ngược trong Chrome với CVAT thật (2 gate ⬜ trong `planning/01_2026-10-22_track-path-trace/specs/TESTING-ACCEPTANCE.md`).
@@ -20,6 +23,7 @@ File này chứa danh sách các tính năng, mục tiêu sắp tới và tình 
 - [ ] Đường đi: vẽ quỹ đạo lên view 3D/Top, bấm dòng bảng để nhảy tới frame, xuất cho nhiều item cùng lúc, cờ bước nhảy bất thường.
 
 ## Đã hoàn thành (Done)
+- [x] **v1.14.0 local (2026-10-23T06:32:05Z):** vault/migration/UI; 139 Node tests, 5 browser checks; chưa nghiệm thu công ty.
 - [x] **v1.13.6 (2026-10-23T03:50:59Z):** lưu nguồn item qua reload theo server/job, ID server hoặc fingerprint duy nhất; 128/128 tests; QA Save/reload công ty còn mở.
 - [x] **v1.13.5 (2026-10-23T03:36:36Z):** đồng bộ README, hướng dẫn nút ?, workflow với điều hướng nguồn item, phím tắt, pan/zoom và giới hạn tilt; 124/124 tests, chưa commit/push.
 - [x] **v1.13.4 (2026-10-23T02:56:00Z):** nhãn nguồn/đoạn tách, nút qua lại đoạn gốc/mới, nhãn vàng/nút về gốc trên fbar và bảng ID sau Apply; 124/124 tests. Live receipt trên server công ty chưa đo.

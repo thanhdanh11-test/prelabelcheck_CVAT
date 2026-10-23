@@ -1,0 +1,892 @@
+TAP version 13
+# Subtest: channel only accepts own extension popup, never page/other extension/other extension page
+ok 1 - channel only accepts own extension popup, never page/other extension/other extension page
+  ---
+  duration_ms: 1.090292
+  type: 'test'
+  ...
+# Subtest: unlock challenge is one-use, expires and cannot survive job/header/lock changes
+ok 2 - unlock challenge is one-use, expires and cannot survive job/header/lock changes
+  ---
+  duration_ms: 0.543916
+  type: 'test'
+  ...
+# Subtest: global lock is allowed during work and revokes pending popup challenge
+ok 3 - global lock is allowed during work and revokes pending popup challenge
+  ---
+  duration_ms: 1.523292
+  type: 'test'
+  ...
+# Subtest: production manifest isolates popup; content has no password inputs or window unlock channel
+ok 4 - production manifest isolates popup; content has no password inputs or window unlock channel
+  ---
+  duration_ms: 8.180625
+  type: 'test'
+  ...
+# Subtest: encrypted point cloud survives reopen; stored bytes contain no XYZ plaintext and reload starts locked
+ok 5 - encrypted point cloud survives reopen; stored bytes contain no XYZ plaintext and reload starts locked
+  ---
+  duration_ms: 244.802167
+  type: 'test'
+  ...
+# Subtest: GCM rejects tampering, wrong record context and cross-origin use; IVs differ
+ok 6 - GCM rejects tampering, wrong record context and cross-origin use; IVs differ
+  ---
+  duration_ms: 116.747292
+  type: 'test'
+  ...
+# Subtest: locking during encryption and changing header reject late results
+ok 7 - locking during encryption and changing header reject late results
+  ---
+  duration_ms: 127.8625
+  type: 'test'
+  ...
+# Subtest: concurrent initialization serializes, does not overwrite header with another password
+ok 8 - concurrent initialization serializes, does not overwrite header with another password
+  ---
+  duration_ms: 167.026791
+  type: 'test'
+  ...
+# Subtest: origin migration preserves exact JSON across all jobs and removes only verified plaintext
+ok 9 - origin migration preserves exact JSON across all jobs and removes only verified plaintext
+  ---
+  duration_ms: 56.2255
+  type: 'test'
+  ...
+# Subtest: migration quota and conflicting old tab preserve original records; reset is scoped
+ok 10 - migration quota and conflicting old tab preserve original records; reset is scoped
+  ---
+  duration_ms: 57.926209
+  type: 'test'
+  ...
+# Subtest: clear while encryption is pending cannot repopulate cloud storage
+ok 11 - clear while encryption is pending cannot repopulate cloud storage
+  ---
+  duration_ms: 81.4575
+  type: 'test'
+  ...
+# Subtest: unsupported crypto/locks and malformed KDF parameters fail without plaintext fallback
+ok 12 - unsupported crypto/locks and malformed KDF parameters fail without plaintext fallback
+  ---
+  duration_ms: 0.45775
+  type: 'test'
+  ...
+# Subtest: serialized origin mutations preserve both writers and reset finishes clearing before new unlock
+ok 13 - serialized origin mutations preserve both writers and reset finishes clearing before new unlock
+  ---
+  duration_ms: 176.621791
+  type: 'test'
+  ...
+# Subtest: reading locked UI status while deriving a key does not cancel unlock
+ok 14 - reading locked UI status while deriving a key does not cancel unlock
+  ---
+  duration_ms: 65.517833
+  type: 'test'
+  ...
+# Subtest: popup prepares a proof without touching page storage; receiver imports a nonextractable usable key
+ok 15 - popup prepares a proof without touching page storage; receiver imports a nonextractable usable key
+  ---
+  duration_ms: 121.122416
+  type: 'test'
+  ...
+# Subtest: popup proof is bound to origin/header and a global lock invalidates all tabs and pending imports
+ok 16 - popup proof is bound to origin/header and a global lock invalidates all tabs and pending imports
+  ---
+  duration_ms: 221.082333
+  type: 'test'
+  ...
+# Subtest: lock during popup proof import cannot leave a usable key or initialize a new header
+ok 17 - lock during popup proof import cannot leave a usable key or initialize a new header
+  ---
+  duration_ms: 55.834667
+  type: 'test'
+  ...
+# Subtest: reset of an empty vault revokes a pending creation proof across tabs
+ok 18 - reset of an empty vault revokes a pending creation proof across tabs
+  ---
+  duration_ms: 57.10125
+  type: 'test'
+  ...
+# Subtest: items share requests by frame; persistent cache survives a new controller
+ok 19 - items share requests by frame; persistent cache survives a new controller
+  ---
+  duration_ms: 2.008292
+  type: 'test'
+  ...
+# Subtest: foreground joins background download and Stop does not cancel its reader
+ok 20 - foreground joins background download and Stop does not cancel its reader
+  ---
+  duration_ms: 7.125833
+  type: 'test'
+  ...
+# Subtest: prefetch stops on storage failure but foreground remains usable
+ok 21 - prefetch stops on storage failure but foreground remains usable
+  ---
+  duration_ms: 0.316
+  type: 'test'
+  ...
+# Subtest: job change cancels late responses without polluting the new cache
+ok 22 - job change cancels late responses without polluting the new cache
+  ---
+  duration_ms: 2.789542
+  type: 'test'
+  ...
+# Subtest: prefetch completes all frames once and resumes without downloads
+ok 23 - prefetch completes all frames once and resumes without downloads
+  ---
+  duration_ms: 19.802416
+  type: 'test'
+  ...
+# Subtest: full cache stops background instead of evicting frames from its own job
+ok 24 - full cache stops background instead of evicting frames from its own job
+  ---
+  duration_ms: 0.505333
+  type: 'test'
+  ...
+# Subtest: clear cancels old downloads and does not let them repopulate storage
+ok 25 - clear cancels old downloads and does not let them repopulate storage
+  ---
+  duration_ms: 2.419834
+  type: 'test'
+  ...
+# Subtest: unverified metadata never reads or writes disk and disables preload
+ok 26 - unverified metadata never reads or writes disk and disables preload
+  ---
+  duration_ms: 0.437
+  type: 'test'
+  ...
+# Subtest: stop aborts background-only fetch; resume can fetch it again
+ok 27 - stop aborts background-only fetch; resume can fetch it again
+  ---
+  duration_ms: 12.816083
+  type: 'test'
+  ...
+# Subtest: foreground downloads can proceed while a background frame is still pending
+ok 28 - foreground downloads can proceed while a background frame is still pending
+  ---
+  duration_ms: 1.803125
+  type: 'test'
+  ...
+# Subtest: background preload starts at the frame being viewed and looks ahead in the direction of travel
+ok 29 - background preload starts at the frame being viewed and looks ahead in the direction of travel
+  ---
+  duration_ms: 22.972333
+  type: 'test'
+  ...
+# Subtest: without any foreground read preload stays sequential from the first frame
+ok 30 - without any foreground read preload stays sequential from the first frame
+  ---
+  duration_ms: 7.011875
+  type: 'test'
+  ...
+# Subtest: preload follows the viewer when they jump while it is running
+ok 31 - preload follows the viewer when they jump while it is running
+  ---
+  duration_ms: 7.864167
+  type: 'test'
+  ...
+# Subtest: configure and clear forget the old viewing position
+ok 32 - configure and clear forget the old viewing position
+  ---
+  duration_ms: 6.312791
+  type: 'test'
+  ...
+# Subtest: arrows move in each tilted cuboid view, preserving rotation, size and neighboring keys
+ok 33 - arrows move in each tilted cuboid view, preserving rotation, size and neighboring keys
+  ---
+  duration_ms: 16.495958
+  type: 'test'
+  ...
+# Subtest: Shift is 1 cm, Alt is 20 cm, PageUp uses world Z and 3D arrows use camera plane
+ok 34 - Shift is 1 cm, Alt is 20 cm, PageUp uses world Z and 3D arrows use camera plane
+  ---
+  duration_ms: 4.324208
+  type: 'test'
+  ...
+# Subtest: held arrow is one Undo; separate presses are distinct; fitting and drag block nudges
+ok 35 - held arrow is one Undo; separate presses are distinct; fitting and drag block nudges
+  ---
+  duration_ms: 0.672916
+  type: 'test'
+  ...
+# Subtest: camera basis stays orthonormal through orbit angles
+ok 36 - camera basis stays orthonormal through orbit angles
+  ---
+  duration_ms: 1.840208
+  type: 'test'
+  ...
+# Subtest: late 3D cloud cannot overwrite a newer frame or reopen a closed preview
+ok 37 - late 3D cloud cannot overwrite a newer frame or reopen a closed preview
+  ---
+  duration_ms: 13.724708
+  type: 'test'
+  ...
+# Subtest: expanded Top/Side/Front zoom in/out keeps the pointed spot, pans freely and widens the needed crop
+ok 38 - expanded Top/Side/Front zoom in/out keeps the pointed spot, pans freely and widens the needed crop
+  ---
+  duration_ms: 1.389375
+  type: 'test'
+  ...
+# Subtest: collapsed frame arrows edit the selected frame and share the existing Undo behavior
+ok 39 - collapsed frame arrows edit the selected frame and share the existing Undo behavior
+  ---
+  duration_ms: 0.624542
+  type: 'test'
+  ...
+# Subtest: comma and period route rotation to selected frame/view, ignore typing and modified keys
+ok 40 - comma and period route rotation to selected frame/view, ignore typing and modified keys
+  ---
+  duration_ms: 0.540375
+  type: 'test'
+  ...
+# Subtest: expanded fit confirmation appears during a proposal and hides after it is cleared
+ok 41 - expanded fit confirmation appears during a proposal and hides after it is cleared
+  ---
+  duration_ms: 0.605666
+  type: 'test'
+  ...
+# Subtest: wheel zoom goes past 3x in every expanded view and keeps the pointer anchored
+ok 42 - wheel zoom goes past 3x in every expanded view and keeps the pointer anchored
+  ---
+  duration_ms: 10.274375
+  type: 'test'
+  ...
+# Subtest: ASCII PCD rejects truncated input instead of adding origin points
+ok 43 - ASCII PCD rejects truncated input instead of adding origin points
+  ---
+  duration_ms: 0.8345
+  type: 'test'
+  ...
+# Subtest: ASCII PCD rejects incomplete rows
+ok 44 - ASCII PCD rejects incomplete rows
+  ---
+  duration_ms: 1.019667
+  type: 'test'
+  ...
+# Subtest: PCD removes nonfinite returns and handles blank lines
+ok 45 - PCD removes nonfinite returns and handles blank lines
+  ---
+  duration_ms: 0.478917
+  type: 'test'
+  ...
+# Subtest: PCD rejects invalid counts before allocation
+ok 46 - PCD rejects invalid counts before allocation
+  ---
+  duration_ms: 0.213417
+  type: 'test'
+  ...
+# Subtest: binary PCD validates body length
+ok 47 - binary PCD validates body length
+  ---
+  duration_ms: 0.168292
+  type: 'test'
+  ...
+# Subtest: rotation interpolation uses shortest turn
+ok 48 - rotation interpolation uses shortest turn
+  ---
+  duration_ms: 0.137792
+  type: 'test'
+  ...
+# Subtest: bottom anchored resize preserves floor
+ok 49 - bottom anchored resize preserves floor
+  ---
+  duration_ms: 0.132792
+  type: 'test'
+  ...
+# Subtest: counts points in a rotated box
+ok 50 - counts points in a rotated box
+  ---
+  duration_ms: 0.140417
+  type: 'test'
+  ...
+# Subtest: new keyframe inherits attribute history without replaying old values
+ok 51 - new keyframe inherits attribute history without replaying old values
+  ---
+  duration_ms: 0.618166
+  type: 'test'
+  ...
+# Subtest: automatic outside inserts keys without resetting mutable attributes
+ok 52 - automatic outside inserts keys without resetting mutable attributes
+  ---
+  duration_ms: 1.402625
+  type: 'test'
+  ...
+# Subtest: late loadData responses cannot replace another job
+ok 53 - late loadData responses cannot replace another job
+  ---
+  duration_ms: 0.521167
+  type: 'test'
+  ...
+# Subtest: undo restores size inputs together with geometry
+ok 54 - undo restores size inputs together with geometry
+  ---
+  duration_ms: 2.763708
+  type: 'test'
+  ...
+# Subtest: auto fit preserves manual reference, anchors and frames outside selected range
+ok 55 - auto fit preserves manual reference, anchors and frames outside selected range
+  ---
+  duration_ms: 2.759041
+  type: 'test'
+  ...
+# Subtest: preview progress button cancels without publishing a partial plan
+ok 56 - preview progress button cancels without publishing a partial plan
+  ---
+  duration_ms: 0.623416
+  type: 'test'
+  ...
+# Subtest: Apply sends an immutable baseline through bridge, then refreshes without server writes/reload
+ok 57 - Apply sends an immutable baseline through bridge, then refreshes without server writes/reload
+  ---
+  duration_ms: 0.6915
+  type: 'test'
+  ...
+# Subtest: frame counts distinguish unavailable cloud, load error and a real zero
+ok 58 - frame counts distinguish unavailable cloud, load error and a real zero
+  ---
+  duration_ms: 13.9765
+  type: 'test'
+  ...
+# Subtest: count follows current geometry and Undo, reusing unchanged geometry counts
+ok 59 - count follows current geometry and Undo, reusing unchanged geometry counts
+  ---
+  duration_ms: 1.552167
+  type: 'test'
+  ...
+# Subtest: partial crops cannot publish an undercount; cached counts are isolated by frame/job/item
+ok 60 - partial crops cannot publish an undercount; cached counts are isolated by frame/job/item
+  ---
+  duration_ms: 5.207083
+  type: 'test'
+  ...
+# Subtest: removing spare keyframes keeps every frame where it was
+ok 61 - removing spare keyframes keeps every frame where it was
+  ---
+  duration_ms: 6.556542
+  type: 'test'
+  ...
+# Subtest: a keyframe that bends the path is never dropped, even when it is the only one between the ends
+ok 62 - a keyframe that bends the path is never dropped, even when it is the only one between the ends
+  ---
+  duration_ms: 0.933458
+  type: 'test'
+  ...
+# Subtest: a region drawn in Top sends the box to the middle of the object points there, keeping height, yaw and size
+ok 63 - a region drawn in Top sends the box to the middle of the object points there, keeping height, yaw and size
+  ---
+  duration_ms: 23.4485
+  type: 'test'
+  ...
+# Subtest: Side moves only along the box length; a region without object points uses its own middle
+ok 64 - Side moves only along the box length; a region without object points uses its own middle
+  ---
+  duration_ms: 21.804625
+  type: 'test'
+  ...
+# Subtest: a box longer than the visible part rests on the seen front face, not on the middle of the points
+ok 65 - a box longer than the visible part rests on the seen front face, not on the middle of the points
+  ---
+  duration_ms: 5.370875
+  type: 'test'
+  ...
+# Subtest: frame switch preserves orbit, relative zoom and pan while following new box center
+ok 66 - frame switch preserves orbit, relative zoom and pan while following new box center
+  ---
+  duration_ms: 9.11825
+  type: 'test'
+  ...
+# Subtest: first frame or invalid camera uses default view without NaNs
+ok 67 - first frame or invalid camera uses default view without NaNs
+  ---
+  duration_ms: 1.544416
+  type: 'test'
+  ...
+# Subtest: server-ID dropdown uses each track range rather than preview frame bounds
+ok 68 - server-ID dropdown uses each track range rather than preview frame bounds
+  ---
+  duration_ms: 1.343375
+  type: 'test'
+  ...
+# Subtest: expanded and collapsed drawing pass frame to trajectory while preserving zoom and proposals
+ok 69 - expanded and collapsed drawing pass frame to trajectory while preserving zoom and proposals
+  ---
+  duration_ms: 4.582959
+  type: 'test'
+  ...
+# Subtest: each view rotates in its displayed plane: Top Z, Side -Y, Front X
+ok 70 - each view rotates in its displayed plane: Top Z, Side -Y, Front X
+  ---
+  duration_ms: 0.699833
+  type: 'test'
+  ...
+# Subtest: rotations compose in cuboid local coordinates even for tilted boxes
+ok 71 - rotations compose in cuboid local coordinates even for tilted boxes
+  ---
+  duration_ms: 2.241708
+  type: 'test'
+  ...
+# Subtest: rotation preserves center, size, extra CVAT coordinates and original input
+ok 72 - rotation preserves center, size, extra CVAT coordinates and original input
+  ---
+  duration_ms: 0.514875
+  type: 'test'
+  ...
+# Subtest: 180-degree flip twice restores orientation in every view
+ok 73 - 180-degree flip twice restores orientation in every view
+  ---
+  duration_ms: 0.106333
+  type: 'test'
+  ...
+# Subtest: orientation arrows project box axes and distinguish end-on direction
+ok 74 - orientation arrows project box axes and distinguish end-on direction
+  ---
+  duration_ms: 0.242625
+  type: 'test'
+  ...
+# Subtest: all three view handles are hittable without replacing resize/move hit areas
+ok 75 - all three view handles are hittable without replacing resize/move hit areas
+  ---
+  duration_ms: 0.507667
+  type: 'test'
+  ...
+# Subtest: rotate button creates one key/undo, keeps other frames and size lock intact
+ok 76 - rotate button creates one key/undo, keeps other frames and size lock intact
+  ---
+  duration_ms: 1.983458
+  type: 'test'
+  ...
+# Subtest: orientation is always drawn without end-on footer labels; rotation handle remains available
+ok 77 - orientation is always drawn without end-on footer labels; rotation handle remains available
+  ---
+  duration_ms: 6.849875
+  type: 'test'
+  ...
+# Subtest: drag rotation follows each view and Shift snaps to 15-degree increments
+ok 78 - drag rotation follows each view and Shift snaps to 15-degree increments
+  ---
+  duration_ms: 9.275084
+  type: 'test'
+  ...
+# Subtest: snapshot reads in-memory unsaved tracks and actual client IDs
+ok 79 - snapshot reads in-memory unsaved tracks and actual client IDs
+  ---
+  duration_ms: 3.2795
+  type: 'test'
+  ...
+# Subtest: apply commits exactly the chosen track, preserves other unsaved edits and refreshes
+ok 80 - apply commits exactly the chosen track, preserves other unsaved edits and refreshes
+  ---
+  duration_ms: 2.732959
+  type: 'test'
+  ...
+# Subtest: apply refuses stale or deleted target without committing
+ok 81 - apply refuses stale or deleted target without committing
+  ---
+  duration_ms: 0.972917
+  type: 'test'
+  ...
+# Subtest: apply adopts IDs assigned by CVAT Save while the preview was open
+ok 82 - apply adopts IDs assigned by CVAT Save while the preview was open
+  ---
+  duration_ms: 1.060167
+  type: 'test'
+  ...
+# Subtest: wrong job, loading, locked track and incompatible UI fail before commit
+ok 83 - wrong job, loading, locked track and incompatible UI fail before commit
+  ---
+  duration_ms: 6.269
+  type: 'test'
+  ...
+# Subtest: render failure after commit is reported as applied, not a retryable mutation failure
+ok 84 - render failure after commit is reported as applied, not a retryable mutation failure
+  ---
+  duration_ms: 1.237916
+  type: 'test'
+  ...
+# Subtest: six outside frames split into distinct tracks in one native commit with Undo/Redo
+ok 85 - six outside frames split into distinct tracks in one native commit with Undo/Redo
+  ---
+  duration_ms: 2.904833
+  type: 'test'
+  ...
+# Subtest: invalid split threshold or stale split baseline never commits
+ok 86 - invalid split threshold or stale split baseline never commits
+  ---
+  duration_ms: 3.710708
+  type: 'test'
+  ...
+# Subtest: split receipt maps each interval to new client IDs even if export order changes
+ok 87 - split receipt maps each interval to new client IDs even if export order changes
+  ---
+  duration_ms: 0.830125
+  type: 'test'
+  ...
+# Subtest: failed post-commit export returns ranges without inventing IDs or retrying commit
+ok 88 - failed post-commit export returns ranges without inventing IDs or retrying commit
+  ---
+  duration_ms: 1.527417
+  type: 'test'
+  ...
+# Subtest: A → B → A restores edits, inputs, Undo and viewport without rebuilding A
+ok 89 - A → B → A restores edits, inputs, Undo and viewport without rebuilding A
+  ---
+  duration_ms: 3.880167
+  type: 'test'
+  ...
+# Subtest: restored draft is kept but cannot Apply after source changes
+ok 90 - restored draft is kept but cannot Apply after source changes
+  ---
+  duration_ms: 1.251583
+  type: 'test'
+  ...
+# Subtest: rapid selection during cancellation builds only the last selected item
+ok 91 - rapid selection during cancellation builds only the last selected item
+  ---
+  duration_ms: 1.858
+  type: 'test'
+  ...
+# Subtest: fitting cannot mutate another item through a switch
+ok 92 - fitting cannot mutate another item through a switch
+  ---
+  duration_ms: 0.427042
+  type: 'test'
+  ...
+# Subtest: saved IDs persist across reload and UI ID changes; jobs remain independent
+ok 93 - saved IDs persist across reload and UI ID changes; jobs remain independent
+  ---
+  duration_ms: 1.210333
+  type: 'test'
+  ...
+# Subtest: unsaved IDs never persist or mark a saved track with the same number
+ok 94 - unsaved IDs never persist or mark a saved track with the same number
+  ---
+  duration_ms: 0.275583
+  type: 'test'
+  ...
+# Subtest: sequential updates from two tabs merge without erasing unrelated reviews
+ok 95 - sequential updates from two tabs merge without erasing unrelated reviews
+  ---
+  duration_ms: 0.407292
+  type: 'test'
+  ...
+# Subtest: blocked storage falls back to tab state and malformed data cannot create marks
+ok 96 - blocked storage falls back to tab state and malformed data cannot create marks
+  ---
+  duration_ms: 0.430208
+  type: 'test'
+  ...
+# Subtest: next unchecked uses actual track IDs, skips reviewed/unsupported entries and wraps
+ok 97 - next unchecked uses actual track IDs, skips reviewed/unsupported entries and wraps
+  ---
+  duration_ms: 2.9635
+  type: 'test'
+  ...
+# Subtest: repeated lookups of an unchanged list do not parse storage again; outside edits are still seen
+ok 98 - repeated lookups of an unchanged list do not parse storage again; outside edits are still seen
+  ---
+  duration_ms: 0.901542
+  type: 'test'
+  ...
+# Subtest: single-frame fit corrects a known translation without changing height, angles, size or tail
+ok 99 - single-frame fit corrects a known translation without changing height, angles, size or tail
+  ---
+  duration_ms: 16.89725
+  type: 'test'
+  ...
+# Subtest: optional yaw stays within 15 degrees and center within 50 cm
+ok 100 - optional yaw stays within 15 degrees and center within 50 cm
+  ---
+  duration_ms: 44.33675
+  type: 'test'
+  ...
+# Subtest: far clutter does not influence the proposal; sparse and tilted boxes are rejected
+ok 101 - far clutter does not influence the proposal; sparse and tilted boxes are rejected
+  ---
+  duration_ms: 13.344917
+  type: 'test'
+  ...
+# Subtest: proposal and cancellation do not mutate draft; acceptance changes only one frame and one Undo restores all keys
+ok 102 - proposal and cancellation do not mutate draft; acceptance changes only one frame and one Undo restores all keys
+  ---
+  duration_ms: 1.741583
+  type: 'test'
+  ...
+# Subtest: cancel or navigation discards pending result; stale draft cannot accept old proposal
+ok 103 - cancel or navigation discards pending result; stale draft cannot accept old proposal
+  ---
+  duration_ms: 1.640916
+  type: 'test'
+  ...
+# Subtest: outside frame never requests a proposal
+ok 104 - outside frame never requests a proposal
+  ---
+  duration_ms: 0.573208
+  type: 'test'
+  ...
+# Subtest: first and last frame edits stay inside job bounds and preserve every other frame
+ok 105 - first and last frame edits stay inside job bounds and preserve every other frame
+  ---
+  duration_ms: 1.485875
+  type: 'test'
+  ...
+# Subtest: draft edited while cloud loads discards result without an Undo entry
+ok 106 - draft edited while cloud loads discards result without an Undo entry
+  ---
+  duration_ms: 0.458958
+  type: 'test'
+  ...
+# Subtest: six-face fit puts the floor on the road, the top on the roof and keeps matching ends and sides
+ok 107 - six-face fit puts the floor on the road, the top on the roof and keeps matching ends and sides
+  ---
+  duration_ms: 15.917791
+  type: 'test'
+  ...
+# Subtest: ground/roof fit keeps floor and height when the road or roof is out of range or missing
+ok 108 - ground/roof fit keeps floor and height when the road or roof is out of range or missing
+  ---
+  duration_ms: 28.099291
+  type: 'test'
+  ...
+# Subtest: a fit proposed from a small view (no expanded frame) can be accepted; a height change follows the size lock
+ok 109 - a fit proposed from a small view (no expanded frame) can be accepted; a height change follows the size lock
+  ---
+  duration_ms: 0.804417
+  type: 'test'
+  ...
+# Subtest: six-face fit puts seen faces on the points, keeps the size when the opposite face is unseen
+ok 110 - six-face fit puts seen faces on the points, keeps the size when the opposite face is unseen
+  ---
+  duration_ms: 17.328709
+  type: 'test'
+  ...
+# Subtest: six-face fit grows to connected points but not across a gap to a neighbor; faces move at most 50 cm
+ok 111 - six-face fit grows to connected points but not across a gap to a neighbor; faces move at most 50 cm
+  ---
+  duration_ms: 10.938958
+  type: 'test'
+  ...
+# Subtest: preview buttons target each segment start in small and expanded mode, clearing hiding filters
+ok 112 - preview buttons target each segment start in small and expanded mode, clearing hiding filters
+  ---
+  duration_ms: 1.461667
+  type: 'test'
+  ...
+# Subtest: receipt navigation uses existing draft-preserving switch path in both directions
+ok 113 - receipt navigation uses existing draft-preserving switch path in both directions
+  ---
+  duration_ms: 1.076917
+  type: 'test'
+  ...
+# Subtest: missing item after Undo, missing mapping and stale job responses cannot navigate
+ok 114 - missing item after Undo, missing mapping and stale job responses cannot navigate
+  ---
+  duration_ms: 0.504875
+  type: 'test'
+  ...
+# Subtest: toolbar shows yellow-origin content only for split children and the button navigates to retained parent
+ok 115 - toolbar shows yellow-origin content only for split children and the button navigates to retained parent
+  ---
+  duration_ms: 0.434542
+  type: 'test'
+  ...
+# Subtest: origin survives later unrelated Apply and parent client-ID replacement
+ok 116 - origin survives later unrelated Apply and parent client-ID replacement
+  ---
+  duration_ms: 0.385375
+  type: 'test'
+  ...
+# Subtest: origin button refuses navigation if original segment was removed by Undo
+ok 117 - origin button refuses navigation if original segment was removed by Undo
+  ---
+  duration_ms: 0.386959
+  type: 'test'
+  ...
+# Subtest: origin survives full tool reload and Save-assigned IDs; navigation uses new client IDs
+ok 118 - origin survives full tool reload and Save-assigned IDs; navigation uses new client IDs
+  ---
+  duration_ms: 1.660041
+  type: 'test'
+  ...
+# Subtest: pending fingerprint cannot choose duplicate geometry or reused client IDs; job isolation
+ok 119 - pending fingerprint cannot choose duplicate geometry or reused client IDs; job isolation
+  ---
+  duration_ms: 0.549291
+  type: 'test'
+  ...
+# Subtest: missing saved parent disables navigation, and restored parent recovers without guessing
+ok 120 - missing saved parent disables navigation, and restored parent recovers without guessing
+  ---
+  duration_ms: 0.667
+  type: 'test'
+  ...
+# Subtest: storage corruption and quota failures preserve live links and report degraded persistence
+ok 121 - storage corruption and quota failures preserve live links and report degraded persistence
+  ---
+  duration_ms: 0.679
+  type: 'test'
+  ...
+# Subtest: unlock merges origins created in RAM with existing encrypted history instead of dropping unrelated links
+ok 122 - unlock merges origins created in RAM with existing encrypted history instead of dropping unrelated links
+  ---
+  duration_ms: 0.478875
+  type: 'test'
+  ...
+# Subtest: lists visible frames from the finish back to the beginning and interpolates between keyframes
+ok 123 - lists visible frames from the finish back to the beginning and interpolates between keyframes
+  ---
+  duration_ms: 0.985041
+  type: 'test'
+  ...
+# Subtest: a visible last keyframe runs to the job end; an outside one stops the path
+ok 124 - a visible last keyframe runs to the job end; an outside one stops the path
+  ---
+  duration_ms: 0.241625
+  type: 'test'
+  ...
+# Subtest: path length counts the curve, net distance counts only the ends
+ok 125 - path length counts the curve, net distance counts only the ends
+  ---
+  duration_ms: 0.143209
+  type: 'test'
+  ...
+# Subtest: height counts in 3D length but not in XY length
+ok 126 - height counts in 3D length but not in XY length
+  ---
+  duration_ms: 0.77725
+  type: 'test'
+  ...
+# Subtest: hidden frames split runs, report the jump and are not counted in the length
+ok 127 - hidden frames split runs, report the jump and are not counted in the length
+  ---
+  duration_ms: 0.204833
+  type: 'test'
+  ...
+# Subtest: yaw turns the short way round and stays within ±π
+ok 128 - yaw turns the short way round and stays within ±π
+  ---
+  duration_ms: 0.071334
+  type: 'test'
+  ...
+# Subtest: job range clips the path but keeps the interpolation of earlier keyframes
+ok 129 - job range clips the path but keeps the interpolation of earlier keyframes
+  ---
+  duration_ms: 0.120459
+  type: 'test'
+  ...
+# Subtest: rectangles use their centre in pixels and have no yaw
+ok 130 - rectangles use their centre in pixels and have no yaw
+  ---
+  duration_ms: 0.076083
+  type: 'test'
+  ...
+# Subtest: rejects empty tracks, duplicate frames and unsupported shapes
+ok 131 - rejects empty tracks, duplicate frames and unsupported shapes
+  ---
+  duration_ms: 0.365083
+  type: 'test'
+  ...
+# Subtest: input track is never changed
+ok 132 - input track is never changed
+  ---
+  duration_ms: 0.333708
+  type: 'test'
+  ...
+# Subtest: CSV lists frames finish first with a header
+ok 133 - CSV lists frames finish first with a header
+  ---
+  duration_ms: 0.1955
+  type: 'test'
+  ...
+# Subtest: count actual consecutive frames: five stays one object, six or seven splits
+ok 134 - count actual consecutive frames: five stays one object, six or seven splits
+  ---
+  duration_ms: 1.065417
+  type: 'test'
+  ...
+# Subtest: extra outside keys do not reset the gap; separate short gaps do not add up
+ok 135 - extra outside keys do not reset the gap; separate short gaps do not add up
+  ---
+  duration_ms: 0.574833
+  type: 'test'
+  ...
+# Subtest: leading/trailing outside and all-hidden tracks create no empty object
+ok 136 - leading/trailing outside and all-hidden tracks create no empty object
+  ---
+  duration_ms: 0.215209
+  type: 'test'
+  ...
+# Subtest: new segments preserve class, immutable and inherited mutable attributes
+ok 137 - new segments preserve class, immutable and inherited mutable attributes
+  ---
+  duration_ms: 0.39375
+  type: 'test'
+  ...
+# Subtest: disabled splitting keeps geometry and changes no input
+ok 138 - disabled splitting keeps geometry and changes no input
+  ---
+  duration_ms: 0.091209
+  type: 'test'
+  ...
+# Subtest: split only on reappearance inside the current job
+ok 139 - split only on reappearance inside the current job
+  ---
+  duration_ms: 0.077167
+  type: 'test'
+  ...
+# Subtest: rectangle tracks keep their own point representation
+ok 140 - rectangle tracks keep their own point representation
+  ---
+  duration_ms: 0.1185
+  type: 'test'
+  ...
+# Subtest: visible geometry and identity coverage are preserved over many gap patterns
+ok 141 - visible geometry and identity coverage are preserved over many gap patterns
+  ---
+  duration_ms: 10.38425
+  type: 'test'
+  ...
+# Subtest: reject malformed key ordering or frame thresholds
+ok 142 - reject malformed key ordering or frame thresholds
+  ---
+  duration_ms: 0.505875
+  type: 'test'
+  ...
+# Subtest: preview split count follows manual outside edits and restoration
+ok 143 - preview split count follows manual outside edits and restoration
+  ---
+  duration_ms: 1.417959
+  type: 'test'
+  ...
+# Subtest: invalid split setting blocks Apply; disabling split or fixing it restores valid preview
+ok 144 - invalid split setting blocks Apply; disabling split or fixing it restores valid preview
+  ---
+  duration_ms: 0.668625
+  type: 'test'
+  ...
+# Subtest: split labels explain source, intervals, hidden gap and new-item boundary
+ok 145 - split labels explain source, intervals, hidden gap and new-item boundary
+  ---
+  duration_ms: 0.692833
+  type: 'test'
+  ...
+# Subtest: receipt preserves source and distinguishes client IDs, server IDs and unresolved mapping
+ok 146 - receipt preserves source and distinguishes client IDs, server IDs and unresolved mapping
+  ---
+  duration_ms: 0.641458
+  type: 'test'
+  ...
+# Subtest: drawTrajectoryTrail draws motion trail and ghost wireframes on Top view when enabled
+ok 147 - drawTrajectoryTrail draws motion trail and ghost wireframes on Top view when enabled
+  ---
+  duration_ms: 1.757959
+  type: 'test'
+  ...
+1..147
+# tests 147
+# suites 0
+# pass 147
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1647.290041

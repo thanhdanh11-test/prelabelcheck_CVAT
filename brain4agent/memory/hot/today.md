@@ -64,3 +64,13 @@ Mốc v1.13.4 đã commit/push main: 09ee43f4daab30e011665bb27207f9e9c7d87003; t
 
 ## 2026-10-23T03:50:59Z — v1.13.6 giữ nguồn qua reload
 v1.13.5 đã push main ở 6fb29a9. Người dùng báo mất nguồn/nút về gốc sau reload: nguyên nhân RAM-only. Đã thêm localStorage theo server/job, ID server ưu tiên, fingerprint duy nhất cho pending; cập nhật nhãn/nút từ clientID mới, lỗi storage báo rõ. 128/128 tests, mutation tắt persistence đỏ 4 ca. Chưa kiểm Save/reload trên server công ty, chưa commit/push bản sửa. Không khôi phục được nguồn đã mất trước bản này.
+
+## 2026-10-23T06:32:05Z — v1.14.0 mã hóa cache
+User yêu cầu triển khai mật khẩu riêng. AES-GCM/PBKDF2 khóa RAM, cloud+origins mã hóa, khóa dùng RAM; migration verify nguồn, legacy cloud upgrade2. Review độc lập sửa race nguồn/reset. 139 tests, 5 browser checks, fixture UI tạo/reopen/sai mật khẩu/khóa/reset, 0 lỗi JS. Chưa company QA, commit/push. Bản trước 4d129de đã push.
+
+## 2026-10-23T06:57:25Z — kiểm thử đối kháng theo yêu cầu
+7 probes Node exit0 và 2 bằng chứng browser isolated-world: chụp pass qua DOM dùng chung rồi giải mã canary sau lock; tab B vẫn mở khi A khóa. Tamper/wrong password/cross-record bị chặn. Replay nhận bản cũ, pass số đơn giản đoán3 lần test. Không dữ liệu thật, không sửa product code; chưa commit/push. Báo cáo docs/CACHE-SECURITY-AUDIT.md.
+
+
+### 2026-10-23 — approved cache audit remediation
+Moved password input to extension popup, activeTab permission; added private runtime channel, single-use challenge and shared lock token. Independent review caught empty-vault reset race; fixed and mutation verified red. 147/147 Node pass, 0 skip. Installed popup runtime cannot be verified in Ego (loadUnpacked unavailable); company gate pending. No commit/push. Residual replay/weak passwords documented.

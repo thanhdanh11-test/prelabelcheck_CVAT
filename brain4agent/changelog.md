@@ -2,6 +2,11 @@
 
 Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên bản của dự án.
 
+## [v1.14.0] - 2026-10-23: Password-encrypted cache
+- Native Web Crypto vault, encrypted cloud/origins; locked default uses RAM only. Create/unlock/lock/reset controls; verified legacy origin migration and cloud version fence.
+- Keys never persisted; checklist IDs/panel/metadata remain outside encryption. Serialize multi-tab origin mutations and reset/clear; reject late crypto and tampering.
+- Validation: 139 Node tests; 5 real IndexedDB checks; synthetic UI create/reopen/wrong-password/lock/reset, 1/1 preload, no JS errors. Company QA pending.
+
 ## [v1.13.6] - 2026-10-23: Persist split origins across reload
 - Store origin identities per browser origin/job; rebuild runtime shortcuts using stable server IDs or unique pending geometry matches, never persisted client IDs.
 - Preserve source labels for missing parents, disable unsafe navigation and report storage failures. Existing lost lineage cannot be recovered retroactively.
@@ -71,3 +76,7 @@ Tất cả các quyết định kiến trúc và lịch sử nâng cấp phiên 
 ## [v1.0.0] - 2026-10-21: Initial Project Scaffolding
 ### Added
 - Khởi tạo kiến trúc dự án và thiết lập hệ thống Bộ Nhớ Não Bộ `brain4agent/` Đa Tầng thế hệ mới.
+
+
+### v1.14.0 local security hardening — 2026-10-23
+Password moved to extension popup; private one-use challenge channel and same-origin global revocation, including pending initial creation on reset. 147 Node tests pass; actual installed Chrome/company gates pending. No new published release.

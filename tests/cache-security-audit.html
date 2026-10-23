@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>Isolated extension security fixture</title>
+<h1>Synthetic security audit</h1><p>No real CVAT data. Extension scripts are injected into a separate isolated world by the audit runner.</p>
+<script>
+history.replaceState(null,'','/jobs/9988');
+addEventListener('message',e=>{
+ const m=e.data;if(m?.channel!=='cvat-track-resizer-v2'||m.direction!=='request')return;
+ const result={job:{id:9988,task_id:1,created_date:'security-fixture',dimension:'2d',start_frame:0,stop_frame:0},annotations:{tracks:[],shapes:[],tags:[]},labels:[]};
+ window.postMessage({...m,direction:'response',result},location.origin);
+});
+</script>

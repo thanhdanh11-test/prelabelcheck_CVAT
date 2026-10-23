@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mở khóa cache CVAT</title><link rel="stylesheet" href="cache-popup.css"></head>
+<body>
+<h1>Cache CVAT</h1>
+<p id="server">Đang kết nối tab CVAT…</p>
+<p id="status" role="status" aria-live="polite"></p>
+<form id="unlock-form">
+<label for="password">Mật khẩu cache riêng</label>
+<input id="password" type="password" autocomplete="off" minlength="12" maxlength="1024" required>
+<div id="confirm-row"><label for="confirm-password">Nhập lại khi tạo kho</label><input id="confirm-password" type="password" autocomplete="off" maxlength="1024"></div>
+<button id="unlock" type="submit" disabled>Tạo / Mở khóa tab này</button>
+</form>
+<button id="lock-all" type="button" disabled>Khóa mọi tab cùng server</button>
+<p class="note">Chỉ nhập mật khẩu trong popup này. Không nhập vào trang CVAT. Đóng popup sẽ xóa nội dung ô nhập. Quên mật khẩu phải xóa kho trong tool.</p>
+<script src="cache-vault.js"></script><script src="cache-popup.js"></script>
+</body></html>

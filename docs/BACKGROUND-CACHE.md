@@ -1,4 +1,6 @@
-# Background point-cloud cache — v1.9.0
+# Background point-cloud cache
+
+**Current v1.14.0:** persistence is password-encrypted and locked by default; preload begins after unlock. Legacy cloud is retired on first successful unlock/migration. See [CACHE-ENCRYPTION.md](CACHE-ENCRYPTION.md). Below: queue behavior and historical evidence.
 
 Opening the tool on a 3D job starts a background preload. Since v1.13.1 (lesson from CVAT's `PrefetchAnalyzer`, which only reads ahead of the current position) the preload starts at the frame last read in the foreground and fans out, looking first in the direction the viewer is moving, and re-picks the nearest missing frame after every download, so a jump moves it. With no foreground read yet it walks the job from its first frame. Configure/Clear forget the viewing position. Foreground frame reads have priority in a shared three-slot queue and join an existing request for the same frame. Stop aborts only background-only requests; Continue skips frames already persisted. Preload never generates all item previews.
 
@@ -26,4 +28,4 @@ Item switching stores drafts, input settings, native tool Undo snapshots and vie
 - Not adopted: CVAT's periodic metadata re-check (`chunks_updated_date`) and RAM sizing from frame size. Both are in the Idea Vault.
 - `node --test tests/*.test.cjs`: 100/100. Not yet run in Chrome against a live job.
 
-No npm packages, server annotation writes or new extension permissions are required.
+No npm packages or server annotation writes are required. The v1.14.0 cache popup uses the activeTab permission.

@@ -11,7 +11,7 @@ Gồm hai phần:
 
 CVAT nội suy tuyến tính giữa các keyframe. Cả hai công cụ đều làm việc bằng cách sửa hoặc thêm keyframe, nên kết quả hiển thị đúng như nhau trên mọi frame.
 
-> **Extension v1.13.6:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
+> **Extension v1.14.0:** bấm **Áp dụng** để cập nhật box ngay trong CVAT, không tải lại trang; sau đó bấm **Save của CVAT** để lưu server. Tool đọc cả thay đổi chưa Save và hỗ trợ Undo/Redo của CVAT.
 >
 > **Script Python:** vẫn ghi trực tiếp lên server. Save trong CVAT trước khi chạy script, rồi tải lại trang CVAT để xem kết quả.
 
@@ -28,6 +28,14 @@ CVAT nội suy tuyến tính giữa các keyframe. Cả hai công cụ đều l�
 Extension chạy trên `localhost`, `127.0.0.1`, `app.cvat.ai` và `cvat-test.vantixapps.net`. Nếu dùng server CVAT khác, thêm domain đó vào cả hai mục `content_scripts[].matches` và mục `web_accessible_resources[].matches` trong `manifest.json` rồi reload extension.
 
 Sau mỗi lần cập nhật code, bấm **reload** ở `chrome://extensions` rồi tải lại trang job.
+
+### v1.14.0: cache mã hóa bằng mật khẩu
+
+Mở job CVAT rồi bấm **biểu tượng extension trên thanh Chrome**, đặt mật khẩu riêng (tối thiểu 12 ký tự), nhập lại rồi **Tạo / Mở khóa**. Tool chuyển nguồn item cũ sang mã hóa, kiểm chứng trước khi bỏ bản rõ; dọn cache cloud cũ và tải lại dưới dạng mã hóa. Đóng/reload tất cả tab tool cũ khi nâng cấp.
+
+Mỗi lần mở trang phải mở khóa lại. Chưa mở khóa: chỉ RAM, nguồn item mới chỉ giữ trong tab. **Khóa mọi tab cùng server** thu hồi khóa trên các tab cùng origin, hủy yêu cầu mở khóa đang chờ và đóng preview, giữ nháp annotation trong tab. **Xóa cache** chỉ xóa point cloud; **Quên mật khẩu / Xóa kho** xóa cả nguồn item đã lưu sau xác nhận. Không ảnh hưởng annotation đã Save trên CVAT.
+
+Point cloud và nguồn item được mã hóa; checklist ID/vị trí panel và metadata cache không mã hóa. Khóa chỉ ở RAM. Không bảo vệ máy/trang bị xâm nhập lúc mở khóa. Chi tiết: [Cache mã hóa](docs/CACHE-ENCRYPTION.md).
 
 ### Nhận biết item sau tách (từ v1.13.4)
 
@@ -91,7 +99,7 @@ Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại m�
 
 ### Từ v1.9.0
 
-- Tự tải trước point cloud toàn job ở nền khi mở tool trên job 3D; ưu tiên frame đang xem.
+- Tự tải trước point cloud toàn job ở nền khi đã mở khóa cache trên job 3D; ưu tiên frame đang xem.
 - Cache IndexedDB dùng chung cho mọi item theo job/frame, dùng lại sau F5 hoặc mở lại trình duyệt.
 - Đổi item tự mở preview; quay lại item đã mở sẽ khôi phục chỉnh sửa, Undo, tùy chọn và vị trí xem trong phiên tab.
 - Có tiến độ frame, nút **Dừng / Tiếp tục tải nền** và **Xóa cache**.
@@ -107,7 +115,7 @@ Trong frame phóng to, bấm **Khớp frame này** để xem box hiện tại m�
 
 ### Tải nền và đổi item
 
-Mở tool là bắt đầu tải point cloud ở nền; bạn có thể làm việc ngay với item đầu tiên. Point cloud thuộc frame nên gần 100 item vẫn dùng chung dữ liệu. Tool chỉ dựng preview của item đang chọn, không dựng đồng thời toàn bộ item. Item mới vẫn cần tính outside/dựng hình, nhưng không tải lại point cloud đã cache.
+Mở khóa cache là bắt đầu tải point cloud ở nền; bạn có thể làm việc ngay với item đầu tiên. Point cloud thuộc frame nên gần 100 item vẫn dùng chung dữ liệu. Tool chỉ dựng preview của item đang chọn, không dựng đồng thời toàn bộ item. Item mới vẫn cần tính outside/dựng hình, nhưng không tải lại point cloud đã cache.
 
 Cache đọc theo thứ tự RAM → IndexedDB → CVAT, giới hạn **1 GiB mỗi server (origin)** và hết hạn sau 7 ngày. RAM giữ tối đa 24 frame hoặc khoảng 128 MiB (ít nhất một frame), cộng vùng điểm quanh box khoảng 64 MB. Nếu toàn job không vừa cache, tải nền dừng và tool chỉ tải bổ sung frame cần xem; không hứa toàn bộ job luôn sẵn offline. Trình duyệt có thể xóa cache khi thiếu dung lượng. Khi IndexedDB không dùng được, tool báo rõ và tiếp tục bằng RAM.
 
@@ -136,7 +144,7 @@ Tool dùng API Commit của CVAT, nên số **# trên sidebar có thể đổi**
 
 Để chuyển qua lại: trong preview bấm **Đoạn gốc / Đoạn mới 2 / …** ở sidebar hoặc dưới frame mở rộng để tới đầu đoạn. Sau **Áp dụng**, các nút chọn item tương ứng và giữ bản nháp khi chuyển. Khi đang xem item con, chữ vàng **Tạo từ item #…** trên thanh số frame cho biết nguồn; **Đến item gốc** mở đoạn đầu còn giữ lại sau tách, không khôi phục track chưa tách.
 
-Quan hệ nguồn được lưu trong localStorage của trình duyệt theo server/job. Save annotation trước khi reload. ID server là định danh chính; với item chưa có ID lúc ghi nhận, tool chỉ nhận lại khi hình học khớp duy nhất, rồi lưu ID server. Nếu đã sửa hình học trong CVAT trước khi tool ghi nhận ID, liên kết có thể không khôi phục được; bấm Tải lại trong tool sau Save để cập nhật ID. Nguồn đã mất từ bản cũ không thể khôi phục chắc chắn. Xóa dữ liệu trang hoặc đổi trình duyệt/máy sẽ mất liên kết. Nếu Undo/Redo làm item đích không còn tồn tại, tool yêu cầu tải lại thay vì chọn nhầm. Bảng đối chiếu sau Áp dụng là lịch sử tại thời điểm áp dụng, không phải danh sách ID luôn cập nhật sau Save.
+Từ v1.14.0, quan hệ nguồn lưu mã hóa trong localStorage khi mở khóa cache theo server/job. Save annotation trước khi reload. ID server là định danh chính; với item chưa có ID lúc ghi nhận, tool chỉ nhận lại khi hình học khớp duy nhất, rồi lưu ID server. Nếu đã sửa hình học trong CVAT trước khi tool ghi nhận ID, liên kết có thể không khôi phục được; bấm Tải lại trong tool sau Save để cập nhật ID. Nguồn đã mất từ bản cũ không thể khôi phục chắc chắn. Xóa dữ liệu trang hoặc đổi trình duyệt/máy sẽ mất liên kết. Nếu Undo/Redo làm item đích không còn tồn tại, tool yêu cầu tải lại thay vì chọn nhầm. Bảng đối chiếu sau Áp dụng là lịch sử tại thời điểm áp dụng, không phải danh sách ID luôn cập nhật sau Save.
 
 Ví dụ frame 10 còn hiện, frame 11–16 outside, frame 17 hiện lại: đoạn đầu giữ box đến frame 10 và keyframe outside ở frame 11; object mới bắt đầu tại frame 17. Mất dấu 5 frame thì chưa tách; nhiều khoảng ngắn không cộng dồn. Nếu có nhiều khoảng outside đủ dài, tool tạo nhiều track. Outside ở đầu/cuối mà chưa có đoạn hiện trước/sau không tạo object rỗng.
 
@@ -200,8 +208,8 @@ Frame bạn đã sửa tay được giữ nguyên và dùng làm điểm neo. Fr
 
 ### Dữ liệu và quyền
 
-- Extension đọc annotation đang mở qua plugin API của CVAT và chỉ tải point cloud từ chính server CVAT (`/api/...`). **Áp dụng** chỉ sửa bộ nhớ của CVAT; việc ghi server thuộc nút Save hoặc Auto Save nếu bạn đã bật trong CVAT. Không gửi dữ liệu đi nơi khác, không khai báo `permissions` nào.
-- Point cloud được lưu trong IndexedDB của server CVAT đang mở, có thể còn sau khi đóng trình duyệt; xóa bằng **Xóa cache**. Cache tách theo origin, job, metadata và phiên bản bộ đọc; metadata được kiểm tra khi vào job. Annotation và bản nháp preview chỉ nằm trong RAM, không lưu vào IndexedDB. `localStorage` lưu vị trí panel và dấu đã kiểm tra theo job/ID server. Quan hệ item gốc–con lưu trong localStorage theo server/job, gồm ID và dấu nhận dạng hình học để đối chiếu item chưa Save; không gửi metadata vào annotation. Lịch sử Áp dụng vẫn chỉ giữ trong RAM của tab, mất khi reload hoặc đổi job.
+- Extension đọc annotation đang mở qua plugin API của CVAT và chỉ tải point cloud từ chính server CVAT (`/api/...`). **Áp dụng** chỉ sửa bộ nhớ của CVAT; việc ghi server thuộc nút Save hoặc Auto Save nếu bạn đã bật trong CVAT. Không gửi dữ liệu đi nơi khác, quyền `activeTab` phục vụ popup mở khóa cache.
+- Point cloud được lưu mã hóa trong IndexedDB khi cache đã mở khóa trên server CVAT đang mở, có thể còn sau khi đóng trình duyệt; xóa bằng **Xóa cache**. Cache tách theo origin, job, metadata và phiên bản bộ đọc; metadata được kiểm tra khi vào job. Annotation và bản nháp preview chỉ nằm trong RAM, không lưu vào IndexedDB. `localStorage` lưu vị trí panel và dấu đã kiểm tra theo job/ID server. Quan hệ item gốc–con lưu mã hóa trong localStorage khi mở khóa cache theo server/job, gồm ID và dấu nhận dạng hình học để đối chiếu item chưa Save; không gửi metadata vào annotation. Lịch sử Áp dụng vẫn chỉ giữ trong RAM của tab, mất khi reload hoặc đổi job.
 - Đọc point cloud dạng PCD `ascii` và `binary` (tọa độ float).
 
 ---
@@ -238,6 +246,7 @@ python3 cvat_resize_track.py --job 97 --track 45 --scale 1.1 --dry-run
 Dùng Node.js 18 trở lên, không cần cài package:
 
 ```sh
+node --check cvat-resize-extension/cache-vault.js
 node --check cvat-resize-extension/content.js
 node --check cvat-resize-extension/page-bridge.js
 node --check cvat-resize-extension/cloud-cache.js
@@ -246,7 +255,7 @@ node --check cvat-resize-extension/lidar-view.js
 node --test tests/*.test.cjs
 ```
 
-128 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
+147 kiểm thử Node bao phủ hình học, PCD, preview, xung đột, áp dụng qua bridge, tải nền, chuyển item, tách object sau outside, xoay theo view, bàn phím và tải LiDAR khi đổi frame nhanh; thêm khớp một frame, Hủy/Chấp nhận và bảo toàn dữ liệu khi Undo, giữ camera và lưu dấu kiểm tra theo item. Báo cáo thử trên CVAT: [EXPERIMENT-INTERPOLATION.md](docs/EXPERIMENT-INTERPOLATION.md). Kiểm thử IndexedDB thật: chạy `python3 -m http.server 5181 --bind 127.0.0.1` ở thư mục repo rồi mở `http://127.0.0.1:5181/tests/cloud-cache-browser.html`; trang dùng database tạm riêng và tự xóa sau khi chạy.
 
 Luồng cập nhật box/class, Undo/Redo và không reload của v1.8 đã được thử trên CVAT 3D thật qua Ego; dữ liệu server không đổi trong lần kiểm thử. Xem [báo cáo Apply trực tiếp](docs/LIVE-APPLY.md), [báo cáo trải nghiệm](docs/EGO-UX-AUDIT.md), [báo cáo bốn view và orientation](docs/ORIENTATION-FOUR-VIEW.md), [kiểm thử tách object trên CVAT thật](docs/TRACK-SPLIT.md) và [cache v1.9](docs/BACKGROUND-CACHE.md) để biết phạm vi và giới hạn đã kiểm chứng.
 

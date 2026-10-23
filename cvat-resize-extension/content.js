@@ -207,12 +207,15 @@
     } else console.info(`[Track Resizer] ${what}: ${wall.toFixed(1)} s, không tải frame nào (dùng cache)`);
     Object.assign(st, { frames: 0, bytes: 0, fetchMs: 0, parseMs: 0, since: performance.now() });
   }
+  const cacheVault = CvatCacheVault.create();
+  const encryptedCloudStore = cacheVault.wrapStore(CvatCloudCache.openStore({ name: "cvat-track-resizer-clouds-encrypted-v1" }));
   const cloudCache = CvatCloudCache.create({
+    store: encryptedCloudStore,
     onState: renderCacheState,
     async fetchFrame(id, frame, signal) {
       const t0 = performance.now();
       const resp = await fetch(`/api/jobs/${id}/data?type=frame&number=${frame}&quality=compressed`,
-        { credentials: "same-origin", signal });
+        { credentials: "same-origin", signal, cache: "no-store" });
       if (!resp.ok) throw new Error(`Không tải được point cloud frame ${frame} (HTTP ${resp.status}).`);
       const buf = await resp.arrayBuffer(), t1 = performance.now(), xyz = parsePcd(buf);
       cloudStats.frames++;
@@ -231,9 +234,41 @@
   }
 
   function renderCacheState(state) {
+    renderVaultState();
     $(".cache-toggle").textContent = state.running ? "Dừng tải nền" : "Tiếp tục tải nền";
     $(".cache-status").textContent = `${state.message || "Cache point cloud"} · ${state.done}/${state.total} frame` +
       (state.storageError ? ` · ${state.storageError}` : "");
+  }
+
+  let vaultBusy = false, vaultMessage = "", cacheChannel = null;
+  function renderVaultState() {
+    const el = $(".vault-status");
+    if (!el) return;
+    const unlocked = cacheVault.unlocked;
+    el.textContent = vaultMessage || (unlocked ? "Đã mở khóa — point cloud và nguồn item lưu mã hóa." :
+      "Đang khóa — chỉ dùng RAM. Lần mở khóa đầu tiên chuyển nguồn item và dọn cache cũ chưa mã hóa.");
+    $(".vault-lock").disabled = false;
+    $(".vault-reset").disabled = vaultBusy;
+    $(".cache-toggle").disabled = vaultBusy || !unlocked;
+  }
+  async function refreshVaultCache() {
+    cacheJob = null; cacheGeneration++; cloudCache.configure(null);
+    near.clear(); nearFloats = 0;
+    if (job) await prepareCache(job);
+    renderVaultState();
+  }
+  function lockVault() {
+    cacheChannel?.invalidate();
+    cacheVault.lock();
+    // Keep annotation drafts, but release point-cloud views and invalidate pending draws.
+    if (plan) savePreview();
+    if (saving) closeEditor(); else closePlan();
+    editGen++; near.clear(); nearFloats = 0; counted.clear(); queue.length = 0; loadState.clear();
+    // Preserve not-yet-persisted links created from annotation drafts; discard restored links.
+    if (!originsChanged) itemOrigins.clear();
+    cacheJob = null; cacheGeneration++; cloudCache.configure(null);
+    vaultMessage = "Cache tab này đã khóa. Bản nháp annotation giữ trong tab; xem tiếp dùng RAM.";
+    renderVaultState();
   }
 
   function prepareCache(loadedJob) {
@@ -256,9 +291,9 @@
       }
       if (jobId !== id || generation !== cacheGeneration) return;
       cloudCache.configure({ jobId: id, scope: `${location.origin}:${id}:${signature}:xyz-v1`,
-        start: loadedJob.start_frame, stop: loadedJob.stop_frame, persistent });
-      if (persistent) void cloudCache.prefetch();
-      else $(".cache-status").textContent = "Không xác minh được metadata; chỉ dùng RAM. Tải lại trang để thử cache lại.";
+        start: loadedJob.start_frame, stop: loadedJob.stop_frame, persistent: persistent && cacheVault.unlocked });
+      if (persistent && cacheVault.unlocked) void cloudCache.prefetch();
+      else $(".cache-status").textContent = persistent ? "Cache đang khóa — chỉ dùng RAM, không tải nền." : "Không xác minh được metadata; chỉ dùng RAM. Tải lại trang để thử cache lại.";
     })();
     return cacheSetup;
   }
@@ -427,6 +462,12 @@
   .tag.split-origin { color: #d8a44c; }
   details.advanced { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--hairline); }
   details.advanced summary { cursor: pointer; color: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: 1.1px; text-transform: uppercase; }
+  .vault-controls { margin-top: 12px; display: grid; gap: 6px; }
+  .vault-controls [hidden] { display: none; }
+  .vault-controls label { display: grid; gap: 4px; }
+  .vault-controls input { min-width: 0; width: 100%; }
+  .vault-controls .cache-btns { flex-wrap: wrap; }
+  .vault-status, .vault-controls small { color: var(--muted); font-size: 12px; }
   .cache-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
   .cache-row .cache-status { color: var(--muted); font-size: 12px; }
   .cache-btns { display: flex; gap: 6px; flex: none; }
@@ -598,6 +639,13 @@
       <input id="outside-threshold" type="number" class="thr" min="0" step="1" value="6" aria-label="Ngưỡng điểm outside"><span>điểm</span></div>
     <div class="option-row"><label><input type="checkbox" class="split-outside" checked>Tách khi outside ≥</label>
       <input id="outside-gap" type="number" class="split-gap" min="1" step="1" value="6" aria-label="Ngưỡng frame tách object"><span>frame</span></div>
+    <div class="vault-controls">
+      <b>Cache mã hóa</b>
+      <div class="vault-status" role="status" aria-live="polite">Đang khóa — chỉ dùng RAM. Cache cũ chưa mã hóa được dọn sau lần mở khóa đầu tiên.</div>
+      <p>Mở khóa: bấm biểu tượng CVAT Track Resizer trên thanh tiện ích Chrome. Chỉ nhập mật khẩu trong popup extension.</p>
+      <div class="cache-btns"><button class="btn quiet vault-lock">Khóa mọi tab cùng server</button><button class="btn quiet vault-reset">Quên mật khẩu / Xóa kho</button></div>
+      <small>Quên mật khẩu phải xóa kho. Xóa kho mất nguồn item đã lưu, không xóa annotation trên CVAT.</small>
+    </div>
     <div class="cache-controls cache-row"><span class="cache-status" role="status" aria-live="polite"></span>
       <span class="cache-btns"><button class="btn quiet cache-toggle">Tải nền toàn job</button><button class="btn quiet cache-clear">Xóa cache</button></span></div>
   </details>
@@ -630,7 +678,7 @@
   <h5>Item mới sau outside</h5>
   <ul><li>Mặc định tách khi outside ≥ 6 frame liên tiếp; đây là số frame, khác ngưỡng số điểm để tự ẩn. Preview đánh dấu vàng <b>BẮT ĐẦU ITEM MỚI</b> và ghi nguồn từng đoạn.</li>
     <li><b>Đoạn gốc / Đoạn mới 2 / …</b> ở sidebar và frame mở rộng đưa tới đầu đoạn; sau Áp dụng chọn item tương ứng, giữ nháp khi chuyển.</li>
-    <li>Chữ vàng <b>Tạo từ item #…</b> trên thanh số frame ghi nguồn. <b>Đến item gốc</b> mở đoạn đầu sau tách, không khôi phục track chưa tách. Nguồn item lưu trên trình duyệt theo server/job và được khôi phục sau reload. Save annotation trước khi tải lại; item chưa có ID chỉ được nhận lại nếu hình học khớp duy nhất. Không khôi phục được nguồn đã mất từ bản cũ.</li>
+    <li>Chữ vàng <b>Tạo từ item #…</b> trên thanh số frame ghi nguồn. <b>Đến item gốc</b> mở đoạn đầu sau tách, không khôi phục track chưa tách. Nguồn item lưu mã hóa theo server/job khi mở khóa cache. Sau reload cần mở khóa để hiện lại nguồn. Save annotation trước khi tải lại; item chưa có ID chỉ được nhận lại nếu hình học khớp duy nhất. Không khôi phục được nguồn đã mất từ bản cũ.</li>
     <li>Bảng ID là lịch sử lần Áp dụng gần nhất, không tự cập nhật sau Undo/Redo/Save. Item mới có ID server sau Save; nếu item đích không còn tồn tại, tải lại danh sách.</li></ul>
   <h5>Vệt quỹ đạo</h5>
   <ul><li>Bật <b>Vệt quỹ đạo (Top)</b> để hiện đường nối tâm box các frame lân cận và khung mờ (ghost wireframe) của frame trước / sau trên khung nhìn Top, giúp căn chỉnh vị trí và hướng di chuyển mượt mà.</li></ul>
@@ -639,7 +687,7 @@
     <li><b>Đã kiểm tra</b> là dấu thủ công trên trình duyệt theo job và ID server; không tự đánh dấu sau khi khớp và không Save annotation. Item chưa có ID server chỉ giữ dấu trong phiên tab. Có thể bỏ dấu để kiểm tra lại.</li></ul>
   <h5>Tùy chọn và cache</h5>
   <ul><li>Giữ đáy khi đổi kích thước; khóa kích thước áp dụng thay đổi kích thước cho cả track. Tự động outside dựa vào số điểm; tách object theo số frame outside liên tiếp.</li>
-    <li>Point cloud dùng chung giữa các item. Tự tải nền toàn job, ưu tiên frame đang xem; cache trình duyệt tối đa 1 GiB mỗi server. Xóa cache không xóa annotation hoặc dấu đã kiểm tra.</li></ul>
+    <li>Point cloud dùng chung giữa các item. Bấm biểu tượng extension trên thanh Chrome để đặt/mở mật khẩu cache riêng. Chưa mở khóa: chỉ RAM; đã mở: tải nền ưu tiên frame đang xem, lưu mã hóa tối đa 1 GiB. Xóa cache chỉ xóa cloud. Quên mật khẩu / Xóa kho xóa cả nguồn item đã lưu, không xóa annotation CVAT. Checklist/vị trí panel không mã hóa.</li></ul>
   <h5>Phím tắt</h5>
   <ul><li>View mở rộng: nút phóng ở góc mỗi view để xem riêng view đó, bấm lại để về bốn view. Top/Side/Front: cuộn chuột để phóng to/thu nhỏ quanh con trỏ (không giới hạn thu nhỏ ở 3×, pan tự do trên point cloud), kéo trái vùng trống khi tắt Kéo vùng (hoặc chuột phải/giữa) để di chuyển, double-click để về mặc định. Dữ liệu là point cloud frame hiện tại, không ghép map nhiều frame.</li>
     <li><b>Kéo vùng</b> (icon khung nét đứt bên trái icon khớp, nền đỏ khi bật): bật rồi kéo chuột trái ở vùng trống của Top/Side/Front để khoanh vùng vật: box nhảy về giữa các điểm trong vùng (Top: dọc + ngang; Side/Front: theo chiều ngang của view), giữ hướng và kích thước. Sau đó bấm khớp để chỉnh sát.</li>
@@ -817,10 +865,18 @@
     return matches.length === 1 ? matches[0] : null;
   }
 
-  function syncStoredOrigins(tracks) {
+  async function syncStoredOrigins(tracks) {
+    if (!cacheVault.unlocked) {
+      originStorageWarning = "Cache đang khóa: nguồn item mới chỉ giữ trong RAM. Mở khóa trước khi đóng trang để lưu nguồn.";
+      return;
+    }
+    const ownerJob = jobId;
+    return cacheVault.withLock(async () => {
+    if (ownerJob !== jobId) return;
     const key = `cvat-track-origins:v1:${jobId}`; // localStorage is already scoped to server origin
     try {
-      const raw = localStorage.getItem(key), saved = raw ? JSON.parse(raw) : null;
+      const raw = await cacheVault.readOrigins(key), saved = raw ? JSON.parse(raw) : null;
+      if (ownerJob !== jobId) return;
       if (saved && (saved.version !== 1 || !Array.isArray(saved.links))) throw new Error("Invalid origin storage");
       let links = (saved?.links || []).filter(link => link && link.source && link.target && link.child &&
         Number.isSafeInteger(link.startFrame) && Number.isSafeInteger(link.endFrame));
@@ -836,7 +892,10 @@
             startFrame: origin.target.startFrame, endFrame: origin.target.endFrame });
         }
         // Keep unresolved history for native Undo/Redo; current links take precedence.
-        links = links.filter(link => !resolveOriginIdentity(link.child, tracks));
+        links = links.filter(link => {
+          const oldChild = resolveOriginIdentity(link.child, tracks);
+          return !oldChild || !fresh.some(item => resolveOriginIdentity(item.child, tracks) === oldChild);
+        });
         links.push(...fresh);
       }
       const restored = new Map();
@@ -849,14 +908,16 @@
           id: parent?.id, startFrame: link.startFrame, endFrame: link.endFrame } });
       }
       // A failed write must keep the live links and display a persistence warning.
-      localStorage.setItem(key, JSON.stringify({ version: 1, links }));
+      await cacheVault.writeOrigins(key, JSON.stringify({ version: 1, links }));
+      if (ownerJob !== jobId) return;
       itemOrigins.clear();
       for (const [id, origin] of restored) itemOrigins.set(id, origin);
       originsChanged = false;
       originStorageWarning = "";
     } catch {
-      originStorageWarning = "Không lưu/đọc được nguồn item trên trình duyệt; liên kết hiện tại chỉ giữ trong phiên. Không xóa dữ liệu trình duyệt nếu cần giữ nguồn item.";
+      originStorageWarning = "Không lưu/đọc được nguồn item mã hóa; liên kết hiện tại chỉ giữ trong phiên. Mở khóa hoặc kiểm tra dung lượng trình duyệt.";
     }
+    });
   }
 
   function renderItemOrigin() {
@@ -995,7 +1056,8 @@
     annotations = loaded.annotations;
     labels = loaded.labels;
     withUiIds(annotations);
-    syncStoredOrigins(annotations.tracks);
+    await syncStoredOrigins(annotations.tracks);
+    if (generation !== dataGeneration || id !== jobId) return;
     const sel = $(".track");
     sel.innerHTML = annotations.tracks.length
       ? annotations.tracks.map((t) => {
@@ -3181,6 +3243,50 @@
     closePlan();
     await loadData(Number($(".track").value));
   }));
+  async function unlockFromPopup(proof, issued) {
+    const ownerJob = jobId;
+    vaultBusy = true; vaultMessage = "Đang mở khóa và chuyển dữ liệu cũ…"; renderVaultState();
+    try {
+      await cacheVault.acceptUnlock(proof, issued.header, issued.lockToken);
+      await cacheVault.migrateOrigins();
+      await CvatCacheVault.retireLegacy();
+      if (ownerJob !== jobId || !cacheVault.unlocked) throw Error("Tab/cache đã đổi khi mở khóa. Thử lại từ popup.");
+      if (annotations) await syncStoredOrigins(annotations.tracks);
+      vaultMessage = originStorageWarning || "Đã mở khóa. Cache cũ đã dọn; dữ liệu mới lưu mã hóa.";
+      await refreshVaultCache(); renderSplitNavigation();
+      if (!cacheVault.unlocked) throw Error("Cache đã bị khóa trong lúc mở khóa.");
+      return vaultMessage;
+    } catch (error) {
+      cacheVault.lock(); vaultMessage = error.message; setStatus(error.message, true); throw error;
+    } finally { proof?.rawKey?.fill(0); vaultBusy = false; renderVaultState(); }
+  }
+  async function lockAllVaults() {
+    // Revocation first: do not wait for fits/network work in any tab to finish.
+    try { cacheVault.lockAll(); }
+    finally { lockVault(); }
+    vaultMessage = "Đã khóa mọi tab cùng server. Bản nháp giữ trong tab; nguồn item chưa lưu cần mở khóa lại trước khi đóng trang.";
+    renderVaultState(); return vaultMessage;
+  }
+  cacheChannel = CvatCacheChannel.install({
+    getState: () => ({ origin: location.origin, jobId, ...cacheVault.describe(), unlocked: cacheVault.unlocked,
+      busy: vaultBusy || saving || !!fitting || previewRun !== null }),
+    unlock: unlockFromPopup, lockAll: lockAllVaults,
+  });
+  $(".vault-lock").addEventListener("click", guard(lockAllVaults));
+  $(".vault-reset").addEventListener("click", guard(async () => {
+    if (vaultBusy || saving || fitting || previewRun !== null) return setStatus("Dừng tác vụ trước khi xóa kho.", true);
+    if (!confirm("Xóa kho cache và mọi liên kết nguồn item đã lưu trên server này? Không khôi phục được nguồn item. Annotation trên CVAT không bị xóa.")) return;
+    vaultBusy = true;
+    try {
+      lockVault(); await cacheVault.reset(async () => { await encryptedCloudStore.clear(); await CvatCacheVault.retireLegacy(); });
+      vaultMessage = "Đã xóa kho. Có thể đặt mật khẩu mới hoặc tiếp tục chỉ dùng RAM.";
+    } finally { vaultBusy = false; renderVaultState(); }
+  }));
+  addEventListener("pagehide", lockVault);
+  addEventListener("storage", event => {
+    if (event.key === CvatCacheVault.HEADER || event.key === CvatCacheVault.LOCK || event.key === null) lockVault();
+  });
+  renderVaultState();
   $(".cache-toggle").addEventListener("click", guard(async () => {
     if (cloudCache.state.running) cloudCache.stop();
     else await cloudCache.prefetch();
@@ -3194,7 +3300,7 @@
     try { await cloudCache.clear(); }
     finally {
       $(".cache-clear").disabled = false;
-      $(".cache-toggle").disabled = false;
+      renderVaultState();
       scheduleDraw();
     }
   }));
@@ -3222,6 +3328,7 @@
     const m = location.pathname.match(JOB_PATH);
     const id = m ? Number(m[1]) : null;
     if (id !== jobId) {
+      cacheChannel?.invalidate();
       dataGeneration++;
       switchGeneration++;
       jobId = id;

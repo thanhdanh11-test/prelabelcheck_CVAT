@@ -1,0 +1,3 @@
+# Architecture
+Protect stored cloud/lineage from offline inspection without password. NOT protection against compromised page/OS while unlocked, browser/OS swap or server transport cache. MUST use native Web Crypto, AES-256-GCM authenticated records, non-extractable tab RAM key (popup temporarily exports for private runtime handoff). MUST NOT store password/key. Locked vault allows online RAM-only usage. UI MUST distinguish RAM vs encrypted persistence, old plaintext migration pending and failures. Source: https://www.w3.org/TR/webcrypto-1/ .
+Errors: unsupported crypto/locks -> encrypted storage unavailable, RAM use continues. Tampered data -> reject, never treat as plaintext. Acceptance: tests inspect persisted bytes and reload locked state.

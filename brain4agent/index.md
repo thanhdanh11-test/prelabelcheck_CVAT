@@ -18,8 +18,10 @@ Khi nhận nhiệm vụ, Agent tra cứu bảng này để đọc **chính xác*
 | **Kiến trúc dữ liệu & Data Flow** | [`-data-architecture.md`](-data-architecture.md) | Cấu trúc dữ liệu, cơ chế lưu trữ và State Flow. |
 | **Lộ trình nâng cấp & Ý tưởng** | [`roadmap.md`](roadmap.md) | Active tasks, Kho Ý Tưởng (Idea Vault) và các mốc đã hoàn thành. |
 | **Lịch sử cập nhật** | [`changelog.md`](changelog.md) | Lịch sử Semantic Releases (vX.Y.Z). |
-| **Extension v1.13.6** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Hướng dẫn hiện tại: phím tắt, pan/zoom, nguồn item và giới hạn khớp; camera, checklist, UI; khớp một frame (đáy/nóc, nút ở view thu nhỏ, zoom/pan toàn cảnh) trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
+| **Extension v1.14.0** | [`REVIEW-WORKFLOW.md`](../docs/REVIEW-WORKFLOW.md), [`README`](../README.md) | Hướng dẫn hiện tại: phím tắt, pan/zoom, nguồn item và giới hạn khớp; camera, checklist, UI; khớp một frame (đáy/nóc, nút ở view thu nhỏ, zoom/pan toàn cảnh) trong [`EXPERIMENT-INTERPOLATION.md`](../docs/EXPERIMENT-INTERPOLATION.md). |
 | **Đường đi item v1.13.0** | [`TRACK-PATH.md`](../docs/TRACK-PATH.md), [`planning/01_2026-10-22_track-path-trace/`](../planning/01_2026-10-22_track-path-trace/plan.md) | Vệt quỹ đạo Top hiện hành; module truy vết thuần và SPEC cũ được giữ, UI bảng/CSV đã gỡ upstream. |
+| **Audit bảo mật cache** | [`CACHE-SECURITY-AUDIT.md`](../docs/CACHE-SECURITY-AUDIT.md) | 7 probes giả lập + browser isolated-world; A1/A2 sửa local; popup Chrome thật và giới hạn replay/mật khẩu yếu còn mở. |
+| **Cache mã hóa v1.14.0** | [`CACHE-ENCRYPTION.md`](../docs/CACHE-ENCRYPTION.md) | Mật khẩu, migration, RAM-only khi khóa, reset, giới hạn bảo vệ. |
 | **Cache point cloud v1.13.1** | [`BACKGROUND-CACHE.md`](../docs/BACKGROUND-CACHE.md), [`planning/02_2026-10-22_cache-lessons/`](../planning/02_2026-10-22_cache-lessons/plan.md) | Tải nền theo vị trí xem, bài học từ CVAT, số đo. |
 | **Nguồn gốc item sau tách** | [`TRACK-SPLIT.md`](../docs/TRACK-SPLIT.md) | Nhãn đoạn/frame, nút chuyển đoạn gốc/mới, nhãn vàng và nút về item gốc và bảng kết quả lần Áp dụng gần nhất; contract segments của bridge. |
 | **Tài liệu kỹ thuật module** | [`docs/`](../docs/) | Thư mục chứa tài liệu chuyên trách 1-1 cho từng module. |
@@ -42,7 +44,7 @@ project-root/
 ├── CLAUDE.md                         # [SHIM] Điểm nạp tự động của Claude Code — chỉ chứa @AGENTS.md
 ├── brain4agent-v1.7.1.md   # [MARKER] Phiên bản khung não — soi nhanh ở root
 ├── README.md                         # Tài liệu giới thiệu và hướng dẫn build dự án
-├── cvat-resize-extension/            # MV3 manifest, content, page-bridge, cloud-cache, lidar-view, review-state, track-split, track-path
+├── cvat-resize-extension/            # MV3 manifest, content, page-bridge, cache-vault, cloud-cache, lidar-view, review-state, track-split, track-path
 ├── tests/                            # Node tests + IndexedDB browser harness
 ├── brain4agent/                      # [BỘ NHỚ DỰ ÁN] Single Source of Truth
 │   ├── memory/hot/                   # [HOT MEMORY] Ký ức nóng phiên (today.md, state.json)
@@ -57,3 +59,5 @@ project-root/
 ├── .agents/skills/                   # [WORKSPACE SKILLS] Kỹ năng chuyên dụng cục bộ dự án
 └── docs/                             # [MODULE DOCS] Tài liệu kỹ thuật chi tiết
 ```
+
+Popup cache: `cache-popup.{html,css,js}` thuộc origin extension; `cache-channel.js` kiểm sender/challenge trong isolated world.

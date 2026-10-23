@@ -173,7 +173,7 @@
     return {
       configure(next) {
         if (context?.scope === next?.scope) return;
-        reset(); context = next;
+        reset(); context = next; storageError = "";
         emit({ done: 0, total: next ? next.stop - next.start + 1 : 0, message: "" });
       },
       async get(frame) {
@@ -185,7 +185,7 @@
       async prefetch() {
         if (clearing) await clearing;
         if (!context || run) return;
-        if (context.persistent === false) { emit({ message: "Chưa xác minh metadata; chỉ dùng RAM" }); return; }
+        if (context.persistent === false) { emit({ message: "Cache chưa mở khóa hoặc chưa xác minh metadata; chỉ dùng RAM" }); return; }
         const token = { cancelled: false }, target = context;
         run = token;
         emit({ running: true, done: 0, message: "Đang tải nền" });

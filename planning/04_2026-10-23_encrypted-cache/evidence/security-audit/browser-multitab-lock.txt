@@ -1,0 +1,4 @@
+{
+  "secondTabStillUnlocked": true,
+  "secondTabCanReadSyntheticRecord": true
+}

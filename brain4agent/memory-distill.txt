@@ -14,9 +14,10 @@
 - Tech Stack: Chrome MV3 extension, JavaScript thuần, Canvas/WebGL; Node built-in test runner (không npm dependencies).
 - Data/State: CVAT MAIN bridge Apply/Undo; Save native; point cloud RAM/IndexedDB; checklist localStorage theo origin/job/server track ID.
 - Planning & RFCs: Thư mục `planning/` lưu trữ các bản kế hoạch theo định dạng `[STT]_[YYYY-MM-DD]_[Ten-Ngan]` (25-35 ký tự, cố định path).
-- Release: v1.13.6; khớp một frame đủ sáu mặt, icon khớp/chấp nhận/hủy ở view thu nhỏ, view mở rộng phóng riêng + zoom in/out + kéo vùng đưa box về; Xoá keyframe chỉ bỏ keyframe thừa. 128/128 tests; mũi tên ở frame thu nhỏ, dấu phẩy/chấm xoay; pan tự do, không trần zoom-out 3×; QA local job 97 đạt, server công ty chưa chạy; xem docs/EXPERIMENT-INTERPOLATION.md.
+- Release: v1.14.0; khớp một frame đủ sáu mặt, icon khớp/chấp nhận/hủy ở view thu nhỏ, view mở rộng phóng riêng + zoom in/out + kéo vùng đưa box về; Xoá keyframe chỉ bỏ keyframe thừa. 147/147 tests; mũi tên ở frame thu nhỏ, dấu phẩy/chấm xoay; pan tự do, không trần zoom-out 3×; QA local job 97 đạt, server công ty chưa chạy; xem docs/EXPERIMENT-INTERPOLATION.md.
 - Đã gộp upstream 203456b: vệt quỹ đạo Top, cache theo frame xem, checklist O(n), ưu tiên nhãn ID server; đã sửa dropdown nhầm frames preview. Không khẳng định sửa nhảy clientID sau Apply.
-- Tách outside: nút chuyển đoạn gốc/mới, nhãn vàng/nút về nguồn trên fbar + khoảng frame trong preview, receipt Apply trả segments/clientID/server ID; receipt trong tab; nguồn item lưu localStorage theo server/job, nhận lại theo ID hoặc hình học duy nhất; docs/TRACK-SPLIT.md.
+- Tách outside: nút chuyển đoạn gốc/mới, nhãn vàng/nút về nguồn trên fbar + khoảng frame trong preview, receipt Apply trả segments/clientID/server ID; receipt trong tab; nguồn item lưu localStorage mã hóa theo server/job khi mở khóa, nhận lại theo ID hoặc hình học duy nhất; docs/TRACK-SPLIT.md.
+- Cache v1.14.0: AES-GCM/PBKDF2 Web Crypto; key RAM, cloud+nguồn mã hóa; mặc định RAM-only khi khóa. Migration nguồn verify trước xóa rõ, cloud cũ upgrade2; docs/CACHE-ENCRYPTION.md.
 </project_foundation>
 
 <brain_file_roles>
@@ -42,3 +43,5 @@
 - Tư duy phân lập lỗi 4 tầng (Mạng/Hạ tầng vs DOM/Race vs Anti-bot vs Code) & tự phục hồi thích ứng.
 </memory_management>
 </kernel_instructions>
+
+- Cache hardening local: popup origin extension + private nonce channel; shared lock/reset token. Installed Chrome/company QA pending; replay/weak-password limitations remain.

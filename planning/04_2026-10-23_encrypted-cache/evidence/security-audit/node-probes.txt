@@ -1,0 +1,38 @@
+{
+  "syntheticOnly": true,
+  "networkRequests": 0,
+  "probes": 7,
+  "results": [
+    {
+      "probe": "locked read without password",
+      "blocked": true
+    },
+    {
+      "probe": "wrong password",
+      "blocked": true
+    },
+    {
+      "probe": "ciphertext tamper",
+      "blocked": true
+    },
+    {
+      "probe": "cross-record substitution",
+      "blocked": true
+    },
+    {
+      "probe": "authenticated stale-record replay",
+      "accepted": true,
+      "impact": "integrity, not plaintext disclosure"
+    },
+    {
+      "probe": "lock first instance",
+      "secondInstanceDecrypts": true
+    },
+    {
+      "probe": "offline guesses against deliberately weak synthetic password",
+      "attempts": 3,
+      "recovered": true,
+      "impact": "weak-password limit; not a general password crack"
+    }
+  ]
+}

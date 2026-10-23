@@ -30,3 +30,10 @@ Bridge Apply thêm `segments[{startFrame,endFrame,clientID?,id?}]` từ export s
 
 ## Nguồn item v1.13.6 (thay giới hạn RAM-only ở trên)
 `cvat-track-origins:v1:<job>` trong localStorage, tách theo origin; lưu child/parent `{id,fingerprint}`, nhãn nguồn lịch sử và khoảng frame. Snapshot sau Apply ghi dấu hình học trước Save; reload nhận theo server ID hoặc fingerprint duy nhất khi chưa có ID, nâng lên server ID khi có. Không dùng clientID làm định danh bền. Receipt vẫn chỉ trong tab. Không đổi annotation/API. Lỗi storage giữ runtime và báo cảnh báo; không đảm bảo merge ghi đồng thời nhiều tab.
+
+## Cache mã hóa v1.14.0 (thay persistence rõ ở trên)
+cache-vault.js: header localStorage, AES-GCM/PBKDF2 key RAM, cloud encrypted-v1. Nguồn ở cvat-encrypted-origins:v1:<job>, migration sau decrypt-verify. Web Lock bao init/reset/migration và read-merge-write nguồn. Khi khóa chỉ dùng RAM; nháp annotation vẫn RAM. Checklist ID/panel không mã hóa. Chưa cách ly tài khoản trong cùng origin. Xem docs/CACHE-ENCRYPTION.md.
+
+
+### Popup unlock boundary
+Password stays in extension-origin popup; transient exported key uses private Chrome messaging with checked sender and single-use nonce. Isolated-world receiver imports nonextractable key. Public token (actual key `cvat-cache-lock:v1`) revokes every same-origin tab and pending proofs; reset rotates it before Web Lock. No persistent key/password. ActiveTab permission only.

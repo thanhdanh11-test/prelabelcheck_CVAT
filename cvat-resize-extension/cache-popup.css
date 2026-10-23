@@ -1,0 +1,12 @@
+:root { color-scheme: dark; font: 14px system-ui, sans-serif; background: #202020; color: #eee; }
+body { width: 330px; padding: 16px; margin: 0; }
+h1 { margin: 0 0 12px; font-size: 18px; }
+p { line-height: 1.5; overflow-wrap: anywhere; }
+form, #confirm-row { display: grid; gap: 8px; }
+input, button { box-sizing: border-box; width: 100%; font: inherit; border: 1px solid #666; border-radius: 4px; padding: 9px; background: #292929; color: inherit; }
+button { cursor: pointer; margin-top: 10px; }
+button:disabled { opacity: .5; cursor: default; }
+input:focus-visible, button:focus-visible { outline: 2px solid #e2bf56; outline-offset: 2px; }
+[hidden] { display: none !important; }
+.note { color: #bbb; font-size: 12px; }
+#status { min-height: 22px; }

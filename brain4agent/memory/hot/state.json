@@ -1,16 +1,16 @@
 {
-  "current_version": "1.13.6",
+  "current_version": "1.14.0",
   "brain_template_version": "1.7.1",
-  "system_status": "unit_verified_live_apply_pending",
+  "system_status": "encryption_hardening_local_verified_chrome_qa_pending",
   "last_verification": {
-    "timestamp": "2026-10-23T03:50:59Z",
-    "tests": 128,
-    "passed": 128,
+    "timestamp": "2026-10-23T07:25:52.983959+00:00",
+    "tests": 147,
+    "passed": 147,
     "failed": 0,
     "skipped": 0,
     "command": "node --test tests/*.test.cjs",
     "npm_audit": "ENOLOCK: no npm package/lockfile",
-    "browser": "Ego local job97 synthetic draft: sidebar ->16, expanded 16->0->16, shapes unchanged; receipt rendering simulated; live post-Apply item navigation pending"
+    "browser": "Prior 5 IDB checks passed; new installed popup/runtime and company QA pending (Ego loadUnpacked unavailable)"
   },
   "active_plans_completed": 0,
   "engine_sha": "0c1ac09f2181206e841c2dd5bfc23c78a13cabfd",
@@ -37,5 +37,20 @@
     "license": ""
   },
   "merged_upstream": "203456bf33fe351d22a7aa412ad59d5a0ed9f5c6",
-  "last_published_commit": "6fb29a9"
+  "last_published_commit": "4d129de",
+  "active_plan": {
+    "id": "04_2026-10-23_encrypted-cache"
+  },
+  "security_audit": {
+    "timestamp": "2026-10-23T06:57:25Z",
+    "synthetic_node_probes": 7,
+    "browser_confirmed_findings": 2,
+    "report": "docs/CACHE-SECURITY-AUDIT.md",
+    "product_changes": true,
+    "remediation": "A1/A2 and reset proof race fixed locally; 147 Node tests pass; installed Chrome QA pending",
+    "residual_limits": [
+      "ciphertext replay",
+      "weak passwords"
+    ]
+  }
 }

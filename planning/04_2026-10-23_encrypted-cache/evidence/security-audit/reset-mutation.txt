@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: reset of an empty vault revokes a pending creation proof across tabs
+not ok 1 - reset of an empty vault revokes a pending creation proof across tabs
+  ---
+  duration_ms: 57.286459
+  type: 'test'
+  location: '/Users/macos/cvat-tools/tests/cache-vault.test.cjs:125:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (/Users/macos/cvat-tools/tests/cache-vault.test.cjs:129:2)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 98.679792
+
+Exit: 1

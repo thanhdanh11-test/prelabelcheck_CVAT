@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Cache vault UI fixture</title>
+<h1>Synthetic CVAT fixture — no server annotations</h1>
+<p>Run only on a dedicated localhost test origin. The extension's vault controls use this origin's storage.</p>
+<script>
+window.fixtureErrors=[];addEventListener('error',e=>fixtureErrors.push(e.message));addEventListener('unhandledrejection',e=>fixtureErrors.push(String(e.reason)));
+history.replaceState(null,'','/jobs/9987');
+const realFetch=window.fetch.bind(window);
+window.fetch=async(url,options)=>{
+ if(String(url).startsWith('/api/jobs/9987/data/meta'))return new Response(JSON.stringify({size:1,frames:[{name:'fixture'}]}));
+ if(String(url).startsWith('/api/jobs/9987/data?'))return new Response('VERSION .7\nFIELDS x y z\nSIZE 4 4 4\nTYPE F F F\nCOUNT 1 1 1\nWIDTH 1\nHEIGHT 1\nPOINTS 1\nDATA ascii\n1 2 3\n');
+ return realFetch(url,options);
+};
+addEventListener('message',e=>{
+ const m=e.data;if(m?.channel!=='cvat-track-resizer-v2'||m.direction!=='request')return;
+ const result={job:{id:9987,task_id:1,created_date:'fixture',dimension:'3d',start_frame:0,stop_frame:0},annotations:{tracks:[],shapes:[],tags:[]},labels:[]};
+ window.postMessage({...m,direction:'response',result},location.origin);
+});
+</script>
+<script src="/cvat-resize-extension/cache-vault.js"></script>
+<script src="/cvat-resize-extension/cache-channel.js"></script>
+<script src="/cvat-resize-extension/cloud-cache.js"></script>
+<script src="/cvat-resize-extension/review-state.js"></script>
+<script src="/cvat-resize-extension/track-split.js"></script>
+<script src="/cvat-resize-extension/lidar-view.js"></script>
+<script src="/cvat-resize-extension/content.js"></script>
